@@ -1,0 +1,92 @@
+# Voice MER Project - .gitignore
+# Hierarchical Multimodal Emotion Recognition for Vietnamese Voice Journals
+
+# ── Python ────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.pyd
+*.pyo
+.Python
+
+# ── Virtual Environments ──────────────────────────────────────────────────
+venv/
+env/
+.venv/
+.env/
+ENV/
+env.bak/
+venv.bak/
+
+# ── Model Checkpoints & Weights ───────────────────────────────────────────
+checkpoints/
+*.pt
+*.pth
+*.ckpt
+*.bin
+*.safetensors
+# LoRA adapters (smaller footprint, commit if desired)
+# lora_weights/
+
+# ── Raw & Processed Data ──────────────────────────────────────────────────
+data/raw/
+data/processed/
+data/interim/
+*.wav
+*.mp3
+*.flac
+*.ogg
+*.csv
+*.tsv
+# Allow sample metadata template
+!data/sample_metadata.csv
+
+# ── Model Cache (HuggingFace, ModelScope) ─────────────────────────────────
+.cache/
+~/.cache/huggingface/
+~/.cache/modelscope/
+hub/
+model_cache/
+
+# ── Logs & Outputs ────────────────────────────────────────────────────────
+logs/
+*.log
+runs/
+wandb/
+mlruns/
+tensorboard/
+outputs/
+
+# ── Jupyter Notebooks ─────────────────────────────────────────────────────
+.ipynb_checkpoints/
+*.ipynb
+
+# ── IDE & Editor ──────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# ── Testing & Coverage ────────────────────────────────────────────────────
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+*.egg-info/
+dist/
+build/
+
+# ── Environment Variables ─────────────────────────────────────────────────
+.env
+.env.local
+*.env
+
+# ── Temporary Files ───────────────────────────────────────────────────────
+tmp/
+temp/
+scratch/
+*.tmp

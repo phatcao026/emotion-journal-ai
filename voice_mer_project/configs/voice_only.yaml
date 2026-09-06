@@ -1,0 +1,65 @@
+# ============================================================
+# voice_only.yaml
+# Configuration for the full acoustic processing subsystem (Voice-Only)
+# Covers: VAD, emotion2vec, LoRA, Attention Pooling, Focal Loss
+# ============================================================
+
+vad:
+  model: "silero_vad"                   # VAD model name (Silero-VAD)
+  sample_rate: 16000                    # Target sample rate (Hz)
+  chunk_duration_s: 6.0                 # Duration of each audio chunk (seconds)
+  stride_duration_s: 3.0               # Stride between chunks (seconds, yields 50% overlap)
+  min_speech_duration_ms: 250           # Minimum duration to confirm a speech region (ms)
+  max_speech_duration_s: 30.0           # Maximum duration before a forced cut (seconds)
+  speech_pad_ms: 100                    # Padding added to the start/end of each speech segment (ms)
+  threshold: 0.5                        # VAD probability threshold (0.0 – 1.0)
+
+pause_analyzer:
+  silence_threshold_db: -40.0          # dB threshold for silence detection
+  min_pause_duration_ms: 200            # Minimum duration of a meaningful pause (ms)
+  spr_window_s: 5.0                     # Sliding window size for Speech-Pause Ratio computation (seconds)
+  pause_feature_dim: 4                  # Dimensionality of the P_pause vector (R^4)
+
+emotion2vec:
+  model_id: "iic/emotion2vec_base"      # Model ID on ModelScope
+  feature_dim: 768                      # Output feature dimensionality of emotion2vec-base
+  freeze_base: true                     # Freeze base weights; train only LoRA parameters
+
+lora:
+  r: 8                                  # LoRA matrix rank
+  lora_alpha: 16                        # Scaling factor: alpha / r = 2.0
+  lora_dropout: 0.1                     # Dropout rate within LoRA layers
+  bias: "none"                          # Bias handling strategy ("none", "all", "lora_only")
+  target_modules:                       # Attention modules to apply LoRA to
+    - "q_proj"
+    - "v_proj"
+    - "k_proj"
+    - "out_proj"
+  task_type: "FEATURE_EXTRACTION"       # PEFT task type
+
+attention_pooling:
+  input_dim: 768                        # Input dimensionality (= emotion2vec feature_dim)
+  hidden_dim: 256                       # Hidden dimensionality of the attention scorer
+  output_dim: 768                       # Output dimensionality of Z_audio
+  dropout: 0.1                          # Dropout applied after attention weights
+
+training:
+  num_classes_primary: 5                # Number of primary emotion classes
+  primary_labels:                       # Primary emotion label list
+    - "Joy"
+    - "Sadness"
+    - "Anxiety"
+    - "Anger"
+    - "Neutral"
+  batch_size: 16
+  learning_rate: 3.0e-4
+  num_epochs: 50
+  warmup_steps: 500
+  gradient_clip: 1.0
+  early_stopping_patience: 7
+  checkpoint_dir: "checkpoints/voice_only/"
+  log_dir: "logs/voice_only/"
+
+focal_loss:
+  gamma: 2.0                            # Focusing parameter γ
+  reduction: "mean"                     # Loss aggregation strategy ("mean", "sum", "none")

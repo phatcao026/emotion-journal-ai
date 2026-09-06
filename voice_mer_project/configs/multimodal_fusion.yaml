@@ -1,0 +1,77 @@
+# ============================================================
+# multimodal_fusion.yaml
+# Configuration for the Multimodal Fusion subsystem
+# Covers: PhoWhisper ASR, Gated Fusion, Dual-Head Classification
+# ============================================================
+
+asr:
+  model_id: "vinai/phowhisper-base"     # Checkpoint on HuggingFace Hub
+  language: "vi"                        # Recognition language (Vietnamese)
+  task: "transcribe"                    # Whisper task type
+  return_timestamps: false              # Whether to return per-segment timestamps
+  restore_punctuation: true             # Run punctuation restoration after ASR
+  max_new_tokens: 512                   # Maximum number of generated tokens
+  device: "cpu"                         # Inference device ("cuda" or "cpu")
+  batch_size: 8                         # Batch size for ASR inference
+
+text_encoder:
+  model_id: "vinai/phobert-base-v2"     # PhoBERT checkpoint
+  feature_dim: 768                      # Dimensionality of z_semantic (R^768)
+  pooling_strategy: "cls"              # Pooling strategy ("cls", "mean", "max")
+  max_length: 256                       # Maximum token sequence length
+  freeze: false                         # Whether to freeze PhoBERT weights
+
+gated_fusion:
+  dim_audio: 768                        # Dimensionality of Z_audio from TemporalAttentionPooling
+  dim_semantic: 768                     # Dimensionality of Z_semantic from PhoBERT
+  dim_pause: 128                        # Dimensionality of Z_pause after projection from R^4
+  pause_raw_dim: 4                      # Raw dimensionality of P_pause before projection
+  output_dim: 896                       # Dimensionality of Z_fused (R^896 = 768 + 128)
+  dropout: 0.2                          # Dropout rate within the fusion layer
+  gate_activation: "sigmoid"            # Activation function for the gates
+
+classification_heads:
+  primary_head:
+    input_dim: 896                      # Input: Z_fused
+    num_classes: 5                      # 5 primary emotion classes
+    labels:
+      - "Joy"
+      - "Sadness"
+      - "Anxiety"
+      - "Anger"
+      - "Neutral"
+    dropout: 0.3
+
+  sub_head:
+    input_dim: 768                      # Input: Z_semantic (from PhoBERT)
+    num_classes: 10                     # 10 fine-grained sub-emotion classes
+    labels:
+      - "Gratitude"
+      - "Pride"
+      - "Relief"
+      - "Disappointment"
+      - "Remorse"
+      - "Loneliness"
+      - "Nervousness"
+      - "Fear"
+      - "Annoyance"
+      - "Realization"
+    dropout: 0.3
+
+loss:
+  focal_gamma: 2.0
+  primary_weight: 0.7                   # Weight for the primary head loss
+  sub_weight: 0.3                       # Weight for the sub head loss
+  label_smoothing: 0.1                  # Label smoothing factor
+
+training:
+  batch_size: 8
+  learning_rate: 1.0e-4
+  num_epochs: 60
+  warmup_ratio: 0.1
+  weight_decay: 1.0e-2
+  gradient_clip: 1.0
+  early_stopping_patience: 10
+  checkpoint_dir: "checkpoints/multimodal/"
+  log_dir: "logs/multimodal/"
+  use_amp: false
