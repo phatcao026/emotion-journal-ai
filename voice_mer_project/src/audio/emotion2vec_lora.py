@@ -163,6 +163,22 @@ class LoRAEmotion2Vec(nn.Module):
         try:
             from funasr import AutoModel as FunASRAutoModel
             from peft import LoraConfig as PeftLoraConfig, get_peft_model
+
+            # Vá lỗi FunASR Issue #2085: Lọc bỏ các tham số không hợp lệ truyền vào compute_mask_indices
+            try:
+                import funasr.models.emotion2vec.base as e2v_base
+                if hasattr(e2v_base, "compute_mask_indices"):
+                    _orig_cmi = e2v_base.compute_mask_indices
+
+                    def _safe_compute_mask(*args, **kwargs):
+                        for bad_arg in ["add_masks", "seed", "epoch", "indices"]:
+                            kwargs.pop(bad_arg, None)
+                        return _orig_cmi(*args, **kwargs)
+
+                    e2v_base.compute_mask_indices = _safe_compute_mask
+            except Exception as patch_exc:
+                logger.debug("Could not patch e2v_base compute_mask_indices: %s", patch_exc)
+
         except ImportError as exc:
             logger.warning(
                 "Cannot load real emotion2vec (missing dependency: %s). "
@@ -180,6 +196,7 @@ class LoRAEmotion2Vec(nn.Module):
             # Freeze base
             for p in self.base_model.parameters():
                 p.requires_grad = False
+            self.base_model.eval()
 
             # Apply LoRA
             lora_cfg = PeftLoraConfig(
@@ -202,8 +219,15 @@ class LoRAEmotion2Vec(nn.Module):
             self._synthetic = True
 
     # ------------------------------------------------------------------
-    # Forward
+    # Forward & Training Mode
     # ------------------------------------------------------------------
+
+    def train(self, mode: bool = True) -> "LoRAEmotion2Vec":
+        """Set module training mode, keeping base_model frozen in eval mode."""
+        super().train(mode)
+        if self.base_model is not None and not self._synthetic:
+            self.base_model.eval()
+        return self
 
     def forward(
         self,
@@ -221,6 +245,10 @@ class LoRAEmotion2Vec(nn.Module):
         Returns:
             frame_features of shape (B, N, 768) or (frame_features, frame_lengths).
         """
+        # Luôn giữ base_model ở chế độ eval để trích xuất đặc trưng ổn định, không bị che frame ngẫu nhiên
+        if self.base_model is not None and not self._synthetic:
+            self.base_model.eval()
+
         if self.lora_model is None:
             self.lora_model = self._synthetic_backbone
 
