@@ -463,7 +463,12 @@ class HierarchicalMERModel(nn.Module):
             num_sub_classes=checkpoint.get("num_sub_classes", 10),
             device=device,
         )
-        model.load_state_dict(checkpoint["state_dict"])
+        # 1. Gọi nạp các thành phần pretrained trước
+        model.load_pretrained()
+
+        # 2. Thêm strict=False để nạp an toàn, không bị xung đột khóa thừa
+        model.load_state_dict(checkpoint["state_dict"], strict=False)
+
         model.to(torch.device(device))
         logger.info("Loaded HierarchicalMERModel from %s (epoch %d)", p, checkpoint.get("epoch", -1))
         return model

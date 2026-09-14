@@ -332,7 +332,7 @@ def train(
 
     if resume_path and Path(resume_path).exists():
         ckpt = torch.load(resume_path, map_location=dev, weights_only=False)
-        model.load_state_dict(ckpt["state_dict"])
+        model.load_state_dict(ckpt["state_dict"], strict=False)
         if "optimizer_state" in ckpt and ckpt["optimizer_state"]:
             optimizer.load_state_dict(ckpt["optimizer_state"])
         start_epoch = ckpt.get("epoch", 0) + 1
@@ -386,7 +386,7 @@ def train(
     best_path = ckpt_dir / "best_model.pt"
     if best_path.exists():
         best_ckpt = torch.load(best_path, map_location=dev, weights_only=False)
-        model.load_state_dict(best_ckpt["state_dict"])
+        model.load_state_dict(best_ckpt["state_dict"], strict=False)
     logger.info("Evaluating best model on test split:")
     test_metrics = evaluate(model=model, loader=test_loader, loss_fn=loss_fn, device=dev, phase="test")
     logger.info("\n%s", format_metrics_report(test_metrics))

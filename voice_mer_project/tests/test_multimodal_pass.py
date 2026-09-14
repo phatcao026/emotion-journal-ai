@@ -294,6 +294,22 @@ class TestMultimodalEndToEnd(unittest.TestCase):
 
         logger.info("PASS HierarchicalMERModel end-to-end forward and backward with dummy audio: OK")
 
+    def test_hierarchical_mer_model_from_checkpoint(self) -> None:
+        """Verify saving and loading HierarchicalMERModel from checkpoint."""
+        import tempfile
+        model = HierarchicalMERModel(
+            num_primary_classes=NUM_PRIMARY,
+            num_sub_classes=NUM_SUB,
+            device="cpu",
+        )
+        with tempfile.TemporaryDirectory() as tmpdir:
+            ckpt_path = os.path.join(tmpdir, "test_ckpt.pt")
+            model.save_checkpoint(ckpt_path, epoch=1)
+            loaded_model = HierarchicalMERModel.from_checkpoint(ckpt_path, device="cpu")
+            self.assertIsInstance(loaded_model, HierarchicalMERModel)
+            self.assertEqual(loaded_model.num_primary_classes, NUM_PRIMARY)
+            self.assertEqual(loaded_model.num_sub_classes, NUM_SUB)
+
 
 if __name__ == "__main__":
     print("=" * 60)
