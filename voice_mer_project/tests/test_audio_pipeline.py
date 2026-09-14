@@ -37,6 +37,7 @@ import torch.nn as nn
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from src.audio.attention_pooling import TemporalAttentionPooling
+from src.audio.emotion2vec_lora import LoRAConfig, LoRAEmotion2Vec
 from src.audio.pause_analyzer import EmotionalPauseAnalyzer, PauseFeatures
 from src.data.audio_dataset import PrimaryEmotion, VoiceJournalDataset
 
@@ -148,6 +149,18 @@ class TestPauseFeatureTensor(unittest.TestCase):
         expected = torch.tensor([0.8, 0.6, 12.0, -2.5], dtype=torch.float32)
         torch.testing.assert_close(tensor, expected)
 
+    def test_energy_drift_from_waveform(self) -> None:
+        """Verify that analyze() calculates real energy_drift from waveform."""
+        analyzer = EmotionalPauseAnalyzer(sample_rate=16000)
+        # 1-second audio: first 0.5s amplitude 1.0, second 0.5s amplitude 2.0
+        # Energy ratio = (2.0^2) / (1.0^2) = 4.0 -> drift = sqrt(4.0) = 2.0
+        half = 8000
+        first_half = torch.ones(half)
+        second_half = torch.full((half,), 2.0)
+        wav = torch.cat([first_half, second_half])
+        feats = analyzer.analyze(wav, speech_timestamps=[])
+        self.assertAlmostEqual(feats.energy_drift, 2.0, places=2)
+
 
 class TestVoiceJournalDatasetDummy(unittest.TestCase):
     """Tests for VoiceJournalDataset in dummy mode."""
@@ -213,6 +226,27 @@ class TestAudioPipelineIntegration(unittest.TestCase):
         self.assertIn("primary_labels", batch)
         self.assertEqual(batch["waveforms"].shape[0], 4)
         logger.info("PASS Dataset collate: waveforms shape=%s", tuple(batch["waveforms"].shape))
+
+
+class TestLoRAEmotion2Vec(unittest.TestCase):
+    """Tests for LoRAEmotion2Vec model."""
+
+    def test_synthetic_flag_init(self) -> None:
+        """Verify _synthetic flag reflects constructor argument."""
+        model_default = LoRAEmotion2Vec(synthetic=False)
+        self.assertFalse(model_default._synthetic)
+
+        model_synthetic = LoRAEmotion2Vec(synthetic=True)
+        self.assertTrue(model_synthetic._synthetic)
+
+    def test_forward_output_shape(self) -> None:
+        """Verify output shape (B, N, 768) in synthetic mode."""
+        model = LoRAEmotion2Vec(synthetic=True)
+        wav = torch.randn(2, 16000 * 2)  # 2 seconds
+        feats = model(wav)
+        self.assertEqual(feats.shape[0], 2)
+        self.assertEqual(feats.shape[2], 768)
+        self.assertGreater(feats.shape[1], 0)
 
 
 if __name__ == "__main__":

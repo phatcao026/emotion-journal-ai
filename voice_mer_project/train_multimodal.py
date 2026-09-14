@@ -343,6 +343,9 @@ def train(
     )
 
     model = build_model(config, device=device)
+    if not dummy:
+        logger.info("Loading pretrained weights for Multimodal model...")
+        model.load_pretrained()
 
     train_cfg = config.get("training", {})
     lr = float(train_cfg.get("learning_rate", 1.0e-4))

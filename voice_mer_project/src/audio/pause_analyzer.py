@@ -123,44 +123,56 @@ class EmotionalPauseAnalyzer:
         Returns:
             PauseFeatures with all four components populated.
         """
-        wav = waveform.squeeze()
+        wav = waveform.detach().squeeze()
         total_samples = wav.numel()
         total_duration_s = total_samples / self.sample_rate
 
-        if total_duration_s <= 0 or len(speech_timestamps) == 0:
+        if total_duration_s <= 0:
             return PauseFeatures()
 
+        # --- Energy drift (acoustic ratio between second half and first half) ---
+        mid = total_samples // 2
+        if mid > 0:
+            e_first = (wav[:mid].float() ** 2).mean().clamp(min=1e-9)
+            e_second = (wav[mid:].float() ** 2).mean().clamp(min=1e-9)
+            drift = float((e_second / e_first).sqrt().item())
+        else:
+            drift = 1.0
+
+        if not speech_timestamps:
+            return PauseFeatures(
+                speech_pause_ratio=0.8,
+                mean_pause_duration=0.5,
+                pause_frequency=6.0,
+                energy_drift=drift,
+            )
+
         # --- SPR ---
-        speech_samples = sum(seg["end"] - seg["start"] for seg in speech_timestamps)
+        speech_samples = sum(seg.get("end", 0) - seg.get("start", 0) for seg in speech_timestamps)
         spr = min(float(speech_samples) / total_samples, 1.0)
 
         # --- Pause intervals ---
-        sorted_ts = sorted(speech_timestamps, key=lambda s: s["start"])
+        sorted_ts = sorted(speech_timestamps, key=lambda s: s.get("start", 0))
         pause_intervals: List[float] = []
 
         # Gap before first speech
-        if sorted_ts[0]["start"] > self.min_pause_samples:
+        if sorted_ts and sorted_ts[0].get("start", 0) > self.min_pause_samples:
             pause_intervals.append(sorted_ts[0]["start"] / self.sample_rate)
 
         # Gaps between consecutive speech segments
         for i in range(len(sorted_ts) - 1):
-            gap = sorted_ts[i + 1]["start"] - sorted_ts[i]["end"]
+            gap = sorted_ts[i + 1].get("start", 0) - sorted_ts[i].get("end", 0)
             if gap >= self.min_pause_samples:
                 pause_intervals.append(gap / self.sample_rate)
 
         # Gap after last speech
-        tail_gap = total_samples - sorted_ts[-1]["end"]
-        if tail_gap >= self.min_pause_samples:
-            pause_intervals.append(tail_gap / self.sample_rate)
+        if sorted_ts:
+            tail_gap = total_samples - sorted_ts[-1].get("end", 0)
+            if tail_gap >= self.min_pause_samples:
+                pause_intervals.append(tail_gap / self.sample_rate)
 
         mean_dur = float(np.mean(pause_intervals)) if pause_intervals else 0.0
         freq = len(pause_intervals) / (total_duration_s / 60.0) if total_duration_s > 0 else 0.0
-
-        # --- Energy drift ---
-        mid = total_samples // 2
-        e_first = (wav[:mid] ** 2).mean().clamp(min=1e-9)
-        e_second = (wav[mid:] ** 2).mean().clamp(min=1e-9)
-        drift = float((e_second / e_first).sqrt().item())
 
         return PauseFeatures(
             speech_pause_ratio=spr,

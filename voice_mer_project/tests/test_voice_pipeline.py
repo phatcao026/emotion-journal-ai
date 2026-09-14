@@ -17,6 +17,7 @@ from test_audio_pipeline import (
     TestPauseFeatureTensor,
     TestVoiceJournalDatasetDummy,
     TestAudioPipelineIntegration,
+    TestLoRAEmotion2Vec,
 )
 
 if __name__ == "__main__":

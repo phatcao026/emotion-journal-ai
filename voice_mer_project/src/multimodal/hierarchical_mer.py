@@ -175,7 +175,7 @@ class VoiceOnlyMERModel(nn.Module):
         p_pause_tensors = []
         for i in range(b):
             ts = speech_timestamps[i] if speech_timestamps and i < len(speech_timestamps) else []
-            feats = self.pause_analyzer.analyze_from_timestamps(ts)
+            feats = self.pause_analyzer.analyze(waveforms[i], ts)
             p_pause_tensors.append(feats.to_tensor())
         p_pause = torch.stack(p_pause_tensors).to(device)  # (B, 4)
 
@@ -341,7 +341,7 @@ class HierarchicalMERModel(nn.Module):
         p_pause_tensors = []
         for i in range(b):
             ts = speech_timestamps[i] if speech_timestamps and i < len(speech_timestamps) else []
-            feats = self.pause_analyzer.analyze_from_timestamps(ts)
+            feats = self.pause_analyzer.analyze(waveforms[i], ts)
             p_pause_tensors.append(feats.to_tensor())
         p_pause = torch.stack(p_pause_tensors).to(device)  # (B, 4)
 

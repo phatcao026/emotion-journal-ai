@@ -123,7 +123,7 @@ class LoRAEmotion2Vec(nn.Module):
         self.device = torch.device(device)
         self.cache_dir = cache_dir
         self.feature_dim = self.FEATURE_DIM
-        self._synthetic = True
+        self._synthetic = synthetic
 
         self.base_model: Optional[nn.Module] = None
         self.lora_model: Optional[nn.Module] = None
@@ -173,24 +173,34 @@ class LoRAEmotion2Vec(nn.Module):
             self._synthetic = True
             return
 
-        model = FunASRAutoModel(model=self.model_id, model_revision="master")
-        self.base_model = model.model.to(self.device)
+        try:
+            model = FunASRAutoModel(model=self.model_id, model_revision="master")
+            self.base_model = model.model.to(self.device)
 
-        # Freeze base
-        for p in self.base_model.parameters():
-            p.requires_grad = False
+            # Freeze base
+            for p in self.base_model.parameters():
+                p.requires_grad = False
 
-        # Apply LoRA
-        lora_cfg = PeftLoraConfig(
-            r=self.lora_config.r,
-            lora_alpha=self.lora_config.lora_alpha,
-            lora_dropout=self.lora_config.lora_dropout,
-            bias=self.lora_config.bias,
-            target_modules=self.lora_config.target_modules,
-            task_type=self.lora_config.task_type,
-        )
-        self.lora_model = get_peft_model(self.base_model, lora_cfg).to(self.device)
-        logger.info("Real emotion2vec + LoRA loaded on %s", self.device)
+            # Apply LoRA
+            lora_cfg = PeftLoraConfig(
+                r=self.lora_config.r,
+                lora_alpha=self.lora_config.lora_alpha,
+                lora_dropout=self.lora_config.lora_dropout,
+                bias=self.lora_config.bias,
+                target_modules=self.lora_config.target_modules,
+                task_type=self.lora_config.task_type,
+            )
+            self.lora_model = get_peft_model(self.base_model, lora_cfg).to(self.device)
+            self._synthetic = False
+            logger.info("Real emotion2vec + LoRA loaded on %s", self.device)
+        except Exception as exc:
+            logger.warning(
+                "Failed to load real emotion2vec checkpoint (%s). "
+                "Falling back to synthetic encoder.", exc,
+            )
+            self.base_model = _SyntheticEmotion2Vec(self.FEATURE_DIM).to(self.device)
+            self.lora_model = self.base_model
+            self._synthetic = True
 
     # ------------------------------------------------------------------
     # Forward

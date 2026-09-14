@@ -311,6 +311,9 @@ def train(
     )
 
     model = build_model(config, device=device)
+    if not dummy:
+        logger.info("Loading pretrained weights for Voice-Only model...")
+        model.load_pretrained()
     optimizer = build_optimizer(model, config)
 
     focal_cfg = config.get("focal_loss", {})
