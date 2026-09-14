@@ -166,7 +166,7 @@ def build_model(config: dict, device: str) -> VoiceOnlyMERModel:
         lora_alpha=lora_dict.get("lora_alpha", 16),
         lora_dropout=lora_dict.get("lora_dropout", 0.1),
         bias=lora_dict.get("bias", "none"),
-        target_modules=lora_dict.get("target_modules", ["q_proj", "v_proj", "k_proj", "out_proj"]),
+        target_modules=lora_dict.get("target_modules", ["qkv", "proj"]),
     )
 
     attn_dict = config.get("attention_pooling", {})

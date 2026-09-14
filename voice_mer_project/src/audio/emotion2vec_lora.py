@@ -45,7 +45,7 @@ class LoRAConfig:
     lora_dropout: float = 0.1
     bias: str = "none"
     target_modules: List[str] = field(
-        default_factory=lambda: ["q_proj", "v_proj", "k_proj", "out_proj"]
+        default_factory=lambda: ["qkv", "proj"]
     )
     task_type: str = "FEATURE_EXTRACTION"
 
@@ -188,7 +188,6 @@ class LoRAEmotion2Vec(nn.Module):
                 lora_dropout=self.lora_config.lora_dropout,
                 bias=self.lora_config.bias,
                 target_modules=self.lora_config.target_modules,
-                task_type=self.lora_config.task_type,
             )
             self.lora_model = get_peft_model(self.base_model, lora_cfg).to(self.device)
             self._synthetic = False

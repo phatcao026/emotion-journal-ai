@@ -46,11 +46,8 @@ lora:
   lora_dropout: 0.1                     # Dropout rate within LoRA layers
   bias: "none"                          # Bias handling strategy ("none", "all", "lora_only")
   target_modules:                       # Attention modules to apply LoRA to
-    - "q_proj"
-    - "v_proj"
-    - "k_proj"
-    - "out_proj"
-  task_type: "FEATURE_EXTRACTION"       # PEFT task type
+    - "qkv"
+    - "proj"
 
 # -----------------------------------
 # Temporal Attention Pooling Configuration
