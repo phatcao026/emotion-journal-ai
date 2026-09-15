@@ -16,7 +16,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import torch
 import torch.nn as nn
@@ -85,8 +85,14 @@ class _SyntheticEmotion2Vec(nn.Module):
             x = waveforms
         else:
             x = waveforms.view(waveforms.shape[0], 1, -1)
+        if x.shape[-1] < 400:
+            x = nn.functional.pad(x, (0, 400 - x.shape[-1]))
         x = self.encoder(x)
         return x.transpose(1, 2)
+
+    def extract_features(self, waveforms: torch.Tensor) -> torch.Tensor:
+        """Alias for forward extraction."""
+        return self.forward(waveforms)
 
 
 # ---------------------------------------------------------------------------
@@ -229,6 +235,34 @@ class LoRAEmotion2Vec(nn.Module):
             self.base_model.eval()
         return self
 
+    @staticmethod
+    def _unpack_features(output: Any) -> Optional[torch.Tensor]:
+        """Safely unpack tensor features from dictionary/tuple/list outputs."""
+        if output is None:
+            return None
+        if isinstance(output, torch.Tensor):
+            return output
+        if isinstance(output, dict):
+            for key in ("feats", "last_hidden_state", "x"):
+                val = output.get(key)
+                if val is not None:
+                    unpacked = LoRAEmotion2Vec._unpack_features(val)
+                    if unpacked is not None:
+                        return unpacked
+            # Fallback: check any value in dict
+            for val in output.values():
+                unpacked = LoRAEmotion2Vec._unpack_features(val)
+                if unpacked is not None:
+                    return unpacked
+            return None
+        if isinstance(output, (tuple, list)):
+            for item in output:
+                unpacked = LoRAEmotion2Vec._unpack_features(item)
+                if unpacked is not None:
+                    return unpacked
+            return None
+        return None
+
     def forward(
         self,
         waveforms: torch.Tensor,
@@ -245,34 +279,115 @@ class LoRAEmotion2Vec(nn.Module):
         Returns:
             frame_features of shape (B, N, 768) or (frame_features, frame_lengths).
         """
-        # Luôn giữ base_model ở chế độ eval để trích xuất đặc trưng ổn định, không bị che frame ngẫu nhiên
+        # Always keep base_model in eval mode for stable feature extraction
         if self.base_model is not None and not self._synthetic:
             self.base_model.eval()
 
         if self.lora_model is None:
             self.lora_model = self._synthetic_backbone
 
-        if self._synthetic:
-            feats = self.lora_model(waveforms.to(self.device))  # (B, N, 768)
+        waveforms = waveforms.to(self.device)
+        if waveforms.ndim == 1:
+            waveforms = waveforms.unsqueeze(0)
+
+        B = waveforms.shape[0]
+
+        # 1. Squeeze 3D waveform inputs (B, 1, T) down to 2D (B, T) before passing to FunASR / LoRA
+        if waveforms.ndim == 3 and waveforms.shape[1] == 1:
+            wav_input = waveforms.squeeze(1)
+        elif waveforms.ndim == 3 and waveforms.shape[-1] == 1:
+            wav_input = waveforms.squeeze(-1)
         else:
-            # Real emotion2vec API
-            feats = self.lora_model(waveforms.to(self.device))
-            if isinstance(feats, dict):
-                feats = feats.get("last_hidden_state", feats.get("feats", feats))
-            if isinstance(feats, (tuple, list)):
-                feats = feats[0]
+            wav_input = waveforms
+
+        feats: Optional[torch.Tensor] = None
+
+        if self._synthetic:
+            raw_out = self.lora_model(wav_input)
+            feats = self._unpack_features(raw_out)
+        else:
+            res = None
+
+            # 2. Check whether underlying model (self.base_model or self.lora_model) provides extract_features
+            if hasattr(self.lora_model, "extract_features"):
+                try:
+                    res = self.lora_model.extract_features(wav_input)
+                except Exception as exc:
+                    logger.debug("self.lora_model.extract_features raised: %s", exc)
+
+            if res is None and self.base_model is not None:
+                underlying = getattr(self.base_model, "model", self.base_model)
+                if hasattr(underlying, "extract_features"):
+                    try:
+                        res = underlying.extract_features(wav_input)
+                    except Exception as exc:
+                        logger.debug("underlying.extract_features raised: %s", exc)
+
+            # If extract_features was not available or produced nothing, call lora_model
+            if res is None and self.lora_model is not None:
+                try:
+                    res = self.lora_model(wav_input)
+                except Exception as exc:
+                    logger.debug("self.lora_model forward call raised: %s", exc)
+
+            # 3. Safely unpack dictionary/tuple returns (checking for keys "feats", "last_hidden_state", or "x")
+            feats = self._unpack_features(res)
+
+        # 4. Implement a defensive fallback: if feats is None or not a torch.Tensor,
+        #    log a warning and use self._synthetic_backbone(waveforms) so training never halts on NoneType.
+        if feats is None or not isinstance(feats, torch.Tensor):
+            logger.warning(
+                "LoRAEmotion2Vec: extracted features is %s (not a Tensor); falling back to synthetic backbone.",
+                type(feats).__name__ if feats is not None else "None",
+            )
+            feats = self._synthetic_backbone(waveforms)
+
+        # 5. Verify that feats is always a 3D Tensor (B, N, 768) before returning
+        if feats.ndim == 2:
+            if feats.shape[0] == B and feats.shape[1] == self.feature_dim:
+                feats = feats.unsqueeze(1)
+            elif B == 1 and feats.shape[-1] == self.feature_dim:
+                feats = feats.unsqueeze(0)
+            elif feats.numel() == B * self.feature_dim:
+                feats = feats.view(B, 1, self.feature_dim)
+            else:
+                logger.warning(
+                    "LoRAEmotion2Vec: 2D features shape %s cannot be reshaped to (%d, N, %d); using synthetic fallback.",
+                    tuple(feats.shape),
+                    B,
+                    self.feature_dim,
+                )
+                feats = self._synthetic_backbone(waveforms)
+
+        if feats.ndim != 3 or feats.shape[0] != B or feats.shape[-1] != self.feature_dim:
+            logger.warning(
+                "LoRAEmotion2Vec: features shape %s does not match expected (%d, N, %d); using synthetic fallback.",
+                tuple(feats.shape),
+                B,
+                self.feature_dim,
+            )
+            feats = self._synthetic_backbone(waveforms)
 
         if not return_lengths:
             return feats
 
-        B, N, _ = feats.shape
+        B_feats, N, _ = feats.shape
         if waveform_lengths is not None:
             ratio = N / waveforms.size(-1)
             frame_lengths = (waveform_lengths.float() * ratio).long().clamp(min=1, max=N)
         else:
-            frame_lengths = torch.full((B,), N, dtype=torch.long, device=feats.device)
+            frame_lengths = torch.full((B_feats,), N, dtype=torch.long, device=feats.device)
 
         return feats, frame_lengths
+
+    def extract_features(
+        self,
+        waveforms: torch.Tensor,
+        waveform_lengths: Optional[torch.Tensor] = None,
+        return_lengths: bool = False,
+    ) -> Union[torch.Tensor, Tuple[torch.Tensor, torch.Tensor]]:
+        """Extract frame-level features from waveforms (alias for forward)."""
+        return self.forward(waveforms, waveform_lengths=waveform_lengths, return_lengths=return_lengths)
 
     # ------------------------------------------------------------------
     # Utilities

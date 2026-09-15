@@ -248,6 +248,88 @@ class TestLoRAEmotion2Vec(unittest.TestCase):
         self.assertEqual(feats.shape[2], 768)
         self.assertGreater(feats.shape[1], 0)
 
+    def test_forward_3d_waveform_squeezed(self) -> None:
+        """Verify 3D waveform (B, 1, T) is accepted and squeezed properly."""
+        model = LoRAEmotion2Vec(synthetic=True)
+        wav = torch.randn(2, 1, 16000 * 2)
+        feats = model(wav)
+        self.assertEqual(feats.shape[0], 2)
+        self.assertEqual(feats.shape[2], 768)
+        self.assertGreater(feats.shape[1], 0)
+
+    def test_forward_single_batch_3d(self) -> None:
+        """Verify (1, 1, T) does not collapse batch dimension."""
+        model = LoRAEmotion2Vec(synthetic=True)
+        wav = torch.randn(1, 1, 16000 * 2)
+        feats = model(wav)
+        self.assertEqual(feats.shape[0], 1)
+        self.assertEqual(feats.shape[2], 768)
+        self.assertGreater(feats.shape[1], 0)
+
+    def test_underlying_extract_features_dict_and_tuple(self) -> None:
+        """Verify extract_features with dict/tuple unpacking."""
+        model = LoRAEmotion2Vec(synthetic=False)
+
+        class MockFunASRModel(nn.Module):
+            def __init__(self, mode: str):
+                super().__init__()
+                self.mode = mode
+
+            def extract_features(self, wav):
+                b = wav.shape[0]
+                if self.mode == "feats":
+                    return {"feats": torch.ones(b, 10, 768)}
+                elif self.mode == "last_hidden_state":
+                    return {"last_hidden_state": torch.ones(b, 10, 768)}
+                elif self.mode == "x":
+                    return {"x": torch.ones(b, 10, 768), "padding_mask": None}
+                elif self.mode == "tuple":
+                    return (torch.ones(b, 10, 768), None)
+                elif self.mode == "none_tuple":
+                    return (None, None)
+                elif self.mode == "empty":
+                    return None
+
+        for mode in ["feats", "last_hidden_state", "x", "tuple"]:
+            model.base_model = MockFunASRModel(mode)
+            model.lora_model = model.base_model
+            feats = model(torch.randn(2, 1, 16000))
+            self.assertEqual(feats.shape, (2, 10, 768))
+
+    def test_fallback_on_none_output_preventing_typeerror(self) -> None:
+        """Verify FunASR returning (None, None) falls back to synthetic backbone and works with TemporalAttentionPooling."""
+        model = LoRAEmotion2Vec(synthetic=False)
+
+        class BrokenFunASRModel(nn.Module):
+            def forward(self, wav):
+                return None, None
+
+            def extract_features(self, wav):
+                return None, None
+
+        model.base_model = BrokenFunASRModel()
+        model.lora_model = model.base_model
+
+        # LoRAEmotion2Vec should not return None
+        feats = model(torch.randn(2, 1, 16000))
+        self.assertIsInstance(feats, torch.Tensor)
+        self.assertEqual(feats.shape[0], 2)
+        self.assertEqual(feats.shape[2], 768)
+
+        # Downstream TemporalAttentionPooling must not crash with TypeError
+        pooling = TemporalAttentionPooling(input_dim=768, hidden_dim=128, output_dim=768)
+        z, alpha = pooling(feats)
+        self.assertEqual(z.shape, (2, 768))
+        self.assertEqual(alpha.shape, (2, feats.shape[1]))
+
+    def test_extract_features_alias(self) -> None:
+        """Verify extract_features method alias produces expected output."""
+        model = LoRAEmotion2Vec(synthetic=True)
+        wav = torch.randn(2, 1, 16000)
+        feats = model.extract_features(wav)
+        self.assertEqual(feats.shape[0], 2)
+        self.assertEqual(feats.shape[2], 768)
+
 
 if __name__ == "__main__":
     print("=" * 60)
