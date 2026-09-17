@@ -111,6 +111,14 @@ class PhoWhisperTranscriber:
             restore_punctuation,
         )
 
+    def to(self, device: Union[str, torch.device]) -> "PhoWhisperTranscriber":
+        """Move transcriber and underlying model to target device."""
+        self.device = torch.device(device)
+        if self.model is not None and not self.is_synthetic:
+            dtype = torch.float16 if self.device.type == "cuda" else torch.float32
+            self.model = self.model.to(self.device, dtype=dtype)
+        return self
+
     def load_model(self) -> None:
         """Load the PhoWhisper model and processor from HuggingFace Hub.
 

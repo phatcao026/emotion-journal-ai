@@ -310,6 +310,103 @@ class TestMultimodalEndToEnd(unittest.TestCase):
             self.assertEqual(loaded_model.num_primary_classes, NUM_PRIMARY)
             self.assertEqual(loaded_model.num_sub_classes, NUM_SUB)
 
+    def test_dummy_waveform_3d_input_forward_pass(self) -> None:
+        """SPEC TEST: Run forward pass on dummy waveform tensor torch.randn(2, 1, 48000)."""
+        model = HierarchicalMERModel(
+            num_primary_classes=NUM_PRIMARY,
+            num_sub_classes=NUM_SUB,
+            device="cpu",
+        )
+        model.eval()
+
+        dummy_waveforms = torch.randn(2, 1, 48000)
+
+        # 1. Forward pass without ASR (pre-supplied dummy text)
+        with torch.no_grad():
+            output = model(
+                waveforms=dummy_waveforms,
+                texts=["Hôm nay tôi rất vui và nhẹ nhõm.", "Một ngày nhiều trăn trở và âu lo."],
+                use_asr=False,
+            )
+
+            # Verify non-null and expected shapes
+            self.assertIsNotNone(output.primary_logits)
+            self.assertIsNotNone(output.sub_logits)
+            self.assertIsNotNone(output.z_audio)
+            self.assertIsNotNone(output.z_semantic)
+            self.assertIsNotNone(output.z_fused)
+            self.assertIsNotNone(output.attention_weights)
+            self.assertIsNotNone(output.gate_audio)
+            self.assertIsNotNone(output.gate_text)
+
+            self.assertEqual(output.primary_logits.shape, (2, NUM_PRIMARY))
+            self.assertEqual(output.sub_logits.shape, (2, NUM_SUB))
+            self.assertEqual(output.z_audio.shape, (2, DIM_AUDIO))
+            self.assertEqual(output.z_semantic.shape, (2, DIM_SEMANTIC))
+            self.assertEqual(output.z_fused.shape, (2, DIM_FUSED))
+            self.assertEqual(output.gate_audio.shape, (2, DIM_AUDIO))
+            self.assertEqual(output.gate_text.shape, (2, DIM_SEMANTIC))
+            self.assertEqual(output.attention_weights.shape[0], 2)
+
+            self.assertTrue(torch.isfinite(output.primary_logits).all().item())
+            self.assertTrue(torch.isfinite(output.sub_logits).all().item())
+
+        # 2. Forward pass with use_asr=True
+        with torch.no_grad():
+            output_asr = model(
+                waveforms=dummy_waveforms,
+                texts=None,
+                use_asr=True,
+            )
+            self.assertEqual(output_asr.primary_logits.shape, (2, NUM_PRIMARY))
+            self.assertEqual(output_asr.sub_logits.shape, (2, NUM_SUB))
+            self.assertEqual(output_asr.z_fused.shape, (2, DIM_FUSED))
+
+    def test_hierarchical_mer_device_propagation(self) -> None:
+        """Verify device propagation updates asr, audio_encoder, and text_encoder."""
+        model = HierarchicalMERModel(device="cpu")
+        self.assertEqual(model.device_str, "cpu")
+        self.assertEqual(model.audio_encoder.device.type, "cpu")
+        self.assertEqual(model.asr.device.type, "cpu")
+        self.assertEqual(model.text_encoder.device_str, "cpu")
+
+        # Test to("cpu")
+        model.to(torch.device("cpu"))
+        self.assertEqual(model.device_str, "cpu")
+        self.assertEqual(model.audio_encoder.device.type, "cpu")
+        self.assertEqual(model.asr.device.type, "cpu")
+
+        if torch.cuda.is_available():
+            model.to(torch.device("cuda"))
+            self.assertTrue("cuda" in model.device_str)
+            self.assertEqual(model.audio_encoder.device.type, "cuda")
+            self.assertEqual(model.asr.device.type, "cuda")
+            self.assertTrue("cuda" in model.text_encoder.device_str)
+            model.to(torch.device("cpu"))
+
+    def test_broken_funasr_extract_fallback(self) -> None:
+        """Verify (None, None) FunASR output fails over to synthetic backbone without TypeError."""
+        model = HierarchicalMERModel(device="cpu")
+
+        class MockBrokenFunASR(nn.Module):
+            def extract_features(self, wav):
+                return (None, None)
+
+            def forward(self, wav, *args, **kwargs):
+                return (None, None)
+
+        model.audio_encoder._synthetic = False
+        model.audio_encoder.base_model = MockBrokenFunASR()
+        model.audio_encoder.lora_model = model.audio_encoder.base_model
+
+        dummy_waveforms = torch.randn(2, 1, 48000)
+        output = model(waveforms=dummy_waveforms, texts=["Test 1", "Test 2"], use_asr=False)
+
+        self.assertIsInstance(output.primary_logits, torch.Tensor)
+        self.assertEqual(output.primary_logits.shape, (2, NUM_PRIMARY))
+        self.assertEqual(output.sub_logits.shape, (2, NUM_SUB))
+        self.assertEqual(output.z_fused.shape, (2, DIM_FUSED))
+
 
 if __name__ == "__main__":
     print("=" * 60)

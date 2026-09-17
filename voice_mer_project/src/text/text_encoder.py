@@ -136,11 +136,26 @@ class PhoBERTEncoder(nn.Module):
             device,
         )
 
+    def _apply(self, fn):
+        """Synchronize self.device_str when model is moved to device (e.g., .to(device))."""
+        super()._apply(fn)
+        try:
+            self.device_str = str(next(self.parameters()).device)
+        except StopIteration:
+            pass
+        return self
+
     def load_pretrained(self) -> None:
         """Load the PhoBERT tokenizer and model from HuggingFace Hub.
 
         Falls back gracefully to synthetic backbone if offline or unavailable.
         """
+        try:
+            target_device = next(self.parameters()).device
+            self.device_str = str(target_device)
+        except StopIteration:
+            target_device = torch.device(self.device_str)
+
         try:
             from transformers import AutoModel, AutoTokenizer
 
@@ -155,7 +170,7 @@ class PhoBERTEncoder(nn.Module):
                     param.requires_grad = False
                 logger.info("PhoBERT weights frozen.")
 
-            self.bert_model.to(torch.device(self.device_str))
+            self.bert_model.to(target_device)
             self.is_synthetic = False
             logger.info("PhoBERT pretrained model loaded successfully.")
 
@@ -168,7 +183,7 @@ class PhoBERTEncoder(nn.Module):
                     exc,
                 )
                 self.is_synthetic = True
-                self._synthetic_backbone.to(torch.device(self.device_str))
+                self._synthetic_backbone.to(target_device)
             else:
                 raise RuntimeError(
                     f"Failed to load PhoBERT checkpoint '{self.model_id}': {exc}"

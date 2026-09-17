@@ -141,6 +141,30 @@ class VoiceOnlyMERModel(nn.Module):
 
         logger.info("VoiceOnlyMERModel initialized: num_primary=%d", num_primary_classes)
 
+    def _apply(self, fn):
+        """Synchronize child component devices on device migration."""
+        super()._apply(fn)
+        try:
+            target_device = next(self.parameters()).device
+            self.device_str = str(target_device)
+            if hasattr(self, "audio_encoder") and self.audio_encoder is not None:
+                self.audio_encoder.device = target_device
+        except StopIteration:
+            pass
+        return self
+
+    def to(self, *args, **kwargs):
+        """Move model to target device and update child device references."""
+        res = super().to(*args, **kwargs)
+        try:
+            target_device = next(self.parameters()).device
+            self.device_str = str(target_device)
+            if hasattr(self, "audio_encoder") and self.audio_encoder is not None:
+                self.audio_encoder.device = target_device
+        except StopIteration:
+            pass
+        return res
+
     def load_pretrained(self) -> None:
         """Load pretrained weights for acoustic encoder."""
         self.audio_encoder.load_pretrained()
@@ -171,11 +195,11 @@ class VoiceOnlyMERModel(nn.Module):
         # 2. Attention pooling
         z_audio, alpha = self.attention_pooling(frame_features)  # (B, 768), (B, N)
 
-        # 3. Paralinguistic pause vector
+        # 3. Paralinguistic pause vector (computed via CPU numpy analyzer)
         p_pause_tensors = []
         for i in range(b):
             ts = speech_timestamps[i] if speech_timestamps and i < len(speech_timestamps) else []
-            feats = self.pause_analyzer.analyze(waveforms[i], ts)
+            feats = self.pause_analyzer.analyze(waveforms[i].detach().cpu(), ts)
             p_pause_tensors.append(feats.to_tensor())
         p_pause = torch.stack(p_pause_tensors).to(device)  # (B, 4)
 
@@ -290,6 +314,38 @@ class HierarchicalMERModel(nn.Module):
             num_sub_classes,
         )
 
+    def _apply(self, fn):
+        """Synchronize child component devices on device migration."""
+        super()._apply(fn)
+        try:
+            target_device = next(self.parameters()).device
+            self.device_str = str(target_device)
+            if hasattr(self, "audio_encoder") and self.audio_encoder is not None:
+                self.audio_encoder.device = target_device
+            if hasattr(self, "text_encoder") and self.text_encoder is not None:
+                self.text_encoder.device_str = str(target_device)
+            if hasattr(self, "asr") and self.asr is not None:
+                self.asr.to(target_device)
+        except StopIteration:
+            pass
+        return self
+
+    def to(self, *args, **kwargs):
+        """Move model to target device and update child device references."""
+        res = super().to(*args, **kwargs)
+        try:
+            target_device = next(self.parameters()).device
+            self.device_str = str(target_device)
+            if hasattr(self, "audio_encoder") and self.audio_encoder is not None:
+                self.audio_encoder.device = target_device
+            if hasattr(self, "text_encoder") and self.text_encoder is not None:
+                self.text_encoder.device_str = str(target_device)
+            if hasattr(self, "asr") and self.asr is not None:
+                self.asr.to(target_device)
+        except StopIteration:
+            pass
+        return res
+
     def load_pretrained(self) -> None:
         """Load pretrained components (emotion2vec, PhoWhisper, PhoBERT)."""
         logger.info("Loading pretrained weights for all components...")
@@ -337,11 +393,11 @@ class HierarchicalMERModel(nn.Module):
 
         z_semantic = self.text_encoder(texts=texts)  # (B, 768)
 
-        # 3. Paralinguistic pause vector
+        # 3. Paralinguistic pause vector (computed via CPU numpy analyzer)
         p_pause_tensors = []
         for i in range(b):
             ts = speech_timestamps[i] if speech_timestamps and i < len(speech_timestamps) else []
-            feats = self.pause_analyzer.analyze(waveforms[i], ts)
+            feats = self.pause_analyzer.analyze(waveforms[i].detach().cpu(), ts)
             p_pause_tensors.append(feats.to_tensor())
         p_pause = torch.stack(p_pause_tensors).to(device)  # (B, 4)
 

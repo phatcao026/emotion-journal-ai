@@ -196,6 +196,11 @@ class LoRAEmotion2Vec(nn.Module):
             return
 
         try:
+            self.device = next(self.parameters()).device
+        except StopIteration:
+            pass
+
+        try:
             model = FunASRAutoModel(model=self.model_id, model_revision="master")
             self.base_model = model.model.to(self.device)
 
@@ -227,6 +232,15 @@ class LoRAEmotion2Vec(nn.Module):
     # ------------------------------------------------------------------
     # Forward & Training Mode
     # ------------------------------------------------------------------
+
+    def _apply(self, fn):
+        """Synchronize self.device when model is moved to device (e.g., .to(device))."""
+        super()._apply(fn)
+        try:
+            self.device = next(self.parameters()).device
+        except StopIteration:
+            pass
+        return self
 
     def train(self, mode: bool = True) -> "LoRAEmotion2Vec":
         """Set module training mode, keeping base_model frozen in eval mode."""
@@ -286,7 +300,14 @@ class LoRAEmotion2Vec(nn.Module):
         if self.lora_model is None:
             self.lora_model = self._synthetic_backbone
 
-        waveforms = waveforms.to(self.device)
+        # Ensure device matches underlying parameters
+        try:
+            target_device = next(self.parameters()).device
+            self.device = target_device
+        except StopIteration:
+            target_device = self.device
+
+        waveforms = waveforms.to(target_device)
         if waveforms.ndim == 1:
             waveforms = waveforms.unsqueeze(0)
 
@@ -297,8 +318,10 @@ class LoRAEmotion2Vec(nn.Module):
             wav_input = waveforms.squeeze(1)
         elif waveforms.ndim == 3 and waveforms.shape[-1] == 1:
             wav_input = waveforms.squeeze(-1)
-        else:
+        elif waveforms.ndim == 2:
             wav_input = waveforms
+        else:
+            wav_input = waveforms.view(B, -1)
 
         feats: Optional[torch.Tensor] = None
 
@@ -308,22 +331,36 @@ class LoRAEmotion2Vec(nn.Module):
         else:
             res = None
 
-            # 2. Check whether underlying model (self.base_model or self.lora_model) provides extract_features
+            # 2a. Check whether lora_model provides extract_features
             if hasattr(self.lora_model, "extract_features"):
                 try:
                     res = self.lora_model.extract_features(wav_input)
+                    if self._unpack_features(res) is None:
+                        res = None
                 except Exception as exc:
                     logger.debug("self.lora_model.extract_features raised: %s", exc)
 
+            # 2b. Check whether base_model or underlying model provides extract_features
             if res is None and self.base_model is not None:
                 underlying = getattr(self.base_model, "model", self.base_model)
                 if hasattr(underlying, "extract_features"):
                     try:
                         res = underlying.extract_features(wav_input)
+                        if self._unpack_features(res) is None:
+                            res = None
                     except Exception as exc:
                         logger.debug("underlying.extract_features raised: %s", exc)
 
-            # If extract_features was not available or produced nothing, call lora_model
+            # 2c. Try calling lora_model with features_only=True
+            if res is None and self.lora_model is not None:
+                try:
+                    res = self.lora_model(wav_input, features_only=True)
+                    if self._unpack_features(res) is None:
+                        res = None
+                except Exception as exc:
+                    logger.debug("self.lora_model(wav_input, features_only=True) raised: %s", exc)
+
+            # 2d. Fallback call to lora_model directly
             if res is None and self.lora_model is not None:
                 try:
                     res = self.lora_model(wav_input)
@@ -333,7 +370,7 @@ class LoRAEmotion2Vec(nn.Module):
             # 3. Safely unpack dictionary/tuple returns (checking for keys "feats", "last_hidden_state", or "x")
             feats = self._unpack_features(res)
 
-        # 4. Implement a defensive fallback: if feats is None or not a torch.Tensor,
+        # 4. Defensive fallback: if feats is None or not a torch.Tensor,
         #    log a warning and use self._synthetic_backbone(waveforms) so training never halts on NoneType.
         if feats is None or not isinstance(feats, torch.Tensor):
             logger.warning(
@@ -367,6 +404,8 @@ class LoRAEmotion2Vec(nn.Module):
                 self.feature_dim,
             )
             feats = self._synthetic_backbone(waveforms)
+
+        feats = feats.float().to(target_device)
 
         if not return_lengths:
             return feats
