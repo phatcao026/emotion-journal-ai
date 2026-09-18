@@ -120,9 +120,27 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--learning-rate",
+        "--lr",
         type=float,
         default=None,
         help="Override learning rate",
+    )
+    parser.add_argument(
+        "--checkpoint-dir",
+        type=str,
+        default=None,
+        help="Override checkpoint directory",
+    )
+    parser.add_argument(
+        "--pretrained-weights",
+        type=str,
+        default=None,
+        help="Path to checkpoint to initialize model weights from (starts at epoch 1 with fresh optimizer)",
+    )
+    parser.add_argument(
+        "--reset-optimizer",
+        action="store_true",
+        help="Reset optimizer and start training from epoch 1 when resuming",
     )
     parser.add_argument(
         "--seed",
@@ -363,22 +381,38 @@ def train(
     num_epochs = epochs_override or train_cfg.get("num_epochs", 50)
     grad_clip = float(train_cfg.get("gradient_clip", 1.0))
     patience = train_cfg.get("early_stopping_patience", 7)
-    ckpt_dir = Path(train_cfg.get("checkpoint_dir", "checkpoints/voice_only/"))
+    ckpt_dir_override = getattr(args, "checkpoint_dir", None)
+    ckpt_dir = Path(ckpt_dir_override or train_cfg.get("checkpoint_dir", "checkpoints/voice_only/"))
     ckpt_dir.mkdir(parents=True, exist_ok=True)
 
     best_val_f1 = -1.0
     patience_counter = 0
 
-    if resume_path and Path(resume_path).exists():
+    pretrained_path = getattr(args, "pretrained_weights", None)
+    reset_optimizer = getattr(args, "reset_optimizer", False)
+
+    if pretrained_path and Path(pretrained_path).exists():
+        ckpt = torch.load(pretrained_path, map_location=dev, weights_only=False)
+        sd = ckpt.get("state_dict", ckpt)
+        model.load_state_dict(sd, strict=False)
+        logger.info("Initialized model weights from %s (training starting fresh at epoch 1)", pretrained_path)
+    elif resume_path and Path(resume_path).exists():
         ckpt = torch.load(resume_path, map_location=dev, weights_only=False)
         model.load_state_dict(ckpt["state_dict"], strict=False)
-        if "optimizer_state" in ckpt and ckpt["optimizer_state"]:
+        if not reset_optimizer and "optimizer_state" in ckpt and ckpt["optimizer_state"]:
             optimizer.load_state_dict(ckpt["optimizer_state"])
-        start_epoch = ckpt.get("epoch", 0) + 1
-        if "metrics" in ckpt and isinstance(ckpt["metrics"], dict) and "macro_f1" in ckpt["metrics"]:
-            best_val_f1 = float(ckpt["metrics"]["macro_f1"])
+        if not reset_optimizer:
+            prev_epoch = ckpt.get("epoch", 0)
+            if epochs_override and epochs_override <= prev_epoch:
+                # User passed e.g. --epochs 10 to train 10 additional epochs
+                start_epoch = prev_epoch + 1
+                num_epochs = prev_epoch + epochs_override
+                logger.info("Resuming for %d additional epochs (epochs %d to %d)...", epochs_override, start_epoch, num_epochs)
+            else:
+                start_epoch = prev_epoch + 1
+            if "metrics" in ckpt and isinstance(ckpt["metrics"], dict) and "macro_f1" in ckpt["metrics"]:
+                best_val_f1 = float(ckpt["metrics"]["macro_f1"])
         logger.info("Resumed from %s at epoch %d (best_val_f1=%.4f)", resume_path, start_epoch, best_val_f1)
-
 
     logger.info("Starting Voice-Only training for %d epochs...", num_epochs)
     for epoch in range(start_epoch, num_epochs + 1):
