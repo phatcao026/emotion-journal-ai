@@ -52,6 +52,12 @@ def parse_args() -> argparse.Namespace:
         help="Run evaluation on dummy test dataset",
     )
     parser.add_argument(
+        "--data-dir",
+        type=str,
+        default="data/voice_journals",
+        help="Path to dataset directory containing test/metadata.csv",
+    )
+    parser.add_argument(
         "--device",
         type=str,
         default="cuda" if torch.cuda.is_available() else "cpu",
@@ -76,21 +82,25 @@ def evaluate_model(
             s_targets = batch.get("sub_labels", None)
             transcripts = batch["transcripts"]
 
-            output = model(waveforms=waveforms, texts=transcripts, use_asr=False)
+            if hasattr(model, "sub_head"):
+                output = model(waveforms=waveforms, texts=transcripts, use_asr=False)
+            else:
+                output = model(waveforms=waveforms)
 
             p_preds.append(output.primary_predictions().cpu())
             p_trues.append(p_targets.cpu())
-            if s_targets is not None:
+            if s_targets is not None and hasattr(model, "sub_head"):
                 s_preds.append(output.sub_predictions().cpu())
                 s_trues.append(s_targets)
 
     y_p_pred = torch.cat(p_preds)
     y_p_true = torch.cat(p_trues)
+    p_labels = getattr(model, "PRIMARY_LABELS", ["Joy", "Sadness", "Anxiety", "Anger", "Neutral"])
     p_metrics = compute_all_metrics(
         predictions=y_p_pred,
         targets=y_p_true,
         num_classes=5,
-        class_names=model.PRIMARY_LABELS,
+        class_names=p_labels,
     )
 
     print("\n" + "=" * 60)
@@ -98,7 +108,7 @@ def evaluate_model(
     print("=" * 60)
     print(format_metrics_report(p_metrics, title="Primary Emotion Classification"))
 
-    if s_preds:
+    if s_preds and hasattr(model, "sub_head"):
         y_s_pred = torch.cat(s_preds)
         y_s_true = torch.cat(s_trues)
         s_metrics = compute_all_metrics(
@@ -120,12 +130,21 @@ def main() -> None:
     if args.dummy:
         dataset = VoiceJournalDataset(dummy_mode=True, dummy_size=30, dummy_duration_s=6.0, use_sub_labels=True)
     else:
-        dataset = VoiceJournalDataset(data_dir="data/voice_journals", split="test", use_sub_labels=True)
+        dataset = VoiceJournalDataset(data_dir=args.data_dir, split="test", use_sub_labels=True)
 
     loader = DataLoader(dataset, batch_size=8, shuffle=False, collate_fn=VoiceJournalDataset.collate_fn)
 
     if args.model_path and Path(args.model_path).exists():
-        model = HierarchicalMERModel.from_checkpoint(args.model_path, device=args.device)
+        ckpt = torch.load(args.model_path, map_location=args.device, weights_only=False)
+        state_dict = ckpt.get("state_dict", ckpt)
+        if any("sub_head" in k or "fusion" in k for k in state_dict.keys()):
+            model = HierarchicalMERModel.from_checkpoint(args.model_path, device=args.device)
+        else:
+            from src.multimodal.hierarchical_mer import VoiceOnlyMERModel
+            model = VoiceOnlyMERModel(device=args.device)
+            model.load_pretrained()
+            model.load_state_dict(state_dict, strict=False)
+            logger.info("Loaded VoiceOnlyMERModel checkpoint from %s", args.model_path)
     else:
         model = HierarchicalMERModel(device=args.device)
 

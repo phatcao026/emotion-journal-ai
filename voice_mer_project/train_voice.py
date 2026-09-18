@@ -103,6 +103,18 @@ def parse_args() -> argparse.Namespace:
         help="Override batch size",
     )
     parser.add_argument(
+        "--data-dir",
+        type=str,
+        default=None,
+        help="Override dataset directory containing train/val/test splits and metadata.csv",
+    )
+    parser.add_argument(
+        "--learning-rate",
+        type=float,
+        default=None,
+        help="Override learning rate",
+    )
+    parser.add_argument(
         "--seed",
         type=int,
         default=42,
@@ -115,6 +127,7 @@ def build_dataloaders(
     config: dict,
     dummy: bool = False,
     batch_size_override: Optional[int] = None,
+    data_dir_override: Optional[str] = None,
     seed: int = 42,
 ) -> Tuple[DataLoader, DataLoader, DataLoader]:
     """Build train / val / test DataLoaders."""
@@ -130,7 +143,7 @@ def build_dataloaders(
         val_set = Subset(dataset, val_idx)
         test_set = Subset(dataset, test_idx)
     else:
-        data_dir = config.get("data", {}).get("data_dir", "data/voice_journals")
+        data_dir = data_dir_override or config.get("data", {}).get("data_dir", "data/voice_journals")
         train_set = VoiceJournalDataset(data_dir=data_dir, split="train")
         val_set = VoiceJournalDataset(data_dir=data_dir, split="val")
         test_set = VoiceJournalDataset(data_dir=data_dir, split="test")
@@ -183,10 +196,10 @@ def build_model(config: dict, device: str) -> VoiceOnlyMERModel:
     return model
 
 
-def build_optimizer(model: VoiceOnlyMERModel, config: dict) -> optim.Optimizer:
+def build_optimizer(model: VoiceOnlyMERModel, config: dict, lr_override: Optional[float] = None) -> optim.Optimizer:
     """Build AdamW optimizer for trainable parameters."""
     train_cfg = config.get("training", {})
-    lr = float(train_cfg.get("learning_rate", 3.0e-4))
+    lr = lr_override or float(train_cfg.get("learning_rate", 3.0e-4))
     weight_decay = float(train_cfg.get("weight_decay", 1e-2))
 
     trainable_params = [p for p in model.parameters() if p.requires_grad]
@@ -300,6 +313,8 @@ def train(
     device: str = "cpu",
     epochs_override: Optional[int] = None,
     batch_size_override: Optional[int] = None,
+    data_dir_override: Optional[str] = None,
+    lr_override: Optional[float] = None,
     seed: int = 42,
 ) -> None:
     """Execute training pipeline."""
@@ -307,14 +322,18 @@ def train(
     dev = torch.device(device)
 
     train_loader, val_loader, test_loader = build_dataloaders(
-        config, dummy=dummy, batch_size_override=batch_size_override, seed=seed
+        config,
+        dummy=dummy,
+        batch_size_override=batch_size_override,
+        data_dir_override=data_dir_override,
+        seed=seed,
     )
 
     model = build_model(config, device=device)
     if not dummy:
         logger.info("Loading pretrained weights for Voice-Only model...")
         model.load_pretrained()
-    optimizer = build_optimizer(model, config)
+    optimizer = build_optimizer(model, config, lr_override=lr_override)
 
     focal_cfg = config.get("focal_loss", {})
     loss_fn = MultiClassFocalLoss(
@@ -403,6 +422,8 @@ def main() -> None:
         device=args.device,
         epochs_override=args.epochs,
         batch_size_override=args.batch_size,
+        data_dir_override=args.data_dir,
+        lr_override=args.learning_rate,
         seed=args.seed,
     )
 
