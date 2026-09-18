@@ -36,9 +36,18 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Evaluate Voice MER Model")
     parser.add_argument(
         "--model-path",
+        "--checkpoint",
+        dest="model_path",
         type=str,
         default=None,
         help="Path to saved model checkpoint (.pt)",
+    )
+    parser.add_argument(
+        "--model-type",
+        type=str,
+        default="voice",
+        choices=["voice", "multimodal"],
+        help="Model architecture type ('voice' or 'multimodal')",
     )
     parser.add_argument(
         "--config",

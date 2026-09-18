@@ -4,6 +4,9 @@ data/raw/
 *.csv
 *.jsonl
 .checkpoint_*
+*.pt
+*.pth
+*.bin
 
 # Environment & API keys
 .env
