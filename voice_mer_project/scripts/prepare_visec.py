@@ -238,6 +238,10 @@ def extract_audio_from_record(rec: Dict[str, Any], sample_id: str) -> Tuple[Opti
     for key in ["path", "audio", "wav", "speech", "sound", "file"]:
         if key in rec and rec[key] is not None:
             val = rec[key]
+            # Unwrap list/tuple if returned as a list of items
+            if isinstance(val, (list, tuple)) and len(val) > 0:
+                val = val[0]
+
             if isinstance(val, dict) and ("array" in val or "bytes" in val or "path" in val or "src" in val):
                 audio_obj = val
                 break
@@ -254,19 +258,29 @@ def extract_audio_from_record(rec: Dict[str, Any], sample_id: str) -> Tuple[Opti
     # Priority 2: Scan any field in rec that looks like a HuggingFace Audio dict
     if audio_obj is None:
         for val in rec.values():
-            if isinstance(val, dict) and ("array" in val or "bytes" in val):
+            if isinstance(val, (list, tuple)) and len(val) > 0:
+                val = val[0]
+            if isinstance(val, dict) and ("array" in val or "bytes" in val or "src" in val):
                 audio_obj = val
                 break
 
     # Priority 3: Fallback to any string path or URL
     if audio_obj is None:
         for key in ["path", "file", "url"]:
-            if key in rec and isinstance(rec[key], (str, Path)):
-                audio_obj = rec[key]
-                break
+            if key in rec:
+                val = rec[key]
+                if isinstance(val, (list, tuple)) and len(val) > 0:
+                    val = val[0]
+                if isinstance(val, (str, Path)):
+                    audio_obj = val
+                    break
 
     if audio_obj is None:
         return None, TARGET_SAMPLE_RATE
+
+    # Unwrap list if audio_obj itself is still a list
+    if isinstance(audio_obj, (list, tuple)) and len(audio_obj) > 0:
+        audio_obj = audio_obj[0]
 
     # Parse audio_obj into numpy float32 array
     try:
@@ -391,6 +405,13 @@ def download_and_process_hf(
         csv_rows = []
 
         logger.info("Processing split '%s' (%d samples)...", split_name, len(records))
+        if records:
+            first_rec = records[0]
+            logger.info("Split '%s' sample 0 fields: %s", split_name, list(first_rec.keys()))
+            for cand in ["path", "audio", "wav"]:
+                if cand in first_rec:
+                    v = first_rec[cand]
+                    logger.info("Split '%s' sample 0 key '%s': type=%s preview=%s", split_name, cand, type(v), str(v)[:120])
 
         for idx, rec in enumerate(records):
             sample_id = f"visec_{split_name}_{idx:05d}"
@@ -402,7 +423,13 @@ def download_and_process_hf(
 
             if audio_arr is None or len(audio_arr) == 0:
                 # If audio extraction fails, generate minimal silent clip to prevent crash
-                logger.warning("Sample %s: could not read audio, inserting dummy waveform.", sample_id)
+                logger.warning(
+                    "Sample %s: could not read audio (keys=%s, path_type=%s, path_preview=%s)",
+                    sample_id,
+                    list(rec.keys()),
+                    type(rec.get("path")),
+                    str(rec.get("path"))[:60],
+                )
                 audio_arr = np.zeros(TARGET_SAMPLE_RATE * 3, dtype=np.float32)
                 sr = TARGET_SAMPLE_RATE
 
