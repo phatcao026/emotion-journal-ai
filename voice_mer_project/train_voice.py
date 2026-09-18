@@ -366,16 +366,19 @@ def train(
     ckpt_dir = Path(train_cfg.get("checkpoint_dir", "checkpoints/voice_only/"))
     ckpt_dir.mkdir(parents=True, exist_ok=True)
 
+    best_val_f1 = -1.0
+    patience_counter = 0
+
     if resume_path and Path(resume_path).exists():
         ckpt = torch.load(resume_path, map_location=dev, weights_only=False)
         model.load_state_dict(ckpt["state_dict"], strict=False)
         if "optimizer_state" in ckpt and ckpt["optimizer_state"]:
             optimizer.load_state_dict(ckpt["optimizer_state"])
         start_epoch = ckpt.get("epoch", 0) + 1
-        logger.info("Resumed from %s at epoch %d", resume_path, start_epoch)
+        if "metrics" in ckpt and isinstance(ckpt["metrics"], dict) and "macro_f1" in ckpt["metrics"]:
+            best_val_f1 = float(ckpt["metrics"]["macro_f1"])
+        logger.info("Resumed from %s at epoch %d (best_val_f1=%.4f)", resume_path, start_epoch, best_val_f1)
 
-    best_val_f1 = -1.0
-    patience_counter = 0
 
     logger.info("Starting Voice-Only training for %d epochs...", num_epochs)
     for epoch in range(start_epoch, num_epochs + 1):
