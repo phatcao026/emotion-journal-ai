@@ -32,6 +32,16 @@ import torch.optim as optim
 import yaml
 from torch.utils.data import DataLoader, Subset
 
+# Suppress incompatible pre-installed torchao on Kaggle/Colab (< 0.16.0) to ensure peft loads cleanly
+try:
+    import torchao
+    from packaging import version
+    if hasattr(torchao, "__version__") and version.parse(torchao.__version__) < version.parse("0.16.0"):
+        import sys
+        sys.modules["torchao"] = None
+except Exception:
+    pass
+
 from src.audio.emotion2vec_lora import LoRAConfig
 from src.data.audio_dataset import VoiceJournalDataset
 from src.losses.focal_loss import MultiClassFocalLoss
@@ -148,24 +158,31 @@ def build_dataloaders(
         val_set = VoiceJournalDataset(data_dir=data_dir, split="val")
         test_set = VoiceJournalDataset(data_dir=data_dir, split="test")
 
+    use_cuda = torch.cuda.is_available() and not dummy
     train_loader = DataLoader(
         train_set,
         batch_size=batch_size,
         shuffle=True,
         collate_fn=VoiceJournalDataset.collate_fn,
         drop_last=len(train_set) > batch_size,
+        num_workers=2 if use_cuda else 0,
+        pin_memory=use_cuda,
     )
     val_loader = DataLoader(
         val_set,
         batch_size=batch_size,
         shuffle=False,
         collate_fn=VoiceJournalDataset.collate_fn,
+        num_workers=2 if use_cuda else 0,
+        pin_memory=use_cuda,
     )
     test_loader = DataLoader(
         test_set,
         batch_size=batch_size,
         shuffle=False,
         collate_fn=VoiceJournalDataset.collate_fn,
+        num_workers=2 if use_cuda else 0,
+        pin_memory=use_cuda,
     )
 
     return train_loader, val_loader, test_loader

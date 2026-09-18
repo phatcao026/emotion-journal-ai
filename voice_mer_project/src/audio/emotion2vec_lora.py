@@ -23,8 +23,16 @@ import torch.nn as nn
 
 logger = logging.getLogger(__name__)
 
+# Suppress incompatible pre-installed torchao on Kaggle/Colab (< 0.16.0) to ensure peft loads cleanly
+try:
+    import torchao
+    from packaging import version
+    if hasattr(torchao, "__version__") and version.parse(torchao.__version__) < version.parse("0.16.0"):
+        import sys
+        sys.modules["torchao"] = None
+except Exception:
+    pass
 
-# ---------------------------------------------------------------------------
 # Configuration
 # ---------------------------------------------------------------------------
 
@@ -167,6 +175,16 @@ class LoRAEmotion2Vec(nn.Module):
             return
 
         try:
+            # Mask incompatible torchao (< 0.16.0) before importing peft
+            try:
+                import torchao
+                from packaging import version
+                if hasattr(torchao, "__version__") and version.parse(torchao.__version__) < version.parse("0.16.0"):
+                    import sys
+                    sys.modules["torchao"] = None
+            except Exception:
+                pass
+
             from funasr import AutoModel as FunASRAutoModel
             from peft import LoraConfig as PeftLoraConfig, get_peft_model
 
