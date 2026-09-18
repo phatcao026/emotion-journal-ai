@@ -104,11 +104,11 @@ def evaluate_model(
         s_metrics = compute_all_metrics(
             predictions=y_s_pred,
             targets=y_s_true,
-            num_classes=10,
+            num_classes=model.num_sub_classes,
             class_names=model.SUB_LABELS,
         )
         print("\n" + "=" * 60)
-        print("  SUB-CATEGORY HEAD EVALUATION REPORT (10 Classes)")
+        print(f"  SUB-CATEGORY HEAD EVALUATION REPORT ({model.num_sub_classes} Classes)")
         print("=" * 60)
         print(format_metrics_report(s_metrics, title="Sub-Category Emotion Classification"))
 

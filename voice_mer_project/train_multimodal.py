@@ -170,7 +170,7 @@ def build_model(config: dict, device: str) -> HierarchicalMERModel:
 
     model = HierarchicalMERModel(
         num_primary_classes=heads_cfg.get("primary_head", {}).get("num_classes", 5),
-        num_sub_classes=heads_cfg.get("sub_head", {}).get("num_classes", 10),
+        num_sub_classes=heads_cfg.get("sub_head", {}).get("num_classes", 11),
         fusion_dropout=fusion_cfg.get("dropout", 0.2),
         head_dropout=heads_cfg.get("primary_head", {}).get("dropout", 0.3),
         asr_model_id=asr_cfg.get("model_id", "vinai/phowhisper-base"),
@@ -235,7 +235,7 @@ def train_one_epoch(
     y_s_pred = torch.cat(all_s_preds) if all_s_preds else torch.empty(0)
     y_s_true = torch.cat(all_s_targets) if all_s_targets else torch.empty(0)
     m_sub = (
-        compute_all_metrics(predictions=y_s_pred, targets=y_s_true, num_classes=10)
+        compute_all_metrics(predictions=y_s_pred, targets=y_s_true, num_classes=model.num_sub_classes)
         if len(y_s_true) > 0
         else {}
     )
@@ -301,7 +301,7 @@ def evaluate(
     y_s_pred = torch.cat(all_s_preds) if all_s_preds else torch.empty(0)
     y_s_true = torch.cat(all_s_targets) if all_s_targets else torch.empty(0)
     m_sub = (
-        compute_all_metrics(predictions=y_s_pred, targets=y_s_true, num_classes=10)
+        compute_all_metrics(predictions=y_s_pred, targets=y_s_true, num_classes=model.num_sub_classes)
         if len(y_s_true) > 0
         else {}
     )

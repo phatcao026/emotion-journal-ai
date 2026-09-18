@@ -40,31 +40,33 @@ class PrimaryEmotion(Enum):
 
 
 class SubEmotion(Enum):
-    """Sub-category emotion labels (Level 2) - 10 fine-grained classes."""
-    GRATITUDE = 0
-    PRIDE = 1
-    RELIEF = 2
-    DISAPPOINTMENT = 3
-    REMORSE = 4
-    LONELINESS = 5
-    NERVOUSNESS = 6
-    FEAR = 7
-    ANNOYANCE = 8
-    REALIZATION = 9
+    """Sub-category emotion labels (Level 2) - 11 fine-grained classes (Annotation Guideline v0.1)."""
+    JOY = 0
+    CALM = 1
+    HOPE = 2
+    CONNECTION = 3
+    SADNESS = 4
+    ANXIETY = 5
+    FEAR = 6
+    ANGER = 7
+    GUILT_SHAME = 8
+    LONELINESS = 9
+    DISGUST = 10
 
 
 # Mapping from sub-category emotion -> primary emotion
 SUB_TO_PRIMARY: Dict[SubEmotion, PrimaryEmotion] = {
-    SubEmotion.GRATITUDE: PrimaryEmotion.JOY,
-    SubEmotion.PRIDE: PrimaryEmotion.JOY,
-    SubEmotion.RELIEF: PrimaryEmotion.JOY,
-    SubEmotion.DISAPPOINTMENT: PrimaryEmotion.SADNESS,
-    SubEmotion.REMORSE: PrimaryEmotion.SADNESS,
+    SubEmotion.JOY: PrimaryEmotion.JOY,
+    SubEmotion.CALM: PrimaryEmotion.JOY,
+    SubEmotion.HOPE: PrimaryEmotion.JOY,
+    SubEmotion.CONNECTION: PrimaryEmotion.JOY,
+    SubEmotion.SADNESS: PrimaryEmotion.SADNESS,
     SubEmotion.LONELINESS: PrimaryEmotion.SADNESS,
-    SubEmotion.NERVOUSNESS: PrimaryEmotion.ANXIETY,
+    SubEmotion.GUILT_SHAME: PrimaryEmotion.SADNESS,
+    SubEmotion.ANXIETY: PrimaryEmotion.ANXIETY,
     SubEmotion.FEAR: PrimaryEmotion.ANXIETY,
-    SubEmotion.ANNOYANCE: PrimaryEmotion.ANGER,
-    SubEmotion.REALIZATION: PrimaryEmotion.NEUTRAL,
+    SubEmotion.ANGER: PrimaryEmotion.ANGER,
+    SubEmotion.DISGUST: PrimaryEmotion.ANGER,
 }
 
 
@@ -244,7 +246,7 @@ class VoiceJournalDataset(Dataset):
                         sample_id=p.stem,
                         audio_path=str(p),
                         primary_label=PrimaryEmotion.NEUTRAL,
-                        sub_label=SubEmotion.REALIZATION if self.use_sub_labels else None,
+                        sub_label=SubEmotion.CALM if self.use_sub_labels else None,
                         sample_rate=self.sample_rate,
                     )
                 )

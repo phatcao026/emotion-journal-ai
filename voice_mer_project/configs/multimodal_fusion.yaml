@@ -44,18 +44,19 @@ classification_heads:
 
   sub_head:
     input_dim: 768                      # Input: Z_semantic (from PhoBERT)
-    num_classes: 10                     # 10 fine-grained sub-emotion classes
+    num_classes: 11                     # 11 fine-grained sub-emotion classes (Annotation Guideline v0.1)
     labels:
-      - "Gratitude"
-      - "Pride"
-      - "Relief"
-      - "Disappointment"
-      - "Remorse"
-      - "Loneliness"
-      - "Nervousness"
-      - "Fear"
-      - "Annoyance"
-      - "Realization"
+      - "JOY"
+      - "CALM"
+      - "HOPE"
+      - "CONNECTION"
+      - "SADNESS"
+      - "ANXIETY"
+      - "FEAR"
+      - "ANGER"
+      - "GUILT_SHAME"
+      - "LONELINESS"
+      - "DISGUST"
     dropout: 0.3
 
 loss:

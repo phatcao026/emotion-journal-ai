@@ -50,7 +50,7 @@ DIM_PAUSE_RAW = 4
 DIM_PAUSE_PROJ = 128
 DIM_FUSED = 896      # = DIM_AUDIO + DIM_PAUSE_PROJ = 768 + 128
 NUM_PRIMARY = 5
-NUM_SUB = 10
+NUM_SUB = 11
 
 
 class TestCrossModalGatedFusion(unittest.TestCase):

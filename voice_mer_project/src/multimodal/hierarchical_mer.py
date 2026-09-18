@@ -230,22 +230,22 @@ class HierarchicalMERModel(nn.Module):
 
     Primary Head (5 classes per spec):
         Joy, Sadness, Anxiety, Anger, Neutral
-    Sub Head (10 classes per spec):
-        Gratitude, Pride, Relief, Disappointment, Remorse,
-        Loneliness, Nervousness, Fear, Annoyance, Realization
+    Sub Head (11 classes per Annotation Guideline v0.1):
+        JOY, CALM, HOPE, CONNECTION, SADNESS,
+        ANXIETY, FEAR, ANGER, GUILT_SHAME, LONELINESS, DISGUST
     """
 
     PRIMARY_LABELS: List[str] = ["Joy", "Sadness", "Anxiety", "Anger", "Neutral"]
     SUB_LABELS: List[str] = [
-        "Gratitude", "Pride", "Relief", "Disappointment", "Remorse",
-        "Loneliness", "Nervousness", "Fear", "Annoyance", "Realization",
+        "JOY", "CALM", "HOPE", "CONNECTION", "SADNESS",
+        "ANXIETY", "FEAR", "ANGER", "GUILT_SHAME", "LONELINESS", "DISGUST",
     ]
 
     def __init__(
         self,
         lora_config: Optional[LoRAConfig] = None,
         num_primary_classes: int = 5,
-        num_sub_classes: int = 10,
+        num_sub_classes: int = 11,
         attention_hidden_dim: int = 256,
         fusion_dropout: float = 0.2,
         head_dropout: float = 0.3,
@@ -516,7 +516,7 @@ class HierarchicalMERModel(nn.Module):
         checkpoint = torch.load(str(p), map_location=device, weights_only=False)
         model = cls(
             num_primary_classes=checkpoint.get("num_primary_classes", 5),
-            num_sub_classes=checkpoint.get("num_sub_classes", 10),
+            num_sub_classes=checkpoint.get("num_sub_classes", 11),
             device=device,
         )
         # 1. Gọi nạp các thành phần pretrained trước

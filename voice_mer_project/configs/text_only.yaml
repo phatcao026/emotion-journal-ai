@@ -19,7 +19,7 @@ text_encoder:
 classification_head:
   input_dim: 768
   num_primary_classes: 5
-  num_sub_classes: 10
+  num_sub_classes: 11
   dropout: 0.3
 
 training:
