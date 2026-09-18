@@ -230,6 +230,98 @@ def generate_dummy_data(output_dir: Path, total_samples: int = 60) -> None:
         logger.info("Split [%s]: saved %d samples to %s", split_name.upper(), count, split_dir)
 
 
+def extract_audio_from_record(rec: Dict[str, Any], sample_id: str) -> Tuple[Optional[np.ndarray], int]:
+    """Robustly extract audio array and sample rate from a Hugging Face dataset record."""
+    audio_obj = None
+
+    # Priority 1: Check standard audio column names (ViSEC uses 'path' as Audio feature)
+    for key in ["path", "audio", "wav", "speech", "sound", "file"]:
+        if key in rec and rec[key] is not None:
+            val = rec[key]
+            if isinstance(val, dict) and ("array" in val or "bytes" in val or "path" in val or "src" in val):
+                audio_obj = val
+                break
+            elif isinstance(val, (bytes, bytearray)):
+                audio_obj = val
+                break
+            elif isinstance(val, np.ndarray):
+                audio_obj = val
+                break
+            elif isinstance(val, (str, Path)) and (os.path.exists(str(val)) or str(val).startswith("http")):
+                audio_obj = val
+                break
+
+    # Priority 2: Scan any field in rec that looks like a HuggingFace Audio dict
+    if audio_obj is None:
+        for val in rec.values():
+            if isinstance(val, dict) and ("array" in val or "bytes" in val):
+                audio_obj = val
+                break
+
+    # Priority 3: Fallback to any string path or URL
+    if audio_obj is None:
+        for key in ["path", "file", "url"]:
+            if key in rec and isinstance(rec[key], (str, Path)):
+                audio_obj = rec[key]
+                break
+
+    if audio_obj is None:
+        return None, TARGET_SAMPLE_RATE
+
+    # Parse audio_obj into numpy float32 array
+    try:
+        if isinstance(audio_obj, dict):
+            if "array" in audio_obj and audio_obj["array"] is not None:
+                arr = np.array(audio_obj["array"], dtype=np.float32)
+                sr = int(audio_obj.get("sampling_rate", TARGET_SAMPLE_RATE) or TARGET_SAMPLE_RATE)
+                return arr, sr
+            elif "bytes" in audio_obj and audio_obj["bytes"] is not None:
+                import io
+                import soundfile as sf
+                arr, sr = sf.read(io.BytesIO(audio_obj["bytes"]))
+                return arr.astype(np.float32), sr
+            elif "path" in audio_obj and audio_obj["path"] and os.path.exists(str(audio_obj["path"])):
+                import soundfile as sf
+                arr, sr = sf.read(str(audio_obj["path"]))
+                return arr.astype(np.float32), sr
+            elif "src" in audio_obj and isinstance(audio_obj["src"], str):
+                import io
+                import urllib.request
+                import soundfile as sf
+                with urllib.request.urlopen(audio_obj["src"]) as resp:
+                    arr, sr = sf.read(io.BytesIO(resp.read()))
+                return arr.astype(np.float32), sr
+
+        elif isinstance(audio_obj, (bytes, bytearray)):
+            import io
+            import soundfile as sf
+            arr, sr = sf.read(io.BytesIO(audio_obj))
+            return arr.astype(np.float32), sr
+
+        elif isinstance(audio_obj, np.ndarray):
+            return audio_obj.astype(np.float32), TARGET_SAMPLE_RATE
+
+        elif isinstance(audio_obj, (str, Path)):
+            str_path = str(audio_obj)
+            if os.path.exists(str_path):
+                import soundfile as sf
+                arr, sr = sf.read(str_path)
+                return arr.astype(np.float32), sr
+            elif str_path.startswith("http://") or str_path.startswith("https://"):
+                import io
+                import urllib.request
+                import soundfile as sf
+                with urllib.request.urlopen(str_path) as resp:
+                    arr, sr = sf.read(io.BytesIO(resp.read()))
+                return arr.astype(np.float32), sr
+
+    except Exception as exc:
+        logger.warning("Sample %s: exception while decoding audio (%s)", sample_id, exc)
+        return None, TARGET_SAMPLE_RATE
+
+    return None, TARGET_SAMPLE_RATE
+
+
 def download_and_process_hf(
     dataset_name: str,
     output_dir: Path,
@@ -305,23 +397,10 @@ def download_and_process_hf(
             wav_filename = f"{sample_id}.wav"
             wav_dest_path = split_dir / wav_filename
 
-            # 1. Extract audio
-            audio_obj = rec.get("audio", None) or rec.get("wav", None)
-            audio_arr: Optional[np.ndarray] = None
-            sr: int = TARGET_SAMPLE_RATE
+            # 1. Extract audio robustly
+            audio_arr, sr = extract_audio_from_record(rec, sample_id)
 
-            if isinstance(audio_obj, dict):
-                if "array" in audio_obj:
-                    audio_arr = np.array(audio_obj["array"], dtype=np.float32)
-                    sr = audio_obj.get("sampling_rate", TARGET_SAMPLE_RATE)
-                elif "path" in audio_obj and audio_obj["path"] and os.path.exists(audio_obj["path"]):
-                    import soundfile as sf
-                    audio_arr, sr = sf.read(audio_obj["path"])
-            elif isinstance(audio_obj, str) and os.path.exists(audio_obj):
-                import soundfile as sf
-                audio_arr, sr = sf.read(audio_obj)
-
-            if audio_arr is None:
+            if audio_arr is None or len(audio_arr) == 0:
                 # If audio extraction fails, generate minimal silent clip to prevent crash
                 logger.warning("Sample %s: could not read audio, inserting dummy waveform.", sample_id)
                 audio_arr = np.zeros(TARGET_SAMPLE_RATE * 3, dtype=np.float32)
@@ -329,7 +408,10 @@ def download_and_process_hf(
 
             # Convert stereo to mono
             if audio_arr.ndim > 1:
-                audio_arr = audio_arr.mean(axis=-1)
+                if audio_arr.shape[0] < audio_arr.shape[1]:
+                    audio_arr = audio_arr.mean(axis=0)
+                else:
+                    audio_arr = audio_arr.mean(axis=-1)
 
             # Resample to 16kHz
             audio_resampled = resample_audio(audio_arr, orig_sr=sr, target_sr=TARGET_SAMPLE_RATE)
