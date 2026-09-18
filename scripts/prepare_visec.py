@@ -242,7 +242,11 @@ def extract_audio_from_record(rec: Dict[str, Any], sample_id: str) -> Tuple[Opti
             if isinstance(val, (list, tuple)) and len(val) > 0:
                 val = val[0]
 
-            if isinstance(val, dict) and ("array" in val or "bytes" in val or "path" in val or "src" in val):
+            # Hugging Face datasets >= 4.0 torchcodec AudioDecoder object
+            if hasattr(val, "get_all_samples") or "AudioDecoder" in type(val).__name__:
+                audio_obj = val
+                break
+            elif isinstance(val, dict) and ("array" in val or "bytes" in val or "path" in val or "src" in val):
                 audio_obj = val
                 break
             elif isinstance(val, (bytes, bytearray)):
@@ -255,11 +259,14 @@ def extract_audio_from_record(rec: Dict[str, Any], sample_id: str) -> Tuple[Opti
                 audio_obj = val
                 break
 
-    # Priority 2: Scan any field in rec that looks like a HuggingFace Audio dict
+    # Priority 2: Scan any field in rec that looks like a HuggingFace Audio dict or AudioDecoder
     if audio_obj is None:
         for val in rec.values():
             if isinstance(val, (list, tuple)) and len(val) > 0:
                 val = val[0]
+            if hasattr(val, "get_all_samples") or "AudioDecoder" in type(val).__name__:
+                audio_obj = val
+                break
             if isinstance(val, dict) and ("array" in val or "bytes" in val or "src" in val):
                 audio_obj = val
                 break
@@ -284,6 +291,51 @@ def extract_audio_from_record(rec: Dict[str, Any], sample_id: str) -> Tuple[Opti
 
     # Parse audio_obj into numpy float32 array
     try:
+        # Case 0: Hugging Face datasets >= 4.0 AudioDecoder (torchcodec backend)
+        if hasattr(audio_obj, "get_all_samples"):
+            samples = audio_obj.get_all_samples()
+            data = getattr(samples, "data", samples)
+            if hasattr(data, "detach"):
+                arr = data.detach().cpu().numpy()
+            elif hasattr(data, "numpy"):
+                arr = data.numpy()
+            else:
+                arr = np.array(data)
+            if np.issubdtype(arr.dtype, np.integer):
+                arr = arr.astype(np.float32) / 32768.0
+            else:
+                arr = arr.astype(np.float32)
+            sr = int(getattr(samples, "sample_rate", TARGET_SAMPLE_RATE) or TARGET_SAMPLE_RATE)
+            return arr, sr
+
+        if hasattr(audio_obj, "get_samples"):
+            samples = audio_obj.get_samples()
+            data = getattr(samples, "data", samples)
+            if hasattr(data, "detach"):
+                arr = data.detach().cpu().numpy()
+            elif hasattr(data, "numpy"):
+                arr = data.numpy()
+            else:
+                arr = np.array(data)
+            if np.issubdtype(arr.dtype, np.integer):
+                arr = arr.astype(np.float32) / 32768.0
+            else:
+                arr = arr.astype(np.float32)
+            sr = int(getattr(samples, "sample_rate", TARGET_SAMPLE_RATE) or TARGET_SAMPLE_RATE)
+            return arr, sr
+
+        if hasattr(audio_obj, "decode"):
+            decoded = audio_obj.decode()
+            if hasattr(decoded, "detach"):
+                arr = decoded.detach().cpu().numpy()
+            else:
+                arr = np.array(decoded)
+            if np.issubdtype(arr.dtype, np.integer):
+                arr = arr.astype(np.float32) / 32768.0
+            else:
+                arr = arr.astype(np.float32)
+            return arr, TARGET_SAMPLE_RATE
+
         if isinstance(audio_obj, dict):
             if "array" in audio_obj and audio_obj["array"] is not None:
                 arr = np.array(audio_obj["array"], dtype=np.float32)
