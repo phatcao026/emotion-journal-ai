@@ -358,25 +358,6 @@ def load_visec(dataset_name: str, sample_limit: Optional[int] = None) -> List[Di
     return records
 
 
-def find_ravdess_dir(user_specified_dir: Optional[str] = None) -> Optional[Path]:
-    """Locate RAVDESS dataset directory across common Kaggle and local paths."""
-    candidates = []
-    if user_specified_dir:
-        candidates.append(Path(user_specified_dir))
-
-    candidates.extend([
-        Path("/kaggle/input/ravdess-emotional-speech-audio"),
-        Path("/kaggle/input/ravdess-emotional-speech-audio/audio_speech_actors_01-24"),
-        Path("data/ravdess"),
-        Path("data/raw/ravdess"),
-    ])
-
-    for c in candidates:
-        if c.exists() and any(c.glob("**/*.wav")):
-            return c
-    return None
-
-
 def load_ravdess_fearful(ravdess_dir: Path) -> List[Dict[str, Any]]:
     """Scan RAVDESS directory and extract only Fearful/Anxiety audio clips (emotion 06)."""
     logger.info("Scanning RAVDESS audio in %s...", ravdess_dir)
@@ -415,6 +396,41 @@ def load_ravdess_fearful(ravdess_dir: Path) -> List[Dict[str, Any]]:
     return records
 
 
+def find_ravdess_dir(user_specified_dir: Optional[str] = None) -> Optional[Path]:
+    """Locate RAVDESS dataset directory across common Kaggle and local paths."""
+    candidates = []
+    if user_specified_dir:
+        candidates.append(Path(user_specified_dir))
+
+    candidates.extend([
+        Path("/kaggle/input/ravdess-emotional-speech-audio"),
+        Path("/kaggle/input/ravdess-emotional-speech-audio/audio_speech_actors_01-24"),
+        Path("/kaggle/input/speech-emotion-recognition/ravdess-emotional-speech-audio"),
+        Path("/kaggle/input/speech-emotion-recognition"),
+        Path("data/ravdess"),
+        Path("data/raw/ravdess"),
+    ])
+
+    for c in candidates:
+        if c.exists() and any(c.glob("**/*-*-06-*.wav")):
+            logger.info("Found RAVDESS directory: %s", c)
+            return c
+
+    # Deep search inside /kaggle/input if available
+    kaggle_input = Path("/kaggle/input")
+    if kaggle_input.exists():
+        for sub in kaggle_input.iterdir():
+            if sub.is_dir():
+                # Check if this subfolder contains RAVDESS fearful clips
+                matches = list(sub.glob("**/*-*-06-*.wav"))
+                if matches:
+                    matched_dir = matches[0].parent.parent if matches[0].parent.name.startswith("Actor_") else matches[0].parent
+                    logger.info("Auto-discovered RAVDESS via deep search in %s", matched_dir)
+                    return matched_dir
+
+    return None
+
+
 def find_cremad_dir(user_specified_dir: Optional[str] = None) -> Optional[Path]:
     """Locate CREMA-D dataset directory across common Kaggle and local paths."""
     candidates = []
@@ -426,13 +442,29 @@ def find_cremad_dir(user_specified_dir: Optional[str] = None) -> Optional[Path]:
         Path("/kaggle/input/crema-d"),
         Path("/kaggle/input/cremad-dataset"),
         Path("/kaggle/input/crema-d-dataset"),
+        Path("/kaggle/input/speech-emotion-recognition/AudioWAV"),
+        Path("/kaggle/input/speech-emotion-recognition/crema-d/AudioWAV"),
+        Path("/kaggle/input/speech-emotion-recognition"),
         Path("data/cremad"),
         Path("data/raw/cremad"),
     ])
 
     for c in candidates:
-        if c.exists() and any(c.glob("**/*.wav")):
+        if c.exists() and any(c.glob("**/*_FEA_*.wav")):
+            logger.info("Found CREMA-D directory: %s", c)
             return c
+
+    # Deep search inside /kaggle/input if available
+    kaggle_input = Path("/kaggle/input")
+    if kaggle_input.exists():
+        for sub in kaggle_input.iterdir():
+            if sub.is_dir():
+                matches = list(sub.glob("**/*_FEA_*.wav"))
+                if matches:
+                    matched_dir = matches[0].parent
+                    logger.info("Auto-discovered CREMA-D via deep search in %s", matched_dir)
+                    return matched_dir
+
     return None
 
 
