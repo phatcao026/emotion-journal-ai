@@ -52,7 +52,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--config",
         type=str,
-        default="configs/multimodal_fusion.yaml",
+        default="configs/fusion/multimodal_fusion.yaml",
         help="Path to configuration file",
     )
     parser.add_argument(

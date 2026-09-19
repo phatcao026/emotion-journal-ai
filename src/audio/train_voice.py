@@ -80,7 +80,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--config",
         type=str,
-        default="configs/voice_config.yaml",
+        default="configs/audio/voice_config.yaml",
         help="Path to YAML configuration file",
     )
     parser.add_argument(
