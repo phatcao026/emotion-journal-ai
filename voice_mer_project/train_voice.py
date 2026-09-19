@@ -350,6 +350,9 @@ def train(
     batch_size_override: Optional[int] = None,
     data_dir_override: Optional[str] = None,
     lr_override: Optional[float] = None,
+    checkpoint_dir: Optional[str] = None,
+    pretrained_weights: Optional[str] = None,
+    reset_optimizer: bool = False,
     seed: int = 42,
 ) -> None:
     """Execute training pipeline."""
@@ -381,21 +384,17 @@ def train(
     num_epochs = epochs_override or train_cfg.get("num_epochs", 50)
     grad_clip = float(train_cfg.get("gradient_clip", 1.0))
     patience = train_cfg.get("early_stopping_patience", 7)
-    ckpt_dir_override = getattr(args, "checkpoint_dir", None)
-    ckpt_dir = Path(ckpt_dir_override or train_cfg.get("checkpoint_dir", "checkpoints/voice_only/"))
+    ckpt_dir = Path(checkpoint_dir or train_cfg.get("checkpoint_dir", "checkpoints/voice_only/"))
     ckpt_dir.mkdir(parents=True, exist_ok=True)
 
     best_val_f1 = -1.0
     patience_counter = 0
 
-    pretrained_path = getattr(args, "pretrained_weights", None)
-    reset_optimizer = getattr(args, "reset_optimizer", False)
-
-    if pretrained_path and Path(pretrained_path).exists():
-        ckpt = torch.load(pretrained_path, map_location=dev, weights_only=False)
+    if pretrained_weights and Path(pretrained_weights).exists():
+        ckpt = torch.load(pretrained_weights, map_location=dev, weights_only=False)
         sd = ckpt.get("state_dict", ckpt)
         model.load_state_dict(sd, strict=False)
-        logger.info("Initialized model weights from %s (training starting fresh at epoch 1)", pretrained_path)
+        logger.info("Initialized model weights from %s (training starting fresh at epoch 1)", pretrained_weights)
     elif resume_path and Path(resume_path).exists():
         ckpt = torch.load(resume_path, map_location=dev, weights_only=False)
         model.load_state_dict(ckpt["state_dict"], strict=False)
@@ -478,6 +477,9 @@ def main() -> None:
         batch_size_override=args.batch_size,
         data_dir_override=args.data_dir,
         lr_override=args.learning_rate,
+        checkpoint_dir=args.checkpoint_dir,
+        pretrained_weights=args.pretrained_weights,
+        reset_optimizer=args.reset_optimizer,
         seed=args.seed,
     )
 
