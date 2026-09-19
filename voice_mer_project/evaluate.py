@@ -67,6 +67,19 @@ def parse_args() -> argparse.Namespace:
         help="Path to dataset directory containing test/metadata.csv",
     )
     parser.add_argument(
+        "--split",
+        type=str,
+        default="test",
+        choices=["train", "val", "test"],
+        help="Dataset split to evaluate ('train', 'val', or 'test')",
+    )
+    parser.add_argument(
+        "--batch-size",
+        type=int,
+        default=8,
+        help="Evaluation batch size",
+    )
+    parser.add_argument(
         "--device",
         type=str,
         default="cuda" if torch.cuda.is_available() else "cpu",
@@ -104,7 +117,7 @@ def evaluate_model(
 
     y_p_pred = torch.cat(p_preds)
     y_p_true = torch.cat(p_trues)
-    p_labels = getattr(model, "PRIMARY_LABELS", ["Joy", "Sadness", "Anxiety", "Anger", "Neutral"])
+    p_labels = getattr(model, "PRIMARY_LABELS", ["JOY", "SADNESS", "ANXIETY", "ANGER", "NEUTRAL"])
     p_metrics = compute_all_metrics(
         predictions=y_p_pred,
         targets=y_p_true,
@@ -139,9 +152,9 @@ def main() -> None:
     if args.dummy:
         dataset = VoiceJournalDataset(dummy_mode=True, dummy_size=30, dummy_duration_s=6.0, use_sub_labels=True)
     else:
-        dataset = VoiceJournalDataset(data_dir=args.data_dir, split="test", use_sub_labels=True)
+        dataset = VoiceJournalDataset(data_dir=args.data_dir, split=args.split, use_sub_labels=True)
 
-    loader = DataLoader(dataset, batch_size=8, shuffle=False, collate_fn=VoiceJournalDataset.collate_fn)
+    loader = DataLoader(dataset, batch_size=args.batch_size, shuffle=False, collate_fn=VoiceJournalDataset.collate_fn)
 
     if args.model_path and Path(args.model_path).exists():
         ckpt = torch.load(args.model_path, map_location=args.device, weights_only=False)
@@ -153,9 +166,11 @@ def main() -> None:
             model = VoiceOnlyMERModel(device=args.device)
             model.load_pretrained()
             model.load_state_dict(state_dict, strict=False)
+            model.to(dev)
             logger.info("Loaded VoiceOnlyMERModel checkpoint from %s", args.model_path)
     else:
         model = HierarchicalMERModel(device=args.device)
+        model.to(dev)
 
     evaluate_model(model, loader, dev)
 

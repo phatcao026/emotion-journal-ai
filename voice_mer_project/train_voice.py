@@ -274,6 +274,10 @@ def train_one_epoch(
         all_preds.append(preds)
         all_targets.append(targets.cpu())
 
+        # Real-time progress print every 150 batches or at end of loader
+        if (batch_idx + 1) % 150 == 0 or (batch_idx + 1) == len(loader):
+            print(f"  --> Epoch {epoch:02d} | Batch {batch_idx + 1:03d}/{len(loader)} | Current Loss: {loss.item():.4f}", flush=True)
+
     avg_loss = total_loss / max(1, len(loader))
     y_pred = torch.cat(all_preds) if all_preds else torch.empty(0)
     y_true = torch.cat(all_targets) if all_targets else torch.empty(0)
@@ -284,13 +288,9 @@ def train_one_epoch(
     )
     metrics["loss"] = avg_loss
 
-    logger.info(
-        "Epoch %02d [Train] Loss: %.4f | WA: %.4f | UA: %.4f | Macro-F1: %.4f",
-        epoch,
-        avg_loss,
-        metrics.get("wa", 0.0),
-        metrics.get("ua", 0.0),
-        metrics.get("macro_f1", 0.0),
+    print(
+        f"\n[EPOCH {epoch:02d}] Train Loss: {avg_loss:.4f} | WA: {metrics.get('wa', 0.0):.4f} | UA: {metrics.get('ua', 0.0):.4f} | Macro-F1: {metrics.get('macro_f1', 0.0):.4f}",
+        flush=True,
     )
     return metrics
 
@@ -330,13 +330,9 @@ def evaluate(
     )
     metrics["loss"] = avg_loss
 
-    logger.info(
-        "[%s] Loss: %.4f | WA: %.4f | UA: %.4f | Macro-F1: %.4f",
-        phase.upper(),
-        avg_loss,
-        metrics.get("wa", 0.0),
-        metrics.get("ua", 0.0),
-        metrics.get("macro_f1", 0.0),
+    print(
+        f"           >>> [{phase.upper()}] Loss: {avg_loss:.4f} | WA: {metrics.get('wa', 0.0):.4f} | UA: {metrics.get('ua', 0.0):.4f} | Macro-F1: {metrics.get('macro_f1', 0.0):.4f}",
+        flush=True,
     )
     return metrics
 
@@ -447,11 +443,11 @@ def train(
                 },
                 best_ckpt_path,
             )
-            logger.info("Saved new best model checkpoint to %s (Macro-F1=%.4f)", best_ckpt_path, best_val_f1)
+            print(f"           *** [SAVED NEW BEST MODEL] Val Macro-F1 = {best_val_f1:.4f} -> {best_ckpt_path.name} ***\n", flush=True)
         else:
             patience_counter += 1
             if patience_counter >= patience:
-                logger.info("Early stopping triggered after %d epochs without improvement.", patience)
+                print(f"Early stopping triggered after {patience} epochs without improvement.", flush=True)
                 break
 
     # Final evaluation on test split
@@ -459,9 +455,11 @@ def train(
     if best_path.exists():
         best_ckpt = torch.load(best_path, map_location=dev, weights_only=False)
         model.load_state_dict(best_ckpt["state_dict"], strict=False)
-    logger.info("Evaluating best model on test split:")
+    print("\n" + "=" * 60, flush=True)
+    print("  EVALUATING BEST MODEL ON TEST SPLIT", flush=True)
+    print("=" * 60, flush=True)
     test_metrics = evaluate(model=model, loader=test_loader, loss_fn=loss_fn, device=dev, phase="test")
-    logger.info("\n%s", format_metrics_report(test_metrics))
+    print(format_metrics_report(test_metrics), flush=True)
 
 
 def main() -> None:
