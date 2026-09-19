@@ -1,0 +1,37 @@
+{
+  "version": "1.0",
+  "description": "Hierarchical Emotion Taxonomy for Vietnamese Mental Health Journaling",
+  "primary_emotions": {
+    "0": "JOY",
+    "1": "SADNESS",
+    "2": "ANXIETY",
+    "3": "ANGER",
+    "4": "NEUTRAL"
+  },
+  "sub_emotions": {
+    "0": "JOY",
+    "1": "CALM",
+    "2": "HOPE",
+    "3": "CONNECTION",
+    "4": "SADNESS",
+    "5": "ANXIETY",
+    "6": "FEAR",
+    "7": "ANGER",
+    "8": "GUILT_SHAME",
+    "9": "LONELINESS",
+    "10": "DISGUST"
+  },
+  "sub_to_primary_mapping": {
+    "JOY": "JOY",
+    "CALM": "JOY",
+    "HOPE": "JOY",
+    "CONNECTION": "JOY",
+    "SADNESS": "SADNESS",
+    "LONELINESS": "SADNESS",
+    "GUILT_SHAME": "SADNESS",
+    "ANXIETY": "ANXIETY",
+    "FEAR": "ANXIETY",
+    "ANGER": "ANGER",
+    "DISGUST": "ANGER"
+  }
+}

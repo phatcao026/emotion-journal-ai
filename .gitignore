@@ -1,12 +1,17 @@
-# Data directories
-data/
+# Data directories & large files
 data/raw/
 *.csv
 *.jsonl
 .checkpoint_*
+checkpoints/
 *.pt
 *.pth
 *.bin
+*.safetensors
+*.wav
+*.mp3
+*.flac
+*.m4a
 
 # Environment & API keys
 .env

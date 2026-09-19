@@ -1,0 +1,6 @@
+# Text NLP (PhoBERT & ViSoBERT) dependencies
+-r base.txt
+transformers>=4.36.0
+accelerate>=0.25.0
+pyvi>=0.1.1
+underthesea>=6.8.0
