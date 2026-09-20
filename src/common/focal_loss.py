@@ -131,3 +131,88 @@ class MultiClassFocalLoss(nn.Module):
             f"reduction='{self.reduction}', "
             f"label_smoothing={self.label_smoothing}"
         )
+
+
+class MultilabelFocalLoss(nn.Module):
+    """Multi-label Focal Loss for multi-label emotion classification.
+
+    Applies binary focal loss independently across each emotion label.
+    Effectively addresses extreme class imbalance where negative instances
+    overwhelm positive emotion annotations.
+
+    Args:
+        gamma (float): Focusing parameter. Default: 2.0.
+        pos_weight (Optional[torch.Tensor]): Positive class weights of shape (C,).
+        reduction (str): 'mean' | 'sum' | 'none'. Default: 'mean'.
+    """
+
+    def __init__(
+        self,
+        gamma: float = 2.0,
+        pos_weight: Optional[torch.Tensor] = None,
+        reduction: str = "mean",
+    ) -> None:
+        super().__init__()
+        self.gamma = gamma
+        self.reduction = reduction
+        if pos_weight is not None:
+            if not isinstance(pos_weight, torch.Tensor):
+                pos_weight = torch.tensor(pos_weight, dtype=torch.float32)
+            self.register_buffer("pos_weight", pos_weight)
+        else:
+            self.pos_weight = None
+
+    def forward(self, logits: torch.Tensor, targets: torch.Tensor) -> torch.Tensor:
+        """Compute multi-label focal loss.
+
+        Args:
+            logits: Predicted raw logits of shape (B, C).
+            targets: Binary ground truth matrix of shape (B, C) with values in {0, 1}.
+
+        Returns:
+            torch.Tensor: Computed loss.
+        """
+        probs = torch.sigmoid(logits)
+        # Numerical stability clamping
+        probs = torch.clamp(probs, min=1e-7, max=1.0 - 1e-7)
+
+        # Binary cross entropy components
+        loss_pos = -targets * torch.log(probs)
+        loss_neg = -(1.0 - targets) * torch.log(1.0 - probs)
+
+        # Modulating factor (1 - p_t)^gamma
+        mod_pos = (1.0 - probs) ** self.gamma
+        mod_neg = probs ** self.gamma
+
+        focal_pos = mod_pos * loss_pos
+        focal_neg = mod_neg * loss_neg
+
+        if self.pos_weight is not None:
+            pw = self.pos_weight.to(logits.device)
+            focal_pos = focal_pos * pw
+
+        loss = focal_pos + focal_neg
+
+        if self.reduction == "mean":
+            return loss.mean()
+        elif self.reduction == "sum":
+            return loss.sum()
+        return loss
+
+
+class MultilabelBCEWithLogitsLoss(nn.Module):
+    """Standard BCEWithLogitsLoss with optional pos_weight for multi-label training."""
+
+    def __init__(
+        self,
+        pos_weight: Optional[torch.Tensor] = None,
+        reduction: str = "mean",
+    ) -> None:
+        super().__init__()
+        if pos_weight is not None and not isinstance(pos_weight, torch.Tensor):
+            pos_weight = torch.tensor(pos_weight, dtype=torch.float32)
+        self.criterion = nn.BCEWithLogitsLoss(pos_weight=pos_weight, reduction=reduction)
+
+    def forward(self, logits: torch.Tensor, targets: torch.Tensor) -> torch.Tensor:
+        return self.criterion(logits, targets.float())
+

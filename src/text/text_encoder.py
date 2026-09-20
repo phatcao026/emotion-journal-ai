@@ -284,3 +284,149 @@ class PhoBERTEncoder(nn.Module):
             attention_mask=attention_mask,
             pooling_strategy=self.pooling_strategy,
         )
+
+
+class ViSoBERTEncoder(PhoBERTEncoder):
+    """Extracts semantic features from Vietnamese text using ViSoBERT.
+
+    ViSoBERT (uitnlp/visobert) is pre-trained on Vietnamese social media corpora
+    and excels at informal text, diaries, and emotional nuances.
+
+    Args:
+        model_id (str): HuggingFace model ID. Default: "uitnlp/visobert".
+    """
+
+    DEFAULT_MODEL_ID: str = "uitnlp/visobert"
+
+    def __init__(
+        self,
+        model_id: str = "uitnlp/visobert",
+        pooling_strategy: Literal["cls", "mean", "max"] = "cls",
+        max_length: int = 256,
+        freeze: bool = False,
+        device: str = "cpu",
+        use_synthetic_fallback: bool = True,
+    ) -> None:
+        super().__init__(
+            model_id=model_id,
+            pooling_strategy=pooling_strategy,
+            max_length=max_length,
+            freeze=freeze,
+            device=device,
+            use_synthetic_fallback=use_synthetic_fallback,
+        )
+
+
+class TextEmotionClassifier(nn.Module):
+    """End-to-end Text Emotion Classifier with multi-label prediction head.
+
+    Integrates TextEncoder (PhoBERT or ViSoBERT) with multi-label classification heads
+    for 11 sub-emotions and optional 5 primary emotions (hierarchical taxonomy).
+
+    Args:
+        encoder: Base encoder (PhoBERTEncoder, ViSoBERTEncoder, or any module outputting 768d).
+        num_classes: Number of target emotion classes (default: 11 sub-emotions).
+        num_primary_classes: Optional primary emotion classes (default: 5).
+        dropout: Dropout probability. Default: 0.3.
+    """
+
+    def __init__(
+        self,
+        encoder: nn.Module,
+        num_classes: int = 11,
+        num_primary_classes: Optional[int] = 5,
+        dropout: float = 0.3,
+    ) -> None:
+        super().__init__()
+        self.encoder = encoder
+        self.num_classes = num_classes
+        self.num_primary_classes = num_primary_classes
+        feature_dim = getattr(encoder, "feature_dim", 768)
+
+        self.dropout = nn.Dropout(dropout)
+        # Sub-emotion classification head (11 labels, multi-label)
+        self.classifier = nn.Sequential(
+            nn.Linear(feature_dim, 256),
+            nn.GELU(),
+            nn.Dropout(dropout),
+            nn.Linear(256, num_classes),
+        )
+
+        # Optional Primary-emotion classification head (5 labels)
+        if num_primary_classes is not None and num_primary_classes > 0:
+            self.primary_classifier = nn.Sequential(
+                nn.Linear(feature_dim, 128),
+                nn.GELU(),
+                nn.Dropout(dropout),
+                nn.Linear(128, num_primary_classes),
+            )
+        else:
+            self.primary_classifier = None
+
+    def forward(
+        self,
+        texts: Optional[Union[str, List[str]]] = None,
+        input_ids: Optional[torch.Tensor] = None,
+        attention_mask: Optional[torch.Tensor] = None,
+    ) -> Dict[str, torch.Tensor]:
+        """Forward pass extracting representations and classification logits.
+
+        Returns:
+            Dict containing:
+                - 'features': Representation vector z_text in R^(B, 768).
+                - 'logits': Sub-emotion raw scores in R^(B, 11).
+                - 'probs': Sigmoid probabilities in R^(B, 11).
+                - 'primary_logits': Optional primary emotion logits in R^(B, 5).
+        """
+        features = self.encoder(texts=texts, input_ids=input_ids, attention_mask=attention_mask)
+        dropped = self.dropout(features)
+        logits = self.classifier(dropped)
+        probs = torch.sigmoid(logits)
+
+        out = {
+            "features": features,
+            "logits": logits,
+            "probs": probs,
+        }
+
+        if self.primary_classifier is not None:
+            out["primary_logits"] = self.primary_classifier(dropped)
+            out["primary_probs"] = torch.softmax(out["primary_logits"], dim=-1)
+
+        return out
+
+
+def create_text_encoder(
+    model_family: str = "visobert",
+    model_id: Optional[str] = None,
+    pooling_strategy: str = "cls",
+    max_length: int = 256,
+    freeze: bool = False,
+    device: str = "cpu",
+    use_synthetic_fallback: bool = True,
+) -> PhoBERTEncoder:
+    """Factory to create PhoBERT or ViSoBERT encoder."""
+    family = model_family.lower()
+    if family == "visobert":
+        mid = model_id or "uitnlp/visobert"
+        return ViSoBERTEncoder(
+            model_id=mid,
+            pooling_strategy=pooling_strategy,
+            max_length=max_length,
+            freeze=freeze,
+            device=device,
+            use_synthetic_fallback=use_synthetic_fallback,
+        )
+    elif family == "phobert":
+        mid = model_id or "vinai/phobert-base-v2"
+        return PhoBERTEncoder(
+            model_id=mid,
+            pooling_strategy=pooling_strategy,
+            max_length=max_length,
+            freeze=freeze,
+            device=device,
+            use_synthetic_fallback=use_synthetic_fallback,
+        )
+    else:
+        raise ValueError(f"Unsupported text model family: '{model_family}'. Choose 'visobert' or 'phobert'.")
+

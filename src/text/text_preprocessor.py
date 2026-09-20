@@ -56,16 +56,35 @@ class VietnameseTextPreprocessor:
         max_length (Optional[int]): Maximum character length to truncate. Default: None.
     """
 
+    DEFAULT_TEENCODE_DICT: Dict[str, str] = {
+        "ko": "không", "k": "không", "kh": "không", "hok": "không", "hông": "không",
+        "dc": "được", "đc": "được", "dk": "được",
+        "bt": "biết", "bit": "biết",
+        "mk": "mình", "mik": "mình",
+        "hqua": "hôm qua", "hnay": "hôm nay", "mng": "mọi người",
+        "vs": "với", "cx": "cũng", "cg": "cũng",
+        "thik": "thích", "iu": "yêu",
+        "wa": "quá", "qúa": "quá",
+        "rat": "rất", "thuc_su": "thực sự",
+        "plz": "làm ơn", "tks": "cảm ơn", "cmon": "cảm ơn", "ty": "cảm ơn",
+    }
+
     def __init__(
         self,
         lowercase: bool = False,
         remove_punctuation: bool = False,
         max_length: Optional[int] = None,
+        normalize_teencode: bool = False,
+        teencode_dict: Optional[Dict[str, str]] = None,
     ) -> None:
         self.lowercase = lowercase
         self.remove_punctuation = remove_punctuation
         self.max_length = max_length
+        self.normalize_teencode = normalize_teencode
+        self.teencode_dict = teencode_dict or self.DEFAULT_TEENCODE_DICT
 
+        # Regex for zero-width characters
+        self._zero_width_re = re.compile(r"[\u200b\u200c\u200d\ufeff]")
         # Regex for multi-space and whitespace collapsing
         self._whitespace_re = re.compile(r"\s+")
         # Regex for common ASR noise tokens (e.g., [applause], <noise>, [laughter])
@@ -102,11 +121,17 @@ class VietnameseTextPreprocessor:
         if not text:
             return ""
 
+        # Remove zero-width characters
+        cleaned = self._zero_width_re.sub("", text)
+
         # Remove ASR tags/noise markers
-        cleaned = self._noise_re.sub(" ", text)
+        cleaned = self._noise_re.sub(" ", cleaned)
 
         # Replace non-breaking spaces and other control chars
-        cleaned = cleaned.replace("\u00a0", " ").replace("\ufeff", "")
+        cleaned = cleaned.replace("\u00a0", " ")
+
+        if self.normalize_teencode:
+            cleaned = self.replace_teencode(cleaned)
 
         if self.remove_punctuation:
             cleaned = re.sub(r"[^\w\s]", " ", cleaned, flags=re.UNICODE)
@@ -121,6 +146,15 @@ class VietnameseTextPreprocessor:
             cleaned = cleaned[: self.max_length].strip()
 
         return cleaned
+
+    def replace_teencode(self, text: str) -> str:
+        """Replace common Vietnamese teencode words with standard Vietnamese."""
+        if not text:
+            return ""
+        words = text.split()
+        normalized = [self.teencode_dict.get(w.lower(), w) if w.lower() in self.teencode_dict else w for w in words]
+        return " ".join(normalized)
+
 
     def segment_sentences(self, text: str) -> List[str]:
         """Segment text into individual sentences.
@@ -187,3 +221,17 @@ class VietnameseTextPreprocessor:
             List[TextPreprocessingResult]: List of processed results.
         """
         return [self.process(t) for t in texts]
+
+
+def make_preprocessor(config: Optional[dict] = None) -> VietnameseTextPreprocessor:
+    """Factory to instantiate VietnameseTextPreprocessor from configuration dictionary."""
+    if config is None:
+        config = {}
+    tp_cfg = config.get("text_preprocessor", config)
+    return VietnameseTextPreprocessor(
+        lowercase=bool(tp_cfg.get("lowercase", False)),
+        remove_punctuation=bool(tp_cfg.get("remove_punctuation", False)),
+        max_length=tp_cfg.get("max_length"),
+        normalize_teencode=bool(tp_cfg.get("normalize_teencode", True)),
+    )
+

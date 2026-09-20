@@ -1,18 +1,21 @@
 # ============================================================
 # text_only.yaml
-# Configuration for the Text-Only processing subsystem
-# Covers: Vietnamese text preprocessing, PhoBERT fine-tuning
+# Configuration for the Text-Only emotion recognition subsystem
+# Covers: Vietnamese text preprocessing, ViSoBERT / PhoBERT fine-tuning,
+# multi-label classification head (11 sub-emotions + 5 primary emotions)
 # ============================================================
 
 text_preprocessor:
   lowercase: false
   remove_punctuation: false
+  normalize_teencode: true
   max_length: 512
 
 text_encoder:
-  model_id: "vinai/phobert-base-v2"
+  model_family: "visobert"           # "visobert" (recommended) or "phobert"
+  model_id: "uitnlp/visobert"         # or "vinai/phobert-base-v2"
   feature_dim: 768
-  pooling_strategy: "cls"
+  pooling_strategy: "cls"             # "cls", "mean", or "max"
   max_length: 256
   freeze: false
 
@@ -21,12 +24,29 @@ classification_head:
   num_primary_classes: 5
   num_sub_classes: 11
   dropout: 0.3
+  sub_emotions:
+    - "JOY"
+    - "CALM"
+    - "HOPE"
+    - "CONNECTION"
+    - "SADNESS"
+    - "ANXIETY"
+    - "FEAR"
+    - "ANGER"
+    - "GUILT_SHAME"
+    - "LONELINESS"
+    - "DISGUST"
 
 training:
   batch_size: 16
   learning_rate: 2.0e-5
-  num_epochs: 40
-  warmup_steps: 300
+  num_epochs: 5
+  warmup_ratio: 0.1
   weight_decay: 0.01
+  loss_type: "bce"                    # "bce" or "focal"
   checkpoint_dir: "checkpoints/text_only/"
   log_dir: "logs/text_only/"
+
+dynamics:
+  threshold: 0.4
+  peak_end_weight: 0.5
