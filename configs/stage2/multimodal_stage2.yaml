@@ -1,0 +1,99 @@
+# ============================================================
+# configs/stage2/multimodal_stage2.yaml
+# Stage 2 SOTA Multimodal Emotion Recognition Configuration
+# ============================================================
+
+pipeline_version: "Stage 2 SOTA"
+
+asr:
+  model_id: "vinai/phowhisper-base"
+  language: "vi"
+  task: "transcribe"
+  return_timestamps: false
+  restore_punctuation: true
+  max_new_tokens: 256
+  device: "cpu"
+  batch_size: 8
+
+text_encoder:
+  model_id: "vinai/phobert-base-v2"
+  feature_dim: 768
+  pooling_strategy: "cls"
+  max_length: 256
+  freeze: false
+
+acoustic_stream:
+  backbone: "emotion2vec_plus_base"
+  feature_dim: 768
+  lora_r: 8
+  lora_alpha: 16
+
+melody_extractor:
+  enabled: true
+  sample_rate: 16000
+  raw_features: 32
+  dim_melody_proj: 32
+
+gated_fusion:
+  dim_audio: 768
+  dim_semantic: 768
+  dim_pause: 128
+  pause_raw_dim: 4
+  dim_melody: 32
+  melody_raw_dim: 32
+  dropout: 0.2
+  gate_activation: "sigmoid"
+
+hierarchical_inference:
+  enforce_taxonomy_mask: true
+  guarantee_violation_rate_zero: true
+
+classification_heads:
+  primary_head:
+    input_dim: 928                      # 768 (audio) + 128 (pause) + 32 (melody) = 928
+    num_classes: 5
+    labels:
+      - "Joy"
+      - "Sadness"
+      - "Anxiety"
+      - "Anger"
+      - "Neutral"
+    dropout: 0.3
+
+  sub_head:
+    input_dim: 768
+    num_classes: 11
+    labels:
+      - "JOY"
+      - "CALM"
+      - "HOPE"
+      - "CONNECTION"
+      - "SADNESS"
+      - "ANXIETY"
+      - "FEAR"
+      - "ANGER"
+      - "GUILT_SHAME"
+      - "LONELINESS"
+      - "DISGUST"
+    dropout: 0.3
+
+loss:
+  loss_type: "ldam"                     # "ldam" (Label-Distribution-Aware Margin)
+  ldam_max_m: 0.5
+  ldam_s: 30.0
+  drw_start_epoch: 15                   # Deferred Re-Weighting start epoch
+  use_uncertainty_weighting: true       # Kendall multi-task uncertainty loss
+  default_primary_weight: 0.7
+  default_sub_weight: 0.3
+
+training:
+  batch_size: 8
+  learning_rate: 1.0e-4
+  num_epochs: 60
+  warmup_ratio: 0.1
+  weight_decay: 1.0e-2
+  gradient_clip: 1.0
+  early_stopping_patience: 10
+  checkpoint_dir: "checkpoints/stage2_multimodal/"
+  log_dir: "logs/stage2_multimodal/"
+  use_amp: false
