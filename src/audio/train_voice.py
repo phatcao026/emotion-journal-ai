@@ -22,9 +22,14 @@ import argparse
 import logging
 import os
 import random
-import time
+import sys
 from pathlib import Path
 from typing import Dict, Optional, Tuple
+
+# Ensure repository root is in sys.path when executed directly
+ROOT_DIR = Path(__file__).resolve().parent.parent.parent
+if str(ROOT_DIR) not in sys.path:
+    sys.path.insert(0, str(ROOT_DIR))
 
 import numpy as np
 import torch

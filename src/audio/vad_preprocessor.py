@@ -173,7 +173,12 @@ class VADPreprocessor:
         path = Path(audio_path)
         if not path.exists():
             raise FileNotFoundError(f"Audio file not found: {path}")
-        waveform, sr = torchaudio.load(str(path))
+        try:
+            waveform, sr = torchaudio.load(str(path))
+        except Exception:
+            import soundfile as sf
+            data, sr = sf.read(str(path), dtype="float32")
+            waveform = torch.from_numpy(data).unsqueeze(0) if data.ndim == 1 else torch.from_numpy(data.T)
         return waveform, sr
 
     def _run_vad(self, waveform: torch.Tensor) -> List[dict]:

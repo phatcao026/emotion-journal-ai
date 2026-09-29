@@ -1,5 +1,7 @@
 # Data directories & large files
 data/raw/
+data/multimodal_dummy/
+data/multimodal_paired/
 *.csv
 *.jsonl
 .checkpoint_*

@@ -88,7 +88,7 @@ class PhoWhisperTranscriber:
         device: str = "cpu",
         language: str = "vi",
         restore_punctuation: bool = True,
-        max_new_tokens: int = 512,
+        max_new_tokens: int = 256,
         batch_size: int = 8,
         use_synthetic_fallback: bool = True,
     ) -> None:
@@ -96,7 +96,7 @@ class PhoWhisperTranscriber:
         self.device = torch.device(device)
         self.language = language
         self.restore_punctuation = restore_punctuation
-        self.max_new_tokens = max_new_tokens
+        self.max_new_tokens = min(max_new_tokens, 440)
         self.batch_size = batch_size
         self.use_synthetic_fallback = use_synthetic_fallback
 
@@ -252,10 +252,8 @@ class PhoWhisperTranscriber:
             source_path = str(audio)
             waveform, sr = self._load_audio(source_path)
         elif isinstance(audio, torch.Tensor):
-            if sample_rate is None:
-                raise ValueError("sample_rate must be provided when audio is a torch.Tensor")
+            sr = sample_rate if sample_rate is not None else self.SAMPLE_RATE
             waveform = audio.squeeze()
-            sr = sample_rate
         else:
             raise TypeError(f"Unsupported audio input type: {type(audio)}")
 

@@ -22,9 +22,14 @@ import argparse
 import logging
 import os
 import random
-import time
+import sys
 from pathlib import Path
 from typing import Dict, Optional, Tuple
+
+# Ensure repository root is in sys.path when executed directly
+ROOT_DIR = Path(__file__).resolve().parent.parent.parent
+if str(ROOT_DIR) not in sys.path:
+    sys.path.insert(0, str(ROOT_DIR))
 
 import numpy as np
 import torch
@@ -109,6 +114,24 @@ def parse_args() -> argparse.Namespace:
         default=42,
         help="Random seed",
     )
+    parser.add_argument(
+        "--data-dir",
+        type=str,
+        default=None,
+        help="Override path to dataset folder (containing metadata.csv)",
+    )
+    parser.add_argument(
+        "--stage1-checkpoint",
+        type=str,
+        default="checkpoints/voice_only/best_model_stage1_5.pt",
+        help="Path to Stage 1.5 acoustic checkpoint for warm-starting",
+    )
+    parser.add_argument(
+        "--freeze-audio-epochs",
+        type=int,
+        default=0,
+        help="Number of initial epochs to freeze the acoustic backbone",
+    )
     return parser.parse_args()
 
 
@@ -116,6 +139,7 @@ def build_dataloaders(
     config: dict,
     dummy: bool = False,
     batch_size_override: Optional[int] = None,
+    data_dir_override: Optional[str] = None,
     seed: int = 42,
 ) -> Tuple[DataLoader, DataLoader, DataLoader]:
     """Build train / val / test DataLoaders."""
@@ -133,7 +157,7 @@ def build_dataloaders(
         val_set = Subset(dataset, val_idx)
         test_set = Subset(dataset, test_idx)
     else:
-        data_dir = config.get("data", {}).get("data_dir", "data/voice_journals")
+        data_dir = data_dir_override or config.get("data", {}).get("data_dir", "data/voice_journals")
         train_set = VoiceJournalDataset(data_dir=data_dir, split="train", use_sub_labels=True)
         val_set = VoiceJournalDataset(data_dir=data_dir, split="val", use_sub_labels=True)
         test_set = VoiceJournalDataset(data_dir=data_dir, split="test", use_sub_labels=True)
@@ -329,6 +353,9 @@ def train(
     config: dict,
     dummy: bool = False,
     resume_path: Optional[str] = None,
+    stage1_checkpoint: Optional[str] = None,
+    freeze_audio_epochs: int = 0,
+    data_dir: Optional[str] = None,
     device: str = "cpu",
     epochs_override: Optional[int] = None,
     batch_size_override: Optional[int] = None,
@@ -339,13 +366,20 @@ def train(
     dev = torch.device(device)
 
     train_loader, val_loader, test_loader = build_dataloaders(
-        config, dummy=dummy, batch_size_override=batch_size_override, seed=seed
+        config,
+        dummy=dummy,
+        batch_size_override=batch_size_override,
+        data_dir_override=data_dir,
+        seed=seed,
     )
 
     model = build_model(config, device=device)
     if not dummy:
         logger.info("Loading pretrained weights for Multimodal model...")
         model.load_pretrained()
+        if stage1_checkpoint and Path(stage1_checkpoint).exists() and not resume_path:
+            logger.info("Warm-starting Multimodal model from Stage 1.5 checkpoint: %s", stage1_checkpoint)
+            model.load_stage1_checkpoint(stage1_checkpoint, freeze_audio=(freeze_audio_epochs > 0))
 
     train_cfg = config.get("training", {})
     lr = float(train_cfg.get("learning_rate", 1.0e-4))
@@ -385,6 +419,15 @@ def train(
 
     logger.info("Starting Hierarchical Multimodal training for %d epochs...", num_epochs)
     for epoch in range(start_epoch, num_epochs + 1):
+        if freeze_audio_epochs > 0 and epoch == freeze_audio_epochs + 1:
+            logger.info("Unfreezing acoustic branch at epoch %d and refreshing optimizer.", epoch)
+            model.unfreeze_audio()
+            optimizer = optim.AdamW(
+                [p for p in model.parameters() if p.requires_grad],
+                lr=lr,
+                weight_decay=weight_decay,
+            )
+
         train_one_epoch(
             model=model,
             loader=train_loader,
@@ -453,6 +496,9 @@ def main() -> None:
         config=config,
         dummy=args.dummy,
         resume_path=args.resume,
+        stage1_checkpoint=args.stage1_checkpoint,
+        freeze_audio_epochs=args.freeze_audio_epochs,
+        data_dir=args.data_dir,
         device=args.device,
         epochs_override=args.epochs,
         batch_size_override=args.batch_size,
