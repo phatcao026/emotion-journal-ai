@@ -1,0 +1,17 @@
+{
+  "sample_id": "voice_27b417a2_c14_v",
+  "modality": "voice",
+  "audio_file": "voice_27b417a2_c14_v.wav",
+  "duration_s": 45.0,
+  "primary_label": "JOY",
+  "sub_label": "CALM",
+  "emotion_score": 0.9,
+  "source_platform": "radio_podcast_monologue",
+  "author": "trikycamxuc",
+  "author_hash": "3232db31ca7d",
+  "source_url": "https://www.youtube.com/watch?v=8we7rzGwHFs",
+  "voice_type": "acted_radio",
+  "rms_dbfs": -15.58,
+  "peak": 0.994,
+  "speech_ratio": 0.863
+}

@@ -1,0 +1,28 @@
+{
+  "sample_id": "threads_search_7dac4a6c",
+  "modality": "text_voice",
+  "text": "_chuonglia_ Thái Bình Trường Ninh 21/09/2026 (kẻ láo, a dead person, acc clone anh Tôn tránh ra nhá....) --- \"Vì chẳng có cuộc gặp gỡ và đồng hành nào là vĩnh viễn, thế nên ta hãy trân trọng khoảng thời gian ta đã từng yêu nhau anh nhé?\" Đinh Mạnh Ninh mỉm cười, chính cậu là người đã ngỏ lời dừng lại. Chắc anh Bình sẽ sốc lắm, vốn dĩ tình yêu của cả hai vẫn luôn bình yên như thế... cớ sao lại chọn cách chia tay. Chính bản thân Trịnh Thăng Bình cũng có suy nghĩ như vậy, anh nhìn người mình yêu, rồi lại chìm vào trong suy nghĩ riêng",
+  "audio_file": "threads_search_7dac4a6c.wav",
+  "duration_s": 20.69,
+  "primary_label": "JOY",
+  "sub_label": "JOY",
+  "emotion_score": 0.4,
+  "source_platform": "threads_search",
+  "search_query": "bình yên",
+  "source_url": "https://www.threads.net/search?q=b%C3%ACnh%20y%C3%AAn&filter=recent&serp_type=default",
+  "narrative_score": 1.0,
+  "matched_pronouns": [
+    "mình",
+    "anh",
+    "ta",
+    "bản thân"
+  ],
+  "matched_reflective": [],
+  "matched_keywords": [
+    "cười",
+    "bình yên",
+    "đồng hành"
+  ],
+  "rms_dbfs": -16.77,
+  "speech_ratio": 0.988
+}

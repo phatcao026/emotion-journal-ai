@@ -1,0 +1,21 @@
+{
+  "sample_id": "threads_cmt_8d961486",
+  "modality": "text",
+  "text": "09/05/2026 hôm thứ sáu buổi chiều em với một bạn có lên kiểm tra, bạn ném cho em trc mà bạn ném cho em k đạt xong em có hơi cáu xíu nhưng lúc sau em cũng vui trở lại và ném cho bạn, thế là hai đứa k đạt xong lúc em trả bóng lại chỗ cũ thì lúc đó gió mạnh ngược chiều với lại bóng hơi nên nhẹ nên nó văng hơi mạnh với xa, xong cô tưởng em thái độ xong em giải thích là tại gió mạnh với ngược chiều chứ em k có thái độ, xong cô hỏi tên em r ghi vô sdb là em vô lễ r ghi em k đạt",
+  "primary_label": "JOY",
+  "sub_label": "JOY",
+  "emotion_score": 0.4,
+  "source_platform": "threads_comment",
+  "source_url": "https://www.threads.net/@tieulacdaily/post/DXmGkZ8k5ZF",
+  "author": "qiwns.13",
+  "like_count": 0,
+  "narrative_score": 0.4,
+  "matched_pronouns": [
+    "em"
+  ],
+  "matched_reflective": [],
+  "matched_keywords": [
+    "vui",
+    "cáu"
+  ]
+}

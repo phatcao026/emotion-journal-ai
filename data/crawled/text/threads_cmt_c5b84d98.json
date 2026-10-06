@@ -1,0 +1,20 @@
+{
+  "sample_id": "threads_cmt_c5b84d98",
+  "modality": "text",
+  "text": "08/06/2026 Nên lúc chx bt chuyện thì bme mik cx rất mến a đó vì là ng b lâu nhất của atr mik,từ lúc a2 mik công khai thích con trai thì họ hàng và hàng xóm cx chúc mừng vì nhận ra tcam của 2 ng là thật lòng và cx chấp nhận vì 2 anh rất lễ phép. Nhưng chỉ riêng bame mik là k đý . Bây h thì 2 anh đã dọn ra sống riêng r mik ns kiểu g thì bame mik cx k cho phép 2 ng đến vs nhau .thật sự thì bây h k bt lms luôn",
+  "primary_label": "JOY",
+  "sub_label": "JOY",
+  "emotion_score": 0.4,
+  "source_platform": "threads_comment",
+  "source_url": "https://www.threads.net/@tieulacdaily/post/DXmGkZ8k5ZF",
+  "author": "hocngumaguhocba_01",
+  "like_count": 0,
+  "narrative_score": 0.4,
+  "matched_pronouns": [
+    "anh"
+  ],
+  "matched_reflective": [],
+  "matched_keywords": [
+    "mừng"
+  ]
+}

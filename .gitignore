@@ -14,6 +14,9 @@ checkpoints/
 *.mp3
 *.flac
 *.m4a
+*.webm
+*.mp4
+temp_voice_downloads/
 
 # Environment & API keys
 .env

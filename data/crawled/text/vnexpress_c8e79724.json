@@ -1,0 +1,32 @@
+{
+  "sample_id": "vnexpress_c8e79724",
+  "modality": "text",
+  "text": "Vào 'thùng rác' trên điện thoại vợ, tôi đã hiểu vì sao em thay đổi Tôi thấy ảnh vợ chụp khá thân mật với người đàn ông lạ (khoác vai) và ảnh chụp màn hình tin nhắn khá tình cảm, kiểu \"nhớ anh, nhớ em\". Mấy tháng nay, tôi thấy vợ có nhiều biểu hiện khác trước. Cô ấy hay cáu gắt với chồng, nói chuyện được vài câu đã khó chịu, hay từ chối những lần tôi gần gũi và có vẻ chăm chút ngoại hình hơn hẳn. Trước đây vợ tôi khá xuề xòa, đi làm chỉ cần quần áo gọn gàng là được, tối rửa mặt xong là đi ngủ, lười chăm sóc da. Gần đây, tối nào trước khi đi ngủ cô ấy cũng ngồi trước gương cả chục phút, chăm sóc da, đắp mặt nạ. Ban ngày ra ngoài đường là phải bôi kem chống nắng. Vợ còn mua thêm nước hoa, son và mấy món mỹ phẩm tôi chẳng biết tên. Tôi trêu là dạo này điệu thế, định cưa thằng khác à. Vợ bảo dạo này già nhanh lắm, sợ chồng chê rồi đi với con khác nên phải chăm chút bản thân. Nghe cũng có lý nên tôi không trêu vợ nữa. Cô ấy muốn xăm môi, xăm lông mày, tôi còn cho tiền đi làm. Nhưng nhiều lúc trong lòng vẫn thấy có gì đó không ổn, kiểu tò mò nên thỉnh thoảng tôi lại lén vào điện thoại của vợ kiểm tra. Tin nhắn, cuộc gọi, mạng xã hội đều không có gì đáng ngờ. Tôi còn nghĩ mình đa nghi quá. Tôi hôm trước, tôi dùng điện thoại của vợ chụp ảnh mấy bố con vì máy vợ xịn hơn, chụp đẹp hơn. Chụp xong, tôi vào album xóa những tấm bị nhắm mắt hoặc mờ nhưng lỡ tay xóa nhầm một tấm khá đẹp, tôi vào thùng rác để lấy lại và phát hiện ảnh vợ chụp khá thân mật với người đàn ông lạ (khoác vai). Còn có một ảnh chụp màn hình tin nhắn khá tình cảm, kiểu \"nhớ anh, nhớ em\". Nhưng qua hình ảnh và tin nhắn cũng chưa khẳng định được cô ấy và người kia qua lại với nhau, tôi chỉ sợ nói ra thì cô ấy chối bay chối biến. Tôi cảm giác vợ phản bội mình rồi. Tôi vẫn chưa nói gì. Giờ tôi nên làm thế nào mới phải đây? Hoàng Hưng",
+  "primary_label": "ANXIETY",
+  "sub_label": "FEAR",
+  "emotion_score": 0.8,
+  "source_platform": "vnexpress_tamsu",
+  "author": "Độc giả VnExpress",
+  "author_hash": "2d30d99c0cdb",
+  "source_url": "https://vnexpress.net/tinh-co-vao-thung-rac-tren-may-vo-toi-phat-hien-em-phan-boi-5126064.html",
+  "title": "Vào 'thùng rác' trên điện thoại vợ, tôi đã hiểu vì sao em thay đổi",
+  "narrative_score": 1.0,
+  "matched_pronouns": [
+    "tôi",
+    "mình",
+    "em",
+    "anh",
+    "bản thân",
+    "trong lòng"
+  ],
+  "matched_reflective": [
+    "dạo này",
+    "nhiều lúc"
+  ],
+  "matched_keywords": [
+    "gần gũi",
+    "sợ",
+    "khó chịu",
+    "cáu"
+  ]
+}

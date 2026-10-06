@@ -1,0 +1,22 @@
+{
+  "sample_id": "threads_cmt_f17e1eb0",
+  "modality": "text",
+  "text": "Chuyện là anh mình là gay (bot) nhưng bố mẹ mình đã biết và k đý cho a2 mình và a kia quen nhau gđ mik ms cãi nhau hôm 14-15/5 g đấy vì vụ của atr mình, thì mik sống trong cái tg tương lai này thì mik cx bt con trai vs con trai yêu nhau là chuyện bth th .Vs lại a đó ngoại hình nhìn khá ổn cao tận 1m8 mấy lận lại , rất yêu thương atr mik 2ng yêu nhau cx đc 6-7 gì đó ,mik cx là ng chứng kiến 2a yêu nhau từ hồi c3 đến hết đại học nên bt 2 ng thật lòng đến nhường nào, a ấy thì là bạn của atrai mình",
+  "primary_label": "JOY",
+  "sub_label": "HOPE",
+  "emotion_score": 0.4,
+  "source_platform": "threads_comment",
+  "source_url": "https://www.threads.net/@tieulacdaily/post/DXmGkZ8k5ZF",
+  "author": "hocngumaguhocba_01",
+  "like_count": 0,
+  "narrative_score": 0.8,
+  "matched_pronouns": [
+    "mình",
+    "anh"
+  ],
+  "matched_reflective": [],
+  "matched_keywords": [
+    "tương lai",
+    "yêu thương"
+  ]
+}

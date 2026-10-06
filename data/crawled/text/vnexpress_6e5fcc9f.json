@@ -1,0 +1,33 @@
+{
+  "sample_id": "vnexpress_6e5fcc9f",
+  "modality": "text",
+  "text": "Tôi bị bạn gái chia tay sau lần ngủ chung đầu tiên Tôi hỏi có phải do chuyện hôm đó không nhưng cô ấy chỉ lắc đầu, bảo tôi đừng hỏi nữa. Tôi 25 tuổi, bạn gái 24 tuổi, chúng tôi mới yêu nhau được vài tháng. Trước đây hai đứa thường chỉ gặp nhau đi ăn, xem phim hoặc cà phê, cuối tuần thì có khi đi chơi cả ngày. Mọi chuyện vẫn khá vui vẻ, chưa từng xảy ra mâu thuẫn lớn. Cuối tuần trước, là sinh nhật của bạn gái, tôi muốn tạo bất ngờ cho em và cũng muốn hai đứa gần gũi hơn, sẽ là kỷ niệm khó quên nên đã lên kế hoạch đàng hoàng. Tối ngày trước hôm sinh nhật, tôi hẹn em đi ăn, đi chơi và xem phim như mọi khi. Sau khi xem xong phim, cũng muộn, tôi rủ em vào một khách sạn 3 sao. Khi em ngần ngại thì tôi bảo là có bất ngờ cho em và hứa sẽ không làm gì nếu em không đồng ý. Chúng tôi vào khách sạn lúc 11h đêm. Tôi bảo em đi rửa tay chân mặt mũi, có thể tắm qua cho thoải mái nếu muốn. Tôi cũng thế. Sau đó khoảng 11h40, tôi bảo em khóa cửa lại chờ tôi một lát, tôi đi ra ngoài lấy chút đồ rồi quay lại. Tôi xuống dưới gặp phục vụ lấy bánh sinh nhật và hoa đã chuẩn bị từ trước mang lên phòng chúc mừng em và đúng 0h ngày sinh nhật. Em vui lắm và chúng tôi có một đêm mặn nồng bên nhau. Vì cả hai từng có mối tình trước đó và đã đi quá giới hạn nên giờ cũng không bỡ ngỡ gì nhiều. Tôi rất hạnh phúc khi bên em và tôi nghĩ chắc em cũng vậy. Sáng hôm sau dậy, tôi đưa em đi làm. Em vẫn bình thường, còn cùng tôi ăn sáng. Ngồi trên xe, em vẫn ôm eo tôi như mọi khi. Tôi hoàn toàn không nghĩ đó lại là lần cuối chúng tôi ở bên nhau. Từ hôm ấy, em thay đổi hẳn. Tôi nhắn tin thì trả lời cụt ngủn, không còn chủ động gọi điện như trước. Tôi hỏi có chuyện gì thì em bảo không có gì, chỉ là bận công việc, tôi hẹn đi chơi cũng kêu bận. Đến tối ngày thứ ba, em hẹn gặp và bất ngờ nói muốn chia tay vì cảm thấy hai đứa không hợp. Tôi hỏi có phải do chuyện hôm đó không nhưng em chỉ lắc đầu, bảo tôi đừng hỏi nữa. Tôi cứ nghĩ mãi về đêm hôm đó. Tôi có tật ngáy khá to, sáng hôm sau em còn trêu: \"Đêm qua anh ngáy như kéo gỗ\". Tôi cũng cười cười, trêu lại là ngáy cho vui cửa vui nhà, em cứ bịt mũi anh lại là anh hết ngáy ngay. Hay là vì tôi ngáy to nên em không thích? Hay là khi gần gũi, em thấy không thích, không hài lòng nhưng lại ngại không muốn nói. Hoặc có thể em hối hận vì đã gần gũi với tôi hôm đó. Tôi có hỏi em thêm mấy lần, bảo tôi có làm gì sai thì cứ nói để tôi sửa nhưng em chỉ nói là không hợp, đi tiếp cũng không có kết quả, thà dừng sớm còn đỡ đau. Tôi tôn trọng quyết định của em nhưng đến giờ vẫn không hiểu rốt cuộc mình đã làm điều gì sai khiến bạn gái bỏ đi như vậy. Xuân Sơn",
+  "primary_label": "JOY",
+  "sub_label": "JOY",
+  "emotion_score": 1.0,
+  "source_platform": "vnexpress_tamsu",
+  "author": "Độc giả VnExpress",
+  "author_hash": "2d30d99c0cdb",
+  "source_url": "https://vnexpress.net/toi-bi-ban-gai-chia-tay-sau-lan-ngu-chung-dau-tien-5126392.html",
+  "title": "Tôi bị bạn gái chia tay sau lần ngủ chung đầu tiên",
+  "narrative_score": 1.0,
+  "matched_pronouns": [
+    "tôi",
+    "mình",
+    "em",
+    "anh",
+    "với tôi"
+  ],
+  "matched_reflective": [
+    "cảm thấy",
+    "kỷ niệm"
+  ],
+  "matched_keywords": [
+    "vui",
+    "mừng",
+    "hạnh phúc",
+    "cười",
+    "gần gũi",
+    "hối hận"
+  ]
+}

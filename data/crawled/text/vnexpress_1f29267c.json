@@ -1,0 +1,32 @@
+{
+  "sample_id": "vnexpress_1f29267c",
+  "modality": "text",
+  "text": "Yêu vợ nhưng không muốn về nhà sau giờ làm Có hôm đồng nghiệp rủ đi ăn tối, tôi nhận lời ngay, đi đến 22h; về đến nhà, vợ con đã ngủ, tôi có cảm giác nhẹ nhõm kỳ lạ. Tôi 37 tuổi, kết hôn được gần 8 năm và có hai con. Nhìn từ bên ngoài, gia đình tôi không có vấn đề gì quá lớn. Vợ chồng đều có công việc ổn định, con cái khỏe mạnh, kinh tế không đến mức thiếu thốn. Tôi cũng chưa từng phản bội hay có ý định tìm kiếm một người phụ nữ khác. Thế nhưng gần đây tôi không còn háo hức trở về nhà sau giờ làm. Ngày mới yêu, chỉ cần tan làm là tôi muốn gặp cô ấy. Hai người có thể ngồi với nhau hàng giờ, kể đủ chuyện từ công việc đến những chuyện chẳng đâu vào đâu. Mới cưới, tôi cũng luôn cho rằng dù sau này có bận rộn đến đâu, nhà vẫn sẽ là nơi khiến mình muốn trở về. Thế mà không biết từ lúc nào, điều đó dần biến mất. Từ khi được lên chức trưởng phòng, vợ tôi ngày càng bận rộn với công việc và chăm con. Tôi hiểu cô ấy cũng có những áp lực riêng. Hai đứa trẻ còn nhỏ, việc nhà không bao giờ hết, tôi chưa bao giờ yêu cầu vợ phải ở nhà làm bà nội trợ nhưng một hai năm gần đây tôi chủ động làm việc nhà nhiều hơn. Trước đây, mỗi khi tôi về muộn, cô ấy thường nhắn hỏi đang ở đâu, có ăn tối không. Tôi bị cảm hay đau đầu, vợ cũng để ý và chăm sóc. Những chuyện nhỏ như vậy khiến tôi cảm thấy mình được quan tâm. Giờ thì khác, có hôm tôi đi làm về mệt mỏi, vợ cũng chẳng quan tâm xem vì sao chồng mệt. Sự thiếu quan tâm của vợ khiến tôi thấy vợ chồng chỉ như hai người sống chung nhà. Vợ cũng không còn chia sẻ với tôi như trước. Những chuyện xảy ra ở công ty, chuyện bạn bè, tôi không hay biết. Có hôm cô ấy về muộn, tôi hỏi thì vợ chỉ bảo có việc. Tôi luôn mong vợ chủ động chia sẻ, coi tôi là người đồng hành. Tôi cũng nhận ra bản thân đã thay đổi. Trước đây, dù đi làm mệt đến đâu, tôi vẫn muốn về nhà ăn cơm cùng vợ con. Bây giờ có những hôm tan làm, tôi ngồi lại ở quán cà phê gần công ty rất lâu, chẳng muốn về nhà ngay. Có hôm đồng nghiệp rủ đi ăn tối, tôi nhận lời ngay, đi đến 22h mới về. Về đến nhà, vợ con đã ngủ, tôi lại có cảm giác nhẹ nhõm kỳ lạ. Tôi sợ nếu cứ tiếp tục, một ngày nào đó sẽ thích ở bên ngoài hơn ở nhà. Cuộc sống sau hôn nhân không giống như khi yêu, nhất là khi đã có con, trăm thứ phải lo, ít thời gian lãng mạn, nhưng không đồng nghĩa với việc vợ chồng ít quan tâm đến nhau. Tôi chỉ mong trong thế giới của vợ luôn có một góc dành cho chồng. Tôi còn yêu vợ, cần gia đình này, phải làm sao đây? Phạm Thanh",
+  "primary_label": "JOY",
+  "sub_label": "CONNECTION",
+  "emotion_score": 1.0,
+  "source_platform": "vnexpress_tamsu",
+  "author": "Độc giả VnExpress",
+  "author_hash": "2d30d99c0cdb",
+  "source_url": "https://vnexpress.net/yeu-vo-nhung-khong-muon-ve-nha-sau-gio-lam-5127150.html",
+  "title": "Yêu vợ nhưng không muốn về nhà sau giờ làm",
+  "narrative_score": 1.0,
+  "matched_pronouns": [
+    "tôi",
+    "mình",
+    "bản thân",
+    "với tôi"
+  ],
+  "matched_reflective": [
+    "cảm thấy",
+    "áp lực",
+    "mệt mỏi"
+  ],
+  "matched_keywords": [
+    "nhẹ nhõm",
+    "gia đình",
+    "đồng hành",
+    "áp lực",
+    "sợ"
+  ]
+}

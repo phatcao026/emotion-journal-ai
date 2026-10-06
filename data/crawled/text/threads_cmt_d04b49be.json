@@ -1,0 +1,18 @@
+{
+  "sample_id": "threads_cmt_d04b49be",
+  "modality": "text",
+  "text": "27/04/2026 t đang cô lập cả lớp🫪 thật ra thì do ban đầu t có thân và chơi 1vs1 với 1 đứa, đứa đó thì hoà đồng nên mqh nó nhiều hơn t, xong tính tụi t ko hợp, cái nó đi chơi vs đứa khác, còn t ít mqh nên t đang cô lập cả lớp🫪, ở nhà thì bth chứ t đang ở trọ, nên cứ học xong về rồi loay hoay 1 mình nên suy vcl",
+  "primary_label": "NEUTRAL",
+  "sub_label": "CALM",
+  "emotion_score": 0.0,
+  "source_platform": "threads_comment",
+  "source_url": "https://www.threads.net/@tieulacdaily/post/DXmGkZ8k5ZF",
+  "author": "phonggngonzai",
+  "like_count": 0,
+  "narrative_score": 0.4,
+  "matched_pronouns": [
+    "mình"
+  ],
+  "matched_reflective": [],
+  "matched_keywords": []
+}

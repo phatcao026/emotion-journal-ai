@@ -1,0 +1,24 @@
+{
+  "sample_id": "vnexpress_09c85072",
+  "modality": "text",
+  "text": "Chi 10 triệu tiền riêng mua đồ mình thích, tôi bị vợ giận cả tuần Đôi khi ở công ty, tôi có thêm thưởng chỉ tiêu, thưởng hàng quý nên cũng để riêng ra được một khoản tiền riêng. Vợ chồng tôi có công việc ổn định, thu nhập không phải là cao nhưng cũng ổn xét theo mặt bằng chung, đã có nhà có xe, không vướng nợ nần gì. Cuộc sống có thể coi là dễ thở. Hàng tháng tôi đưa vợ hai phần ba thu nhập để lo ăn uống, một phần ba tôi giữ lại để chi tiêu cá nhân, xe cộ. Đôi khi ở công ty, tôi có thêm thưởng chỉ tiêu, thưởng hàng quý nên cũng để riêng ra được một khoản tiền riêng, không lẫn vào với tiền chung hai vợ chồng. Ngày lễ Tết, sinh nhật, tôi vẫn mùa quà cáp tặng vợ đầy đủ bằng tiền cá nhân, chưa bao giờ xin lại một đồng. Đợt vừa rồi tôi chi ra 10 triệu đồng để mua một số món đồ mình thích từ lâu nhưng mãi bây giờ mới dám mua. Vợ biết chuyện và chúng tôi đã cãi nhau. Tôi cho rằng mình bỏ tiền túi, không liên quan gì đến tiền chung, tôi vẫn hoàn thành nghĩa vụ tài chính nên có chi tiêu như ý muốn. Vợ không nghe, cho rằng hai vợ chồng còn nhiều việc phải lo, không nên tốn kém cho sở thích không cần thiết. Vợ chồng tôi đã chiến tranh lạnh cả tuần nay vì bất đồng ý kiến. Thực sự mệt mỏi. Chẳng lẽ tôi không có quyền chi tiêu cho sở thích bản thân? Xuân Tùng",
+  "primary_label": "NEUTRAL",
+  "sub_label": "CALM",
+  "emotion_score": 0.0,
+  "source_platform": "vnexpress_tamsu",
+  "author": "Độc giả VnExpress",
+  "author_hash": "2d30d99c0cdb",
+  "source_url": "https://vnexpress.net/chi-10-trieu-tien-rieng-mua-do-minh-thich-toi-bi-vo-gian-ca-tuan-5127861.html",
+  "title": "Chi 10 triệu tiền riêng mua đồ mình thích, tôi bị vợ giận cả tuần",
+  "narrative_score": 1.0,
+  "matched_pronouns": [
+    "tôi",
+    "mình",
+    "bản thân"
+  ],
+  "matched_reflective": [
+    "đôi khi",
+    "mệt mỏi"
+  ],
+  "matched_keywords": []
+}

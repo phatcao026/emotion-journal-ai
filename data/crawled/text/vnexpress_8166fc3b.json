@@ -1,0 +1,25 @@
+{
+  "sample_id": "vnexpress_8166fc3b",
+  "modality": "text",
+  "text": "Con ghét học lớp chọn Nhiều lúc con có chia sẻ với bố mẹ về việc chuyển xuống lớp thường nhưng bố mẹ không đồng ý. Con là nam, sinh năm 2014, học lớp bảy. Con đang học cấp hai và học lớp chọn (lớp điểm nhiều học sinh xuất sắc). Thật sự từ khi bước vào lớp chọn, con thấy rất áp lực, những con điểm như ngay sau lưng con, còn bố mẹ bắt con học thêm tận ba môn là Văn, Toán, tiếng Anh. Ba môn đó con thật sự chả thích tí nào nhưng vẫn bị ép học. Nhiều lúc con có chia sẻ với bố mẹ về việc chuyển xuống lớp thường nhưng bố mẹ không đồng ý. Nhiều khi kiểm tra không được điểm cao là con bị mắng rồi giáo viên khiển trách con. Giáo viên dạy thêm thì nói con học nhiều mà không làm được. Con thật sự đã rất mệt với cái lớp chọn này. Con ghét nó. Bảo Minh",
+  "primary_label": "ANGER",
+  "sub_label": "ANGER",
+  "emotion_score": 0.8,
+  "source_platform": "vnexpress_tamsu",
+  "author": "Độc giả VnExpress",
+  "author_hash": "2d30d99c0cdb",
+  "source_url": "https://vnexpress.net/con-ghet-hoc-lop-chon-5126380.html",
+  "title": "Con ghét học lớp chọn",
+  "narrative_score": 0.8,
+  "matched_pronouns": [
+    "anh"
+  ],
+  "matched_reflective": [
+    "nhiều lúc",
+    "áp lực"
+  ],
+  "matched_keywords": [
+    "áp lực",
+    "ghét"
+  ]
+}

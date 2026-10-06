@@ -1,0 +1,22 @@
+{
+  "sample_id": "threads_cmt_412e5cf6",
+  "modality": "text",
+  "text": "Nhưng danh tiếng của mẹ bị hủy hoại từ những lời nói của bố. Tất nhiên là sau đó họ đã ly hôn và có cuộc sống riêng. Nhưng bản thân mình lại như vẫn sống trong khoảng thời gian ấy, dù đã 9 năm trôi qua. Nỗi đau cứ âm ỉ và dai dẳng. Mình đã từng rất shock, và thất vọng với bố. Mình đã từng nghĩ cuộc đời đẹp biết bao, có cả bố và mẹ yêu thương mình. Bây giờ ai yêu thương mình? Mọi thứ như sụp đổ, mình đã từng muốn làm hại bản thân, không muốn đối diện với sự thật là gia đình của mình đã tan nát.",
+  "primary_label": "JOY",
+  "sub_label": "CONNECTION",
+  "emotion_score": 1.0,
+  "source_platform": "threads_comment",
+  "source_url": "https://www.threads.net/@tieulacdaily/post/DXmGkZ8k5ZF",
+  "author": "khanhhan1730",
+  "like_count": 3,
+  "narrative_score": 0.8,
+  "matched_pronouns": [
+    "mình",
+    "bản thân"
+  ],
+  "matched_reflective": [],
+  "matched_keywords": [
+    "yêu thương",
+    "gia đình"
+  ]
+}

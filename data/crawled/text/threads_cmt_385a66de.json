@@ -1,0 +1,18 @@
+{
+  "sample_id": "threads_cmt_385a66de",
+  "modality": "text",
+  "text": "31/05/2026 Nhưng tại sao vẫn cứ đau khổ. Không biết bản thân có thể thực hiện ước mơ đó không?",
+  "primary_label": "NEUTRAL",
+  "sub_label": "CALM",
+  "emotion_score": 0.0,
+  "source_platform": "threads_comment",
+  "source_url": "https://www.threads.net/@tieulacdaily/post/DXmGkZ8k5ZF",
+  "author": "khanhhan1730",
+  "like_count": 0,
+  "narrative_score": 0.4,
+  "matched_pronouns": [
+    "bản thân"
+  ],
+  "matched_reflective": [],
+  "matched_keywords": []
+}

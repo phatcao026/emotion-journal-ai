@@ -1,0 +1,23 @@
+{
+  "sample_id": "threads_cmt_ca02206c",
+  "modality": "text",
+  "text": "có lẽ mình thấy bình luận của bạn lâu nhưng mình cũng muốn gợi ý cho bạn ạ , bạn có thể nói. Thím ơi, mai con có chỗ hẹn xin việc lúc 8 giờ sáng ở quán này. Từ nhà mình xuống đó cũng hơi xa mà con chỉ có xe đạp nên sợ không kịp. Nếu thím rảnh thì sáng mai thím chở con xuống đó giúp con được không ạ? Con cảm ơn thím nhiều lắm. Nếu thím bận thì không sao đâu ạ, con sẽ tìm cách khác.lời này vừa lễ phép và k tạo áp lực cho thím bạn lắm ạ , chúc bạn có công việc thuận lợi nhé!",
+  "primary_label": "ANXIETY",
+  "sub_label": "ANXIETY",
+  "emotion_score": 0.4,
+  "source_platform": "threads_comment",
+  "source_url": "https://www.threads.net/@tieulacdaily/post/DXmGkZ8k5ZF",
+  "author": "andanh0102",
+  "like_count": 0,
+  "narrative_score": 0.6000000000000001,
+  "matched_pronouns": [
+    "mình"
+  ],
+  "matched_reflective": [
+    "áp lực"
+  ],
+  "matched_keywords": [
+    "áp lực",
+    "sợ"
+  ]
+}

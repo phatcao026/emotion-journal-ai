@@ -1,0 +1,40 @@
+{
+  "sample_id": "vnexpress_885ea314",
+  "modality": "text",
+  "text": "Vợ cũ của chồng khiến tôi bận tâm nhiều Tôi sợ một ngày vợ cũ xuất hiện khi cuộc sống của chị có gì đó cần hỗ trợ, khi đó liệu tôi có đủ rộng lượng để chấp nhận? Tôi 34 tuổi, kết hôn gần hai năm, con được một tuổi. Chồng hơn tôi vài tuổi và từng có cuộc hôn nhân kéo dài nhiều năm trước khi đến với tôi. Tôi biết sơ qua về quá khứ của anh, không hoàn toàn bình yên nhưng ngay từ đầu đã chấp nhận để yêu anh. Ai chẳng có quá khứ, một người từng đổ vỡ họ chắc chắn có những kỷ niệm không thể xóa sạch nhưng cũng biết cách trân trọng hạnh phúc hiện tại. Thế nhưng sau khi kết hôn, tôi mới nhận ra có những chuyện dù không muốn nghĩ đến vẫn cứ xuất hiện trong đầu. Khi yêu nhau, tôi không mấy để tâm đến vợ cũ anh. Chẳng hiểu sao cưới rồi tôi bắt đầu để ý đến chị ấy. Chị từng sống với anh gần chục năm, cùng anh trải qua những ngày khó khăn nhất. Hai người chắn chắn sẻ chia cùng nhau những chuyện mà có lẽ tôi không bao giờ hiểu hết. Tôi không biết cuộc hôn nhân của họ đã bắt đầu rạn nứt từ khi nào, chỉ nghe rằng hai người từng có một khoảng thời gian dài sống không hạnh phúc rồi mới quyết định ly hôn. Điều khiến tôi khó chịu là dù cuộc hôn nhân ấy đã kết thúc, người phụ nữ đó dường như vẫn là một phần trong cuộc sống của chồng. Chị ấy như một cái bóng trong hôn nhân của tôi. Họ từng sống với nhau gần một thập kỷ, giờ chia tay rồi có thể thật sự trở thành người xa lạ không? Có thể hai người họ không còn yêu, không nghĩ chuyện quay lại, nhưng những năm tháng họ đã bên nhau, những kỷ niệm vui buồn họ từng có, tôi là người đến sau chẳng thể nào có được. Tôi biết mình không nên so sánh với vợ cũ anh nhưng trong đầu vẫn nghĩ nhiều. Nếu một ngày người phụ nữ ấy gặp khó khăn, liệu chồng tôi có thể thờ ơ không? Tôi sợ sự thương cảm đôi khi rất khó phân định giới hạn. Nhiều lúc trấn an bản thân rằng tại sao lại cứ nghĩ những chuyện mơ hồ, chưa chắc đã xảy ra, mình đã chấp nhận lấy anh là chấp nhận cả quá khứ của anh rồi, còn lăn tăn gì nữa? Thế nhưng thực tế đâu phải tôi làm được như thế. Chỉ cần vô tình nghe nhắc đến một nơi nào đó, một người quen cũ hay một câu chuyện liên quan đến quãng thời gian trước đây của chồng, trong lòng tôi lại xuất hiện cảm giác rất khó tả. Tôi sợ một ngày vợ cũ xuất hiện trở lại khi cuộc sống của chị có vấn đề gì đó cần hỗ trợ, khi đó liệu tôi có đủ rộng lượng để chấp nhận? Tôi sợ mình sẽ trở thành người ích kỷ nếu bắt chồng phải sống vô cảm với vợ cũ, cũng là mẹ của con anh. Tôi đã lựa chọn kết hôn với một người từng có gia đình, đáng lẽ phải hiểu chuyện hơn nhưng tôi không thể. Thật lòng tôi thương chị ấy, một người từng có gia đình rồi lại phải bước ra khỏi hôn nhân chắc chắn cũng mang theo những tổn thương riêng. Thế nhưng tôi cũng lo cho hạnh phúc của mình. Tôi chỉ mong một ngày nào đó có thể thật sự bình thản khi nghĩ về chị ấy, không còn cảm giác lo sợ hay tự so sánh. Tôi phải làm sao đây? Mong các bạn chia sẻ cùng tôi. Huyền Nga",
+  "primary_label": "ANXIETY",
+  "sub_label": "FEAR",
+  "emotion_score": 1.0,
+  "source_platform": "vnexpress_tamsu",
+  "author": "Độc giả VnExpress",
+  "author_hash": "2d30d99c0cdb",
+  "source_url": "https://vnexpress.net/vo-cu-cua-chong-khien-toi-ban-tam-nhieu-5127048.html",
+  "title": "Vợ cũ của chồng khiến tôi bận tâm nhiều",
+  "narrative_score": 1.0,
+  "matched_pronouns": [
+    "tôi",
+    "mình",
+    "anh",
+    "bản thân",
+    "trong lòng",
+    "với tôi"
+  ],
+  "matched_reflective": [
+    "nhiều lúc",
+    "đôi khi",
+    "tổn thương",
+    "kỷ niệm"
+  ],
+  "matched_keywords": [
+    "không_hạnh phúc",
+    "không_bình yên",
+    "buồn",
+    "hạnh phúc",
+    "vui",
+    "sẻ chia",
+    "gia đình",
+    "mơ hồ",
+    "sợ",
+    "khó chịu"
+  ]
+}

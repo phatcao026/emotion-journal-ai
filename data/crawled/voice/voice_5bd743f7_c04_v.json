@@ -1,0 +1,17 @@
+{
+  "sample_id": "voice_5bd743f7_c04_v",
+  "modality": "voice",
+  "audio_file": "voice_5bd743f7_c04_v.wav",
+  "duration_s": 45.0,
+  "primary_label": "SADNESS",
+  "sub_label": "LONELINESS",
+  "emotion_score": 0.9,
+  "source_platform": "radio_podcast_monologue",
+  "author": "nguoigiukinhiem",
+  "author_hash": "af4b8fdeaba5",
+  "source_url": "https://www.youtube.com/watch?v=0k-k6t2In9s",
+  "voice_type": "acted_radio",
+  "rms_dbfs": -13.69,
+  "peak": 0.993,
+  "speech_ratio": 0.849
+}

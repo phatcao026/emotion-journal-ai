@@ -1,0 +1,25 @@
+{
+  "sample_id": "threads_cmt_9e17e8df",
+  "modality": "text",
+  "text": "Xin chào mọi người , t là kim , sự thật là t chán nhà t lắm , kiểu nó khủng kinh luôn Nhưng trc mặt ng ngoài t luon kể tốt về gd và t ko biết điều t kể có hay ko\nNhưng hôm qua , tiền để dành của t (125k) bỗng mất (20k) t hoang mang lắm xong kiểm tra thì lắc tay ba mua cũng tự nhiên mất , t hỏi hết , thì mới biết là bà nội t lấy lắc tặng cho cháu bên nhà ngoại , còn tiền thì anh hai t lấy\nT ghét lắm , hôm đấy t khóc , r giận dỗi ko ăn cơm thế là bị gd bảo matday có tí VC cũng làm quá , áp lực vcl",
+  "primary_label": "ANXIETY",
+  "sub_label": "ANXIETY",
+  "emotion_score": 0.8,
+  "source_platform": "threads_comment",
+  "source_url": "https://www.threads.net/@tieulacdaily/post/DXmGkZ8k5ZF",
+  "author": "huynh8733anh",
+  "like_count": 0,
+  "narrative_score": 0.6000000000000001,
+  "matched_pronouns": [
+    "anh"
+  ],
+  "matched_reflective": [
+    "áp lực"
+  ],
+  "matched_keywords": [
+    "khóc",
+    "áp lực",
+    "hoang mang",
+    "ghét"
+  ]
+}

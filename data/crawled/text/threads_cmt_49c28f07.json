@@ -1,0 +1,18 @@
+{
+  "sample_id": "threads_cmt_49c28f07",
+  "modality": "text",
+  "text": "Cuối cùng cũng có một nhân vật đúng chuẩn hình mẫu lý tưởng của tao. Một kẻ ăn nhiều và bố láo. Đám bạn không hiểu tại sao tao luôn ăn nhiều và luôn làm khùng làm điên. Chúng nó không biết năng lực thực sự của tao và không hề biết tao xuất chúng tới mức nào. Tao chẳng coi chúng là gì ngoài công cụ. Tao ước mình có thể vào trong thế giới anime và bộc lộ con người thực sự của mình. Tao tin chắc rằng tao chính là hoá thân ngoài đời thực của Momonga.",
+  "primary_label": "NEUTRAL",
+  "sub_label": "CALM",
+  "emotion_score": 0.0,
+  "source_platform": "threads_comment",
+  "source_url": "https://www.threads.net/@tieulacdaily/post/DXmGkZ8k5ZF",
+  "author": "rsr1207_",
+  "like_count": 1,
+  "narrative_score": 0.4,
+  "matched_pronouns": [
+    "mình"
+  ],
+  "matched_reflective": [],
+  "matched_keywords": []
+}

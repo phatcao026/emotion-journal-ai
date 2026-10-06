@@ -1,0 +1,23 @@
+{
+  "sample_id": "vnexpress_06931520",
+  "modality": "text",
+  "text": "Nếu không cho đồng nghiệp vay tiền, tôi và mọi người sẽ bị nói xấu Nhiều người bị chị đó mượn không trả rồi, ai không cho mượn thì chị ấy kiếm chuyện bôi xấu đủ thứ. Tôi không nghĩ trong môi trường giáo dục mà có những con người như thế. Không thể vì túng quẫn, nợ nần mà đánh mất giá trị con người mình như vậy, nhất là khi mình là một giáo viên, hàng ngày đứng trước các em học sinh để dạy kiến thức và cả cách làm người. Trường tôi có một chị, chồng là bác sĩ nhưng không hiểu vì lý do gì mà 5-6 năm trước lâm vào nợ nần, phải bán nhà. Tôi sống ít quan tâm đến chuyện đời tư người khác. Gần đây, tôi nghe thông tin chị mượn tiền rất nhiều người trong trường nhưng không trả, còn ai không cho mượn thì chị nói xấu người đó với người khác. Cách đây hơn tuần, chị gặp tôi hỏi mượn vài triệu đồng, hứa đúng ngày này giờ này sẽ trả đủ. Vì nhận được thông tin mọi người nói về chị nên tôi viện cớ nói không có tiền, rồi chị hạ số tiền mượn xuống còn một triệu đồng, rồi 500 nghìn đồng. Tôi đem chuyện này đi hỏi một chị đồng nghiệp khác, rằng có nên cho chị mượn tiền hay không. Chị đồng nghiệp mới nói: \"Thôi em cho nó mượn 500 nghìn đồng, xem như cho con của nó, không hy vọng nó trả đâu. Còn nếu em không cho nó mượn thì nó sẽ đi nói xấu em khắp trường. Nhiều người bị nó mượn không trả rồi, ai không cho mượn thì nó kiếm chuyện bôi xấu đủ thứ. Thôi mua đường vắng đi em\". Nghe lời chị đồng nghiệp, tôi chuyển tiền cho chị kia mượn và cũng xác định là coi như cho con chị. Hôm sau chị đồng nghiệp gặp tôi và dặn thêm: \"Nếu nó trả em thì đó là cách nó sẽ mượn em thêm lần nữa đó, em phải tìm mọi cách để từ chối nhé\". Về nhà nằm suy nghĩ về trường hợp của chị vay tiền, tôi không tin rằng trên đời này có người vì hoàn cảnh mà trơ trẽn, đánh mất giá trị của mình như thế. Tại sao ban giám hiệu biết mà không chấn chỉnh, răn đe để khỏi ảnh hưởng đến uy tín nhà trường. Điều quan trọng nhất là trong ánh mắt của học sinh, người giáo viên đó còn đủ tư cách để dạy học không? Tôi kể câu chuyện này chỉ mong người trong cuộc nếu đọc được hãy tự điều chỉnh để không ảnh hưởng đến hình ảnh người giáo viên. Vân Hoa",
+  "primary_label": "SADNESS",
+  "sub_label": "SADNESS",
+  "emotion_score": 0.48,
+  "source_platform": "vnexpress_tamsu",
+  "author": "Độc giả VnExpress",
+  "author_hash": "2d30d99c0cdb",
+  "source_url": "https://vnexpress.net/neu-khong-cho-dong-nghiep-vay-tien-toi-va-moi-nguoi-se-bi-noi-xau-5126513.html",
+  "title": "Nếu không cho đồng nghiệp vay tiền, tôi và mọi người sẽ bị nói xấu",
+  "narrative_score": 1.0,
+  "matched_pronouns": [
+    "tôi",
+    "mình",
+    "em"
+  ],
+  "matched_reflective": [],
+  "matched_keywords": [
+    "không_hy vọng"
+  ]
+}

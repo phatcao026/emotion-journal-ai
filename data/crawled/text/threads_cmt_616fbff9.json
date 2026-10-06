@@ -1,0 +1,22 @@
+{
+  "sample_id": "threads_cmt_616fbff9",
+  "modality": "text",
+  "text": "Ỏ huhu mình thì bh cx đỡ r á🥺 nhưng vẫn chx khỏi hẳn  mà nhiều cái mình thấy khó chịu ở bảm thân í🥲 chỉ 1 chút xíu vc j đó thôi là lại buồn xong lo lắng mà cứ mỗi lúc mình lo lắng í là mình lại thấy bụng quặng hết lên xong buồn nôn khó thở nx😭 mình cx còn 1-2 bạn khc nx ấy kiểu mấy bạn í cx ko thích cái bạn này [bạn thân khc giới của mình] kiểu khi mà bt chuyện bạn nam kia đối xử với mình như thế í thì bạn còn lại cx tỏ thái độ ra mặt luôn🥲 cảm ơn bạn rất nhiều vì nói chuyện với mình nhaaa!!",
+  "primary_label": "SADNESS",
+  "sub_label": "SADNESS",
+  "emotion_score": 0.8,
+  "source_platform": "threads_comment",
+  "source_url": "https://www.threads.net/@tieulacdaily/post/DXmGkZ8k5ZF",
+  "author": "mtranngockim",
+  "like_count": 1,
+  "narrative_score": 0.4,
+  "matched_pronouns": [
+    "mình"
+  ],
+  "matched_reflective": [],
+  "matched_keywords": [
+    "buồn",
+    "lo lắng",
+    "khó chịu"
+  ]
+}

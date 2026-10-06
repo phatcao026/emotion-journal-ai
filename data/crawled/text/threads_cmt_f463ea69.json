@@ -1,0 +1,18 @@
+{
+  "sample_id": "threads_cmt_f463ea69",
+  "modality": "text",
+  "text": "12/05/2026 dạ, lúc sáng em có đi xin lỗi cô td r ạ, cô cho em thi lại rồi ạ",
+  "primary_label": "NEUTRAL",
+  "sub_label": "CALM",
+  "emotion_score": 0.0,
+  "source_platform": "threads_comment",
+  "source_url": "https://www.threads.net/@tieulacdaily/post/DXmGkZ8k5ZF",
+  "author": "qiwns.13",
+  "like_count": 0,
+  "narrative_score": 0.4,
+  "matched_pronouns": [
+    "em"
+  ],
+  "matched_reflective": [],
+  "matched_keywords": []
+}

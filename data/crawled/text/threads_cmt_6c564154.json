@@ -1,0 +1,24 @@
+{
+  "sample_id": "threads_cmt_6c564154",
+  "modality": "text",
+  "text": "10/05/2026 · Tác giả Môn td à em kết quả hk2 vô cùng quan trọng quyết định cả năm học đó. Bị hiểu lầm đúng là kh ai mong muốn và cũng làm em buồn rất nhiều nhưng mà hãy quan tâm trước hết vào đường đua học tập em nhé. Em có thể liên hệ với cô để giải thích hoặc là giáo viên chủ nhiệm, xin lỗi giáo viên và xin thi lại nhé. Dù có ấm ức hay buồn gv thì chị cũng khuyên em nên xin thi lại. Nó quan trọng với em rất nhiều mà đk. Kh cần giận buồn hay phải bỏ qua cho ai hết. Đặt lợi ích của mình hàng đầu em nhé. Cố gắng lên",
+  "primary_label": "SADNESS",
+  "sub_label": "SADNESS",
+  "emotion_score": 1.0,
+  "source_platform": "threads_comment",
+  "source_url": "https://www.threads.net/@tieulacdaily/post/DXmGkZ8k5ZF",
+  "author": "tieulacdaily",
+  "like_count": 0,
+  "narrative_score": 1.0,
+  "matched_pronouns": [
+    "mình",
+    "em"
+  ],
+  "matched_reflective": [
+    "cố gắng"
+  ],
+  "matched_keywords": [
+    "cố gắng",
+    "buồn"
+  ]
+}
