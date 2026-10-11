@@ -67,7 +67,8 @@ def calculate_taxonomy_violation_rate(
 def _extract_recall(metrics_dict: Dict[str, Any], class_idx: int) -> float:
     """Extract per-class recall from metrics dictionary."""
     for item in metrics_dict.get("per_class", []):
-        if item.get("class") == class_idx:
+        c = item.get("class")
+        if c == class_idx or str(c) == str(class_idx) or (class_idx == 2 and str(c).lower() in ("anxiety", "lo âu")):
             return float(item.get("recall", 0.0))
     return 0.0
 
