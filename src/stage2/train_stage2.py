@@ -135,7 +135,13 @@ def train_one_epoch(
     all_p_preds, all_p_targets = [], []
     all_s_preds, all_s_targets = [], []
 
-    for batch in loader:
+    try:
+        from tqdm import tqdm
+        pbar = tqdm(loader, desc=f"Epoch {epoch:02d} [Train]", leave=False, dynamic_ncols=True)
+    except ImportError:
+        pbar = loader
+
+    for batch_idx, batch in enumerate(pbar):
         waveforms = batch["waveforms"].squeeze(1).to(device)
         p_targets = batch["primary_labels"].to(device)
         s_targets = batch["sub_labels"].to(device)
@@ -163,6 +169,11 @@ def train_one_epoch(
         all_s_preds.append(output.sub_predictions().cpu())
         all_s_targets.append(s_targets.cpu())
 
+        if hasattr(pbar, "set_postfix"):
+            pbar.set_postfix(loss=f"{loss.item():.4f}")
+        if (batch_idx + 1) % 50 == 0 or (batch_idx + 1) == len(loader):
+            print(f"  --> [Epoch {epoch:02d}] Batch {batch_idx + 1:3d}/{len(loader)} | Current Loss: {loss.item():.4f}", flush=True)
+
     avg_loss = total_loss / max(1, len(loader))
     y_p_pred = torch.cat(all_p_preds) if all_p_preds else torch.empty(0)
     y_p_true = torch.cat(all_p_targets) if all_p_targets else torch.empty(0)
@@ -172,10 +183,9 @@ def train_one_epoch(
     y_s_true = torch.cat(all_s_targets) if all_s_targets else torch.empty(0)
     m_sub = compute_all_metrics(predictions=y_s_pred, targets=y_s_true, num_classes=model.num_sub_classes) if len(y_s_true) > 0 else {}
 
-    logger.info(
-        "Epoch %02d [Train] Loss: %.4f | Primary F1: %.4f | Sub F1: %.4f",
-        epoch, avg_loss, m_primary.get("macro_f1", 0.0), m_sub.get("macro_f1", 0.0),
-    )
+    summary_msg = f"\n>>> [EPOCH {epoch:02d} TRAIN COMPLETED] Loss: {avg_loss:.4f} | Primary F1: {m_primary.get('macro_f1', 0.0):.4f} | Sub F1: {m_sub.get('macro_f1', 0.0):.4f}"
+    logger.info(summary_msg)
+    print(summary_msg, flush=True)
     return {
         "loss": avg_loss,
         "primary_f1": m_primary.get("macro_f1", 0.0),
@@ -230,12 +240,9 @@ def evaluate(
     y_s_true = torch.cat(all_s_targets) if all_s_targets else torch.empty(0)
     m_sub = compute_all_metrics(predictions=y_s_pred, targets=y_s_true, num_classes=model.num_sub_classes) if len(y_s_true) > 0 else {}
 
-    logger.info(
-        "Phase [%s] Loss: %.4f | Primary F1: %.4f (WA: %.4f) | Sub F1: %.4f (WA: %.4f)",
-        phase.upper(), avg_loss,
-        m_primary.get("macro_f1", 0.0), m_primary.get("accuracy", 0.0),
-        m_sub.get("macro_f1", 0.0), m_sub.get("accuracy", 0.0),
-    )
+    eval_msg = f"    >>> Phase [{phase.upper()}] Loss: {avg_loss:.4f} | Primary F1: {m_primary.get('macro_f1', 0.0):.4f} (WA: {m_primary.get('accuracy', 0.0):.4f}) | Sub F1: {m_sub.get('macro_f1', 0.0):.4f} (WA: {m_sub.get('accuracy', 0.0):.4f})"
+    logger.info(eval_msg)
+    print(eval_msg, flush=True)
     return {
         "loss": avg_loss,
         "primary_f1": m_primary.get("macro_f1", 0.0),
@@ -363,7 +370,9 @@ def train_stage2(
                 "val_metrics": val_res,
                 "config": config,
             }, str(best_model_path))
-            logger.info("★ Saved new best Stage 2 model to %s (Val Primary Macro-F1: %.4f)", best_model_path, val_f1)
+            save_msg = f"    [*] [SAVED BEST STAGE 2 MODEL] Val Primary Macro-F1 = {val_f1:.4f} -> {best_model_path.name}\n"
+            logger.info(save_msg)
+            print(save_msg, flush=True)
 
     logger.info("Training complete! Running final evaluation on Test Set...")
     evaluate(
