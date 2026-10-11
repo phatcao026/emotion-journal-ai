@@ -1,0 +1,22 @@
+{
+  "sample_id": "threads_cmt_c6e06153",
+  "modality": "text",
+  "text": "Mình lúc trc cũng từng viết truyện và lo âu. Điều mình rút ra đc sau khoảng tg đó là kh kể vđ tâm lý cho ng xung quanh biết ấy và vđ khi mình trả lòng chưa bao giờ là do mình cả🥹 kh biết là ngoài ng bạn này ra bạn còn bạn bè nào khác kh chứ đừng vì ng ntn mà tự tổn thương mình nhé bỏ đc thì bỏ nhaaa to6 lắm ấy. Chứng tramkam của bạn bây giờ đã đỡ hơn chưa🫂 mình có thể biết truyện của bạn là gì hong",
+  "primary_label": "ANXIETY",
+  "sub_label": "ANXIETY",
+  "emotion_score": 0.4,
+  "source_platform": "threads_comment",
+  "source_url": "https://www.threads.net/@tieulacdaily/post/DXmGkZ8k5ZF",
+  "author": "tieulacdaily",
+  "like_count": 2,
+  "narrative_score": 0.6000000000000001,
+  "matched_pronouns": [
+    "mình"
+  ],
+  "matched_reflective": [
+    "tổn thương"
+  ],
+  "matched_keywords": [
+    "lo âu"
+  ]
+}

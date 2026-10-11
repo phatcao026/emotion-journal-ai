@@ -1,0 +1,17 @@
+{
+  "sample_id": "test_radio_18s_v",
+  "modality": "voice",
+  "audio_file": "test_radio_18s_v.wav",
+  "duration_s": 18.0,
+  "primary_label": "SADNESS",
+  "sub_label": "LONELINESS",
+  "emotion_score": 0.9,
+  "source_platform": "radio_podcast_monologue",
+  "author": "test_mc",
+  "author_hash": "25ba2d670545",
+  "source_url": "",
+  "voice_type": "acted_radio",
+  "rms_dbfs": -15.05,
+  "peak": 0.25,
+  "speech_ratio": 1.0
+}

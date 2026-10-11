@@ -1,0 +1,23 @@
+{
+  "sample_id": "threads_cmt_9b80a84f",
+  "modality": "text",
+  "text": "Mình chênh vênh trong vấn đề tình bạn có bạn bè nhưng cảm giác cô đơn kinh khủng khiếp sợ mình là người nhạy cảm nhưng cũng nghĩ đâu phải là do mỗi mình",
+  "primary_label": "ANXIETY",
+  "sub_label": "FEAR",
+  "emotion_score": 0.8,
+  "source_platform": "threads_comment",
+  "source_url": "https://www.threads.net/@tieulacdaily/post/DXmGkZ8k5ZF",
+  "author": "windy._.t",
+  "like_count": 7,
+  "narrative_score": 0.4,
+  "matched_pronouns": [
+    "mình"
+  ],
+  "matched_reflective": [],
+  "matched_keywords": [
+    "cô đơn",
+    "chênh vênh",
+    "khiếp sợ",
+    "sợ"
+  ]
+}

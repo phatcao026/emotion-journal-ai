@@ -1,0 +1,22 @@
+{
+  "sample_id": "threads_cmt_ead1578c",
+  "modality": "text",
+  "text": "Cảm thấy khó chịu thì hãy tìm cách để phát tiết ra bên ngoài như chạy bộ, dặm chân, đấm gấu bông hay gì đó chứ đừng kiềm chế nhá. Sẽ rất khó chịu á. Mấy biểu hiện kia mình cũng có. Lúc đó thường thì mình sẽ ngồi im hoặc là la hét giãy giụa 1 chút để giải phóng cảm xúc á hiệu quả nha. Còn ng bạn kia thì thsu kh hợp thì rcm là môm block luôn hoặc bơ đi chứ để đó ảnh hưởng nhiều tới sk tâm lý á mômmmm",
+  "primary_label": "ANGER",
+  "sub_label": "ANGER",
+  "emotion_score": 0.8,
+  "source_platform": "threads_comment",
+  "source_url": "https://www.threads.net/@tieulacdaily/post/DXmGkZ8k5ZF",
+  "author": "tieulacdaily",
+  "like_count": 1,
+  "narrative_score": 0.6000000000000001,
+  "matched_pronouns": [
+    "mình"
+  ],
+  "matched_reflective": [
+    "cảm thấy"
+  ],
+  "matched_keywords": [
+    "khó chịu"
+  ]
+}

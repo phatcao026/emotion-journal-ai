@@ -1,0 +1,25 @@
+{
+  "sample_id": "vnexpress_5263f294",
+  "modality": "text",
+  "text": "Tôi có nhu cầu cao nhưng luôn bị chồng từ chối gần gũi Mỗi khi tôi chủ động, anh hay gạt đi, bảo là mệt hoặc đau xương khớp nên không có hứng lắm. Chúng tôi đều dưới 40 tuổi, kết hôn được 9 năm và có hai con. Tôi làm văn phòng, chồng làm lao động chân tay, thỉnh thoảng về muộn vì cố cho xong việc. Chồng tôi khá khô khan, không biết nói lời ngọt ngào, việc nhà cũng ít khi chủ động. Con cái chủ yếu do tôi chăm, sáng tôi đưa đi học, chiều mẹ tôi đón giúp. Chồng có ưu điểm là sống có trách nhiệm, lương tháng nào cũng đưa gần hết cho vợ giữ, cần mua gì cho gia đình đều hỏi ý tôi. Anh cũng không có thói quen nhậu nhẹt hay tụ tập bạn bè. Chuyện vợ chồng trước đây khá đều đặn. Khoảng một năm trở lại đây, anh bắt đầu lười gần vợ. Mỗi khi tôi chủ động, anh hay gạt đi, bảo là mệt hoặc đau xương khớp nên không có hứng lắm. Giờ gần như anh không có nhu cầu gần gũi vợ. Sau khi sinh bé thứ hai, tôi có nhu cầu cao trong chuyện ấy, thấy rất khó chịu. Tôi phải làm sao khi mình có nhu cầu còn chồng lại không? Mong được mọi người chia sẻ. Thu Huyền",
+  "primary_label": "JOY",
+  "sub_label": "CONNECTION",
+  "emotion_score": 1.0,
+  "source_platform": "vnexpress_tamsu",
+  "author": "Độc giả VnExpress",
+  "author_hash": "2d30d99c0cdb",
+  "source_url": "https://vnexpress.net/toi-co-nhu-cau-cao-nhung-luon-bi-chong-tu-choi-gan-gui-5127996.html",
+  "title": "Tôi có nhu cầu cao nhưng luôn bị chồng từ chối gần gũi",
+  "narrative_score": 1.0,
+  "matched_pronouns": [
+    "tôi",
+    "mình",
+    "anh"
+  ],
+  "matched_reflective": [],
+  "matched_keywords": [
+    "gần gũi",
+    "gia đình",
+    "khó chịu"
+  ]
+}

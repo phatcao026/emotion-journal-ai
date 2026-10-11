@@ -1,0 +1,26 @@
+{
+  "sample_id": "threads_search_33fe96b4",
+  "modality": "text_voice",
+  "text": "2901again 08/06/2026 “Áp lực cuộc sống đôi khi khiến con người ta trở nên gai góc, nhưng bên trong lớp vỏ bọc ấy vẫn là một đứa trẻ đang thèm khát sự vỗ về…” 1,2K",
+  "audio_file": "threads_search_33fe96b4.wav",
+  "duration_s": 10.66,
+  "primary_label": "ANXIETY",
+  "sub_label": "ANXIETY",
+  "emotion_score": 0.4,
+  "source_platform": "threads_search",
+  "search_query": "áp lực cuộc sống",
+  "source_url": "https://www.threads.net/search?q=%C3%A1p%20l%E1%BB%B1c%20cu%E1%BB%99c%20s%E1%BB%91ng&filter=recent&serp_type=default",
+  "narrative_score": 0.8,
+  "matched_pronouns": [
+    "ta"
+  ],
+  "matched_reflective": [
+    "đôi khi",
+    "áp lực"
+  ],
+  "matched_keywords": [
+    "áp lực"
+  ],
+  "rms_dbfs": -16.98,
+  "speech_ratio": 0.944
+}

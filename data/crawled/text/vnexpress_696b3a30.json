@@ -1,0 +1,24 @@
+{
+  "sample_id": "vnexpress_696b3a30",
+  "modality": "text",
+  "text": "Gia đình phản đối bạn gái tôi vì mẹ cô ấy không chuẩn mực Mẹ cô ấy còn bị mang tiếng lười làm, không chịu vun vén và thường xuyên cãi lại mẹ chồng. Tôi và bạn gái yêu nhau gần một năm. Trước đây tôi chưa kể nhiều với gia đình vì nghĩ chuyện tình cảm của mình cứ để hai đứa tự quyết, bao giờ xác định thì mới đưa về ra mắt gia đình. Gần đây, khi thấy mối quan hệ nghiêm túc hơn, tôi mới đưa bạn gái về giới thiệu với bố mẹ. Bố mẹ vẫn tiếp đón lịch sự nhưng khi cô ấy về, bố mẹ tỏ ý không đồng ý mối quan hệ này. Bố mẹ bảo từng biết bố mẹ cô ấy từ trước. Mẹ tôi kể ngày xưa mẹ bạn gái từng có thời gian qua lại với một người đàn ông khác khi đã có gia đình, còn bị bố cô ấy đánh và gia đình bên nội nói xấu. Mẹ cô ấy còn bị mang tiếng lười làm, không chịu vun vén và thường xuyên cãi lại mẹ chồng. Sau đó mọi chuyện dần lắng xuống, gia đình họ vẫn sống bình thường cho đến giờ. Bố mẹ sợ tôi lấy con gái nhà đó, sau này bạn gái cũng sẽ giống mẹ. Tôi thực sự rất khó xử. Gần một năm qua, ở bên bạn gái, tôi thấy cô ấy sống khá ngăn nắp, giản dị và chăm chỉ, đi làm về là dọn dẹp phòng, cuối tuần tự nấu ăn. Quần áo mặc xong cô ấy giặt ngay, bàn làm việc lúc nào cũng gọn. Cô ấy cũng rất ghét kiểu phụ nữ lười biếng, bừa bộn, yêu đương không nghiêm túc, không chung thủy. Cô ấy cũng hiền lành, tôi nghĩ chắc sau này không có chuyện cãi tay đôi với mẹ chồng đâu. Tôi hiểu bố mẹ lo cho mình nên mới phản đối, nhưng tôi cũng có nhận định của riêng mình. Bố mẹ ít tiếp xúc với cô ấy nên chưa hiểu cô ấy nhiều. Tôi bảo bố mẹ cứ tiếp xúc thêm rồi hãy nhận xét nhưng bố mẹ không chịu, bảo tôi \"cá không ăn muối cá ăn\", rồi thì \"trứng còn đòi khôn hơn vịt\". Tôi đang rất rối., cứ kéo dài thì trước sau gì bạn gái tôi cũng biết chuyện. Tôi mong được nghe ý kiến của những người đi trước, những ai từng trải qua hoàn cảnh tương tự càng tốt. Xin cảm ơn rất nhiều. Xuân Hoàng",
+  "primary_label": "JOY",
+  "sub_label": "CONNECTION",
+  "emotion_score": 1.0,
+  "source_platform": "vnexpress_tamsu",
+  "author": "Độc giả VnExpress",
+  "author_hash": "2d30d99c0cdb",
+  "source_url": "https://vnexpress.net/gia-dinh-phan-doi-tinh-yeu-cua-toi-vi-me-ban-gai-khong-chuan-muc-5127020.html",
+  "title": "Gia đình phản đối bạn gái tôi vì mẹ cô ấy không chuẩn mực",
+  "narrative_score": 0.8,
+  "matched_pronouns": [
+    "tôi",
+    "mình"
+  ],
+  "matched_reflective": [],
+  "matched_keywords": [
+    "gia đình",
+    "sợ",
+    "ghét"
+  ]
+}

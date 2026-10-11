@@ -1,0 +1,27 @@
+{
+  "sample_id": "threads_search_7dac4a6c_v",
+  "modality": "voice",
+  "audio_file": "threads_search_7dac4a6c_v.wav",
+  "duration_s": 20.69,
+  "primary_label": "JOY",
+  "sub_label": "JOY",
+  "emotion_score": 0.4,
+  "source_platform": "threads_search",
+  "search_query": "bình yên",
+  "source_url": "https://www.threads.net/search?q=b%C3%ACnh%20y%C3%AAn&filter=recent&serp_type=default",
+  "narrative_score": 1.0,
+  "matched_pronouns": [
+    "mình",
+    "anh",
+    "ta",
+    "bản thân"
+  ],
+  "matched_reflective": [],
+  "matched_keywords": [
+    "cười",
+    "bình yên",
+    "đồng hành"
+  ],
+  "rms_dbfs": -16.77,
+  "speech_ratio": 0.988
+}

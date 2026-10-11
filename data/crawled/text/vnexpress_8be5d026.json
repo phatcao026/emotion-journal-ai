@@ -1,0 +1,35 @@
+{
+  "sample_id": "vnexpress_8be5d026",
+  "modality": "text",
+  "text": "Chồng vui vẻ với đồng nghiệp nhưng cộc cằn vợ con Nhóm đồng nghiệp này có cả nam lẫn nữ, thường xuyên rủ nhau đi nhậu sau giờ làm, có hôm kéo dài đến khuya. Tôi 35 tuổi, kết hôn gần 10 năm và có hai con. Chồng tôi hiền lành, sống tình cảm, trước đây khá có trách nhiệm với gia đình. Điều khiến tôi lo lắng nhất hiện nay là anh ngày càng dành nhiều thời gian vui chơi cùng một nhóm đồng nghiệp thích ăn chơi. Chồng tôi làm ở một công ty tư nhân, công việc ổn định. Anh không phải người nghiện nhậu hay thường xuyên tụ tập. Thế nhưng khoảng một năm nay, từ khi thân với nhóm đồng nghiệp này, lịch sinh hoạt của anh thay đổi hẳn. Nhóm này cả nam lẫn nữ, thường xuyên rủ nhau đi nhậu sau giờ làm, có hôm kéo dài đến khuya. Tôi nghe chồng kể họ còn hay chơi bài, nói chuyện khá thoải mái và dùng nhiều từ ngữ mà trước đây anh gần như không bao giờ sử dụng. Tôi không phản đối chuyện anh có bạn bè, đồng nghiệp, đấy là chuyện bình thường. Tôi cũng không muốn vì vợ mà chồng cảm thấy mất tự do. Dần dần, những cuộc vui của chồng xuất hiện ngày càng nhiều. Có tuần anh đi nhậu ba, bốn buổi. Có hôm nói chỉ ngồi một lát nhưng gần nửa đêm anh mới về. Cuối tuần đáng lẽ đưa các con đi chơi, anh lại viện lý do mệt hoặc có hẹn với đồng nghiệp. Tôi nhiều lần phải tự đưa con đi chơi. Điều làm tôi buồn hơn là công việc của anh cũng bắt đầu bị ảnh hưởng. Trước đây anh khá chăm chỉ, thường hoàn thành việc sớm. Gần đây anh hay đi làm muộn, về nhà than mệt, sáng hôm sau uể oải. Có lần còn bị cấp trên nhắc nhở vì chậm tiến độ. Tôi góp ý thì anh cho rằng tôi làm quá. Anh nói thư giãn cùng đồng nghiệp chỉ là cách để giải tỏa áp lực công việc, có làm gì xấu đâu. Anh còn bảo đã có gia đình nên luôn biết giới hạn, tôi không phải lo. Tôi hiểu chồng nói cũng có phần đúng, không thể chỉ vì họ thích nhậu hay có cách sống khác mình mà kết luận họ là người xấu. Hơn nữa, tôi cũng không muốn kiểm soát các mối quan hệ của chồng. Thế nhưng tôi lo khi thấy chồng đang thay đổi từng chút một. Anh uống rượu nhiều hơn, dễ cáu khi tôi nhắc đến chuyện đi chơi. Có những câu nói tục trước đây anh nghe người khác nói còn khó chịu, giờ anh nói chẳng ngại ngần. Đôi khi hai vợ chồng đang nói chuyện với nhau, anh cũng vô thức đệm thêm từ khiến tôi và các con không thoải mái. Tôi nhắc chồng để ý lời nói, tránh các con học những điều không hay. Không ngờ anh tự ái, cho rằng tôi coi thường bạn bè anh và muốn quản lý anh. Vợ chồng cãi nhau. Tôi càng nói, anh càng muốn chứng minh rằng mình chẳng làm gì sai. Có lần anh còn nói nếu tôi cứ tiếp tục phàn nàn, anh lại càng về muộn. Nghe câu đó, tôi rất buồn, không muốn trở thành người vợ suốt ngày kiểm soát chồng, cũng chẳng thể cấm anh vì có khi càng cấm anh càng làm tới. Tôi chỉ sợ đến lúc anh nhận ra bản thân đã thay đổi thì lúc đó chưa chắc đã quay lại được như trước. Có cách nào để tôi giúp chồng cân bằng lại các mối quan hệ mà không khiến anh cảm thấy bị kiểm soát? Ngọc Hằng",
+  "primary_label": "JOY",
+  "sub_label": "JOY",
+  "emotion_score": 1.0,
+  "source_platform": "vnexpress_tamsu",
+  "author": "Độc giả VnExpress",
+  "author_hash": "2d30d99c0cdb",
+  "source_url": "https://vnexpress.net/chong-vui-ve-voi-dong-nghiep-nhung-coc-can-vo-con-5126481.html",
+  "title": "Chồng vui vẻ với đồng nghiệp nhưng cộc cằn vợ con",
+  "narrative_score": 1.0,
+  "matched_pronouns": [
+    "tôi",
+    "mình",
+    "anh",
+    "bản thân"
+  ],
+  "matched_reflective": [
+    "đôi khi",
+    "cảm thấy",
+    "áp lực"
+  ],
+  "matched_keywords": [
+    "vui",
+    "gia đình",
+    "buồn",
+    "áp lực",
+    "lo lắng",
+    "sợ",
+    "khó chịu",
+    "cáu"
+  ]
+}

@@ -203,6 +203,18 @@ class Stage2HierarchicalMERModel(nn.Module):
             self.text_encoder.load_pretrained()
         logger.info("Stage 2 MER backbones successfully loaded.")
 
+    def set_audio_trainable(self, trainable: bool = True) -> None:
+        """Control trainability of audio branch, ensuring foundation backbone stays strictly frozen."""
+        if hasattr(self.audio_encoder, "set_lora_trainable"):
+            self.audio_encoder.set_lora_trainable(trainable)
+        else:
+            for name, p in self.audio_encoder.named_parameters():
+                if "lora_" in name.lower():
+                    p.requires_grad = trainable
+                else:
+                    p.requires_grad = False
+        logger.info("Stage2HierarchicalMERModel: set_audio_trainable(%s)", trainable)
+
     def forward(
         self,
         waveforms: torch.Tensor,

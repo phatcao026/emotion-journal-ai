@@ -1,0 +1,23 @@
+{
+  "sample_id": "threads_cmt_9d3155ce",
+  "modality": "text",
+  "text": "06/06/2026 Mình gặp quả hay lắm mình với bạn ấy là bạn thân đúng đợt mình thi hsg cấp tỉnh mình rớt xong mình buồn vì kì thi vì gia đình bạn ấy kêu mình mở lòng đi sẽ đỡ buồn hơn mình vui mình tâm sự nhưng mình vẫn buồn thì bạn ấy quyết định cạch mình mình buồn mình stress tới cuối kỳ bạn ấy nhắn tin lại với mình để chửi mình HĐQT của mình bảo kệ đi nhưng mà thật sự mình quý bạn ấy tại vì mẹ mình người nhà với mình còn chưa tâm sự với mình 😔",
+  "primary_label": "SADNESS",
+  "sub_label": "SADNESS",
+  "emotion_score": 1.0,
+  "source_platform": "threads_comment",
+  "source_url": "https://www.threads.net/@tieulacdaily/post/DXmGkZ8k5ZF",
+  "author": "mecaulongvl",
+  "like_count": 0,
+  "narrative_score": 0.4,
+  "matched_pronouns": [
+    "mình"
+  ],
+  "matched_reflective": [],
+  "matched_keywords": [
+    "vui",
+    "gia đình",
+    "buồn",
+    "stress"
+  ]
+}

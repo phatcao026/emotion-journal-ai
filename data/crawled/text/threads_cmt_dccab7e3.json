@@ -1,0 +1,24 @@
+{
+  "sample_id": "threads_cmt_dccab7e3",
+  "modality": "text",
+  "text": "13/06/2026 Xin chào mình là sĩ tử 2k8 Sau kì thi thpt điểm mình không như mong đợi Chị mình so sánh điểm với chị thi lại 2k7 H mình thấy rất buồn, áp lực Va cứ nói mình phải học trường kiến trúc mà mình lại không phù hợp với cái ngành đấy, cứ dựa vào lương cao của người khác bảo mình học. Mình sợ học mai kia chán lại bỏ Mk bảo ko phù hợp lại nói mk ương và cãi cùn H mk Kobt lm thế nào",
+  "primary_label": "SADNESS",
+  "sub_label": "SADNESS",
+  "emotion_score": 0.4,
+  "source_platform": "threads_comment",
+  "source_url": "https://www.threads.net/@tieulacdaily/post/DXmGkZ8k5ZF",
+  "author": "thichanvat_08",
+  "like_count": 0,
+  "narrative_score": 0.6000000000000001,
+  "matched_pronouns": [
+    "mình"
+  ],
+  "matched_reflective": [
+    "áp lực"
+  ],
+  "matched_keywords": [
+    "buồn",
+    "áp lực",
+    "sợ"
+  ]
+}

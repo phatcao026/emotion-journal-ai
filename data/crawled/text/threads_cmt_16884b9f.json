@@ -1,0 +1,23 @@
+{
+  "sample_id": "threads_cmt_16884b9f",
+  "modality": "text",
+  "text": "Mình cảm ơn nhiều lắm mới nchuyen đc mấy phút đã thấy mom cute dễ thương chứ mình đ ngờ quen nhau 3 năm mà thg kia nó lại thế nhưng mới ngày hôm qua mình với nó còn chửi nhau mà bh mình quên hết với chặn nó òiiii😔 ko những ko buồn mà mình còn cảm thấy ăn ngon hơn trc tại ko còn lo lắng khi phải níu kéo tình bạn to6 này nx!!!=)💗💗💗",
+  "primary_label": "SADNESS",
+  "sub_label": "SADNESS",
+  "emotion_score": 0.4,
+  "source_platform": "threads_comment",
+  "source_url": "https://www.threads.net/@tieulacdaily/post/DXmGkZ8k5ZF",
+  "author": "mtranngockim",
+  "like_count": 1,
+  "narrative_score": 0.6000000000000001,
+  "matched_pronouns": [
+    "mình"
+  ],
+  "matched_reflective": [
+    "cảm thấy"
+  ],
+  "matched_keywords": [
+    "buồn",
+    "lo lắng"
+  ]
+}

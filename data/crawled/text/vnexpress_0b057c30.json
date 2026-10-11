@@ -1,0 +1,35 @@
+{
+  "sample_id": "vnexpress_0b057c30",
+  "modality": "text",
+  "text": "'Tiểu tam' nhắn tin bảo tôi 'về dạy lại chồng' Tôi không ngờ có ngày mình lại nhận được tin nhắn từ cô gái đang qua lại với chồng mình, bảo tôi \"về dạy lại chồng\". Cô gái đó còn trẻ, mới 22 tuổi, làm việc trong khu công nghiệp gần nhà tôi. Chồng tôi cưa cẩm cô ta một thời gian, nói rằng anh đang ly thân vợ. Vợ khiến anh tan nát cõi lòng, mất niềm tin vào tình yêu, hôn nhân, đại loại rất đáng thương. Anh ta nói vợ anh ta - là tôi - ngoại tình lung tung, bỏ bê chồng con, hỗn láo với bố mẹ chồng, gia đình chỉ còn cái vỏ. Anh ta còn bảo những hình ảnh tôi đăng trên mạng xã hội chỉ là để lòe thiên hạ, chứ ngoài đời vợ chồng đã chẳng còn tình cảm. Anh ta nói rất muốn ly hôn với tôi nhưng vướng chuyện nuôi con và chia tài sản nên chưa giải quyết được. Thật nực cười. Nhưng cô ta tin. Cô ta tin rằng cô ta mới là chân ái của chồng tôi, mới là nơi ấm áp mà chồng tôi tìm thấy bình yên chứ không phải là người vợ không hiểu chuyện là tôi và căn nhà đầy bão giông này. Anh ta còn dỗ dành cô ta cố gắng kiên nhẫn chờ đợi một thời gian nữa để anh ta ly hôn với tôi. Người đang bị chồng làm thủ tục ly hôn là tôi thì không hề biết gì, vẫn hạnh phúc mỗi ngày với người chồng có trách nhiệm, yêu thương vợ con. Hôm nay, tôi nhận được tin nhắn của cô gái trẻ đó, trách tôi là không giữ chồng cho tốt, để anh ta ra ngoài tán tỉnh lung tung, lừa tình con gái nhà lành, bảo tôi mang chồng về dạy lại cho tốt. Sau đó cô ta chặn tôi luôn. Tôi gửi một phần hình ảnh các tin nhắn của cô ta sang hỏi chồng. Ban đầu anh còn chối, bảo có người đặt điều phá hạnh phúc gia đình mình này kia nhưng khi tôi gửi ảnh của hai người tình tứ với nhau (do cô kia gửi cho tôi) thì anh xin lỗi rối rít. Anh chạy lên công ty tìm tôi, xin tha thứ. Tôi buồn lắm, giờ chưa muốn nói chuyện gì với chồng. Thu Phương",
+  "primary_label": "JOY",
+  "sub_label": "CONNECTION",
+  "emotion_score": 1.0,
+  "source_platform": "vnexpress_tamsu",
+  "author": "Độc giả VnExpress",
+  "author_hash": "2d30d99c0cdb",
+  "source_url": "https://vnexpress.net/tieu-tam-nhan-tin-bao-toi-ve-day-lai-chong-5127222.html",
+  "title": "'Tiểu tam' nhắn tin bảo tôi 'về dạy lại chồng'",
+  "narrative_score": 1.0,
+  "matched_pronouns": [
+    "tôi",
+    "mình",
+    "anh",
+    "ta",
+    "với tôi"
+  ],
+  "matched_reflective": [
+    "hôm nay",
+    "cố gắng"
+  ],
+  "matched_keywords": [
+    "hạnh phúc",
+    "cười",
+    "bình yên",
+    "cố gắng",
+    "ấm áp",
+    "gia đình",
+    "yêu thương",
+    "buồn"
+  ]
+}

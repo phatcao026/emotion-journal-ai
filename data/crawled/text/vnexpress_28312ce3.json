@@ -1,0 +1,30 @@
+{
+  "sample_id": "vnexpress_28312ce3",
+  "modality": "text",
+  "text": "Anh kể những chuyện riêng tư của vợ chồng tôi cho người tình Sau khi tôi biết chuyện, chồng vẫn muốn xin cơ hội, anh nói những gì xảy ra có thể bỏ lại phía sau, anh sẽ thay đổi vì vợ con. Tôi 34 tuổi, hiện sống cùng con gái 6 tuổi. Nhìn bên ngoài, cuộc sống của mẹ con tôi khá bình thường. Tôi đi làm kiếm tiền, chăm con, thỉnh thoảng gặp bạn bè, không ai nhận ra tôi có nhiều nỗi lo. Tôi và chồng quen nhau khi cùng làm việc tại một công ty truyền thông ở TP HCM. Sau khoảng hai năm tìm hiểu, chúng tôi kết hôn. Những năm đầu, cuộc sống tuy không quá dư dả nhưng khá yên ổn. Sau khi sinh con, tôi nghỉ việc một thời gian rồi bán đồ gia dụng online để có thêm thu nhập. Công việc ngày càng ổn định, tôi vừa chăm con vừa tự kiếm tiền, cũng không đòi hỏi chồng phải nhiều thứ cho gia đình. Cho đến một ngày, tôi phát hiện chồng có người khác. Ban đầu tôi không muốn tin, tìm đủ lý do để giải thích những tin nhắn, cuộc gọi của anh với người khác, thêm cả những lần anh về nhà muộn. Càng tìm hiểu, tôi càng nhận ra đó không chỉ là say nắng, anh đã có mối quan hệ bên ngoài trong một khoảng thời gian dài, thậm chí còn đem những chuyện riêng tư của vợ chồng tôi kể cho người phụ nữ ấy. Anh phản bội đã khiến tôi đau lòng, giờ lại mang những chuyện riêng tư của vợ chồng chia sẻ với bồ. Vợ chồng tôi đã có buổi nói chuyện, anh không nhận lỗi, cứ vòng vo, lý do. Có lần vợ chồng mâu thuẫn, anh nổi nóng, đập phá đồ đạc và cho rằng chính tôi cũng có những thiếu sót khiến anh phải tìm kiếm sự quan tâm bên ngoài. Tôi từng có ý định đưa con về nhà mẹ đẻ một thời gian để vợ chồng có khoảng lặng suy nghĩ. Rồi nghĩ đi nghĩ lại, không muốn bố mẹ phải lo lắng, tôi lại thôi. Có một khoảng thời gian tôi gần như không biết phải làm gì. Tôi vừa giận chồng, thương con, thương cho số phận của mình. Tôi không thể coi như chưa từng có chuyện gì, cũng không đủ dứt khoát để nói rằng mọi thứ đã chấm hết. Tôi từng nghĩ nếu hôn nhân không thể cứu vãn, hai mẹ con sẽ bắt đầu lại cuộc sống mới ở một nơi khác. Tôi nghĩ mình đủ sức để lo cho cuộc sống của mình và con. Công việc kinh doanh của tôi vẫn ổn, có thể kiếm tiền và chăm lo cho con. Thực tế đứng trước lựa chọn ấy, tôi mới nhận ra mọi chuyện không đơn giản như mình từng nghĩ. Nếu ly hôn, tôi sợ con sẽ tổn thương. Còn ở lại, tôi sợ sẽ phải sống thiếu niềm tin với chồng. Chồng vẫn muốn tôi cho anh cơ hội. Anh nói những gì đã xảy ra có thể bỏ lại phía sau, anh sẽ thay đổi vì vợ con. Có những lúc tôi nghĩ mình nên mạnh mẽ bước ra khỏi cuộc hôn nhân này. Có lúc tôi lại nhớ về những năm tháng bên nhau, có quá vội vàng khi quyết tâm rời bỏ anh? Có lẽ tôi cần thêm thời gian để hiểu mình thật sự muốn gì. Tôi không muốn quyết định trong lúc đang tổn thương, nhưng càng kéo dài như này tôi càng mệt mỏi. Giờ tôi không biết phải làm sao, mong được các bạn chia sẻ cùng tôi. Huyền Như",
+  "primary_label": "ANXIETY",
+  "sub_label": "FEAR",
+  "emotion_score": 0.8,
+  "source_platform": "vnexpress_tamsu",
+  "author": "Độc giả VnExpress",
+  "author_hash": "2d30d99c0cdb",
+  "source_url": "https://vnexpress.net/anh-ke-nhung-chuyen-rieng-tu-cua-vo-chong-toi-cho-nguoi-tinh-5126140.html",
+  "title": "Anh kể những chuyện riêng tư của vợ chồng tôi cho người tình",
+  "narrative_score": 1.0,
+  "matched_pronouns": [
+    "tôi",
+    "mình",
+    "anh"
+  ],
+  "matched_reflective": [
+    "nghĩ lại",
+    "mệt mỏi",
+    "tổn thương"
+  ],
+  "matched_keywords": [
+    "gia đình",
+    "đau lòng",
+    "lo lắng",
+    "sợ"
+  ]
+}

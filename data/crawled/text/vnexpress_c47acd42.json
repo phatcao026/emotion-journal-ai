@@ -1,0 +1,27 @@
+{
+  "sample_id": "vnexpress_c47acd42",
+  "modality": "text",
+  "text": "Hóa ra việc làm thêm của vợ tôi là tới nhà nhân tình Tôi thương vợ làm thêm vất vả, chủ động đón con, nấu cơm, dọn dẹp nhà cửa để vợ có thời gian nghỉ ngơi. Tôi 35 tuổi, vợ 33 tuổi, cưới được gần tám năm và có hai con. Trước đây vợ tôi làm giờ hành chính, khoảng 5h30 là về nhà. Gần nửa năm nay, cô ấy nói công việc khó khăn, bị giảm lương mà giờ cái gì cũng tăng giá nên nhận thêm việc ngoài giờ, thường hai, ba buổi một tuần về muộn. Tôi không nghi ngờ gì. Có hôm 9-10 giờ tối cô ấy mới về, trông rất mỏi mệt. Tôi thương vợ làm thêm vất vả, chủ động đón con, nấu cơm, dọn dẹp nhà cửa để vợ có thời gian nghỉ ngơi. Thực ra dù vợ có làm thêm thì thu nhập cũng còn lâu mới bằng tôi nhưng cô ấy muốn và chúng tôi vẫn còn khoản nợ mua nhà trả góp nên làm thêm cũng được. Một tối, gần 10h30 vẫn chưa thấy vợ về, tôi gọi thì cô ấy bảo đang ở chỗ làm, cố chút nữa cho xong, chắc mất khoảng nửa tiếng. Tôi hỏi địa chỉ làm thêm để qua đón thì cô ấy gắt lên, bảo tôi đừng làm phiền vì đang bận. Không hiểu sao hôm đó tôi thấy bất an. Tôi lấy xe chạy đến công ty cô ấy làm nhưng văn phòng đã tắt đèn, cửa khóa. Tôi gọi lại thì vợ không nghe máy. Khoảng 20 phút sau, cô ấy mới gọi lại, bảo vừa xong việc và đang về. Từ hôm đó, tôi vẫn luôn bất an và nghi ngờ nên quyết định bám theo vợ xem cô ấy làm thêm ở đâu. Tôi thấy vợ gửi xe vào một tòa nhà sau đó lên tầng rồi vào một căn hộ. Việc các công ty thuê văn phòng ở căn hộ chung cư không hiếm nên tôi thấy bình thường. Tôi xuống dưới tòa nhà uống cà phê đợi vợ, định chờ tới khi cô ấy sắp về rồi lên đó, cũng coi như chào hỏi mọi người, tiện thể xem nơi vợ làm thêm. 9h tôi lên bấm chuông cửa, nhưng đó chỉ là một căn hộ bình thường và có một người đàn ông ra mở cửa. Người này chẳng xa lạ gì, là đồng nghiệp của vợ tôi. Tôi đã rất nghi ngờ nhưng trong lòng vẫn cố nghĩ chắc anh ta cũng làm thêm cùng vợ tôi dù anh ta đang mặc đồ ở nhà. Tôi cố tình vừa mở cửa vừa bảo đến tìm vợ, đón cô ấy đi làm về. Nhưng nơi tôi bước vào không phải văn phòng làm việc mà là một căn hộ sống bình thường, vợ tôi vừa bước ra từ nhà vệ sinh, trông có vẻ như mới tắm xong. Lúc đó tôi như kiểu mất lý trí, lao tới tát vợ một cái, quay ra đấm người đàn ông kia một cái nữa. Sau đó tôi ra khỏi phòng và về nhà. Tôi chẳng nhớ mình về tới nhà kiểu gì nữa. Vợ về sau tôi một lúc, khóc lóc van xin tha thứ. Tôi hỏi số tiền lương làm thêm có phải là anh ta đưa cho không. Vợ tôi thừa nhận. Vậy khác gì vợ tôi bán tình lấy tiền đâu. Cô ấy quỳ xuống xin tôi tha thứ, nói sẽ xin nghỉ làm ở đó và xin làm chỗ khác, chỉ mong tôi nghĩ tới con cái mà cho cô ấy một cơ hội. Cô ấy còn xin tôi đừng nói với gia đình hai bên. Tôi đau lắm và rất bối rối, chưa biết phải làm sao. Đinh Sơn",
+  "primary_label": "ANXIETY",
+  "sub_label": "ANXIETY",
+  "emotion_score": 0.8,
+  "source_platform": "vnexpress_tamsu",
+  "author": "Độc giả VnExpress",
+  "author_hash": "2d30d99c0cdb",
+  "source_url": "https://vnexpress.net/hoa-ra-viec-lam-them-cua-vo-toi-la-toi-nha-nhan-tinh-5127976.html",
+  "title": "Hóa ra việc làm thêm của vợ tôi là tới nhà nhân tình",
+  "narrative_score": 1.0,
+  "matched_pronouns": [
+    "tôi",
+    "mình",
+    "anh",
+    "ta",
+    "trong lòng"
+  ],
+  "matched_reflective": [],
+  "matched_keywords": [
+    "gia đình",
+    "khóc",
+    "bất an"
+  ]
+}

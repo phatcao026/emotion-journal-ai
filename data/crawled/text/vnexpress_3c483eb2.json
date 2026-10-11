@@ -1,0 +1,29 @@
+{
+  "sample_id": "vnexpress_3c483eb2",
+  "modality": "text",
+  "text": "Choáng váng với quá khứ buông thả của bạn gái Em thấy rất xấu hổ về quá khứ của mình, mong tôi chấp nhận và hứa sẽ không bao giờ sa ngã như thế nữa. Tôi và bạn gái đều 26 tuổi, yêu nhau được hơn một năm và đang tính chuyện cưới xin. Em sống khá giản dị, đi làm rồi về nhà, cuối tuần thường ở bên tôi. Hai đứa cũng đã về ra mắt gia đình nhau và được hai bên ủng hộ. Tôi yêu em, cảm nhận được em cũng vậy. Em rất tốt, quan tâm tôi. Em trong sáng, ngây thơ thật chứ không phải giả tạo. Em cũng rất thật thà nên mới kể cho tôi về những chuyện ngày xưa (hồi mới yêu cũng có kể nhưng chỉ sơ sơ). Có những chuyện mà khi biết rồi tôi còn không tin vào tai mình. Em từng yêu một người con trai rất sâu đậm vào năm thứ nhất đại học. Khi vừa ở quê lên thành phố, mọi thứ đều bỡ ngỡ, em gặp và yêu cậu ta. Cậu ta cũng là sinh viên, học năm thứ ba nên biết nhiều thứ hơn. Cậu ta đưa em đi chơi khắp thành phố. Nói chung là một chuyện tình đẹp, họ đã đi quá giới hạn nhưng rồi kết thúc sau 1,5 năm yêu nhau vì gia đình cậu ấy chê em nghèo, không môn đăng hộ đối. Em sốc một thời gian dài. Trong thời gian đó em đã quen vài người, có người chỉ được vài tuần. Có một điều dại dột là với người nào, em cũng đi quá giới hạn. Em nói đó là thời kỳ đen tối, dại dột và ngu ngốc của em. Sau này, khi thoát ra được, em đã rất hối hận. Em thấy rất xấu hổ về quá khứ của mình, mong tôi chấp nhận và hứa sẽ không bao giờ sa ngã như thế nữa. Em nói giờ chỉ yêu tôi, tôi cũng cảm nhận được điều đó. Tôi biết quá khứ không thể thay đổi và em của hiện tại đã chín chắn hơn rất nhiều. Có điều tôi không thể gạt bỏ suy nghĩ chuyện em từng dễ dãi, buông thả bản thân như thế. Tôi bị ám ảnh về điều này. Tôi thấy em sống dựa vào cảm xúc nhiều, dễ dao động và không lý trí, chỉ sợ sau này vợ chồng có lúc không yên ấm em lại dễ dàng bị cảm xúc chi phối rồi xảy chuyện như ngày xưa. Tôi mong được nhận lời khuyên từ mọi người. Hải Quân",
+  "primary_label": "SADNESS",
+  "sub_label": "GUILT_SHAME",
+  "emotion_score": 1.0,
+  "source_platform": "vnexpress_tamsu",
+  "author": "Độc giả VnExpress",
+  "author_hash": "2d30d99c0cdb",
+  "source_url": "https://vnexpress.net/choang-vang-voi-qua-khu-buong-tha-cua-ban-gai-5127995.html",
+  "title": "Choáng váng với quá khứ buông thả của bạn gái",
+  "narrative_score": 1.0,
+  "matched_pronouns": [
+    "tôi",
+    "mình",
+    "em",
+    "ta",
+    "bản thân"
+  ],
+  "matched_reflective": [],
+  "matched_keywords": [
+    "gia đình",
+    "hối hận",
+    "xấu hổ",
+    "ám ảnh",
+    "sợ"
+  ]
+}

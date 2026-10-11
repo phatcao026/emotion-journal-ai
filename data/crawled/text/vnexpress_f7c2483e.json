@@ -1,0 +1,31 @@
+{
+  "sample_id": "vnexpress_f7c2483e",
+  "modality": "text",
+  "text": "Mẹ chê bạn trai tôi nghèo, gần 30 tuổi chưa có gì trong tay Mẹ bảo đàn ông gần 30 tuổi vẫn chưa có gì trong tay, đến đám cưới cũng không lo nổi, sau này sao lo được cho vợ con, gia đình. Tôi và bạn trai đều 29 tuổi. Hai đứa yêu nhau gần ba năm và đang sống chung. Mẹ biết chuyện nên thời gian gần đây liên tục giục cưới vì cho rằng tôi không còn trẻ, yêu nhau lâu như vậy nên tính chuyện ổn định. Thực ra bạn trai tôi cũng muốn cưới. Anh từng nói nếu có đủ tiền, anh muốn lo một đám cưới đàng hoàng để tôi được vui, bố mẹ tôi nở mày nở mặt. Nhưng hiện tại anh gần như không có khoản tiết kiệm nào. Công việc của anh mới ổn định khoảng một năm, thu nhập đủ trang trải nhưng chưa dư được bao nhiêu. Bố mẹ anh làm nông, nhà vừa xây xong vẫn còn nợ nên anh không thể trông chờ gia đình hỗ trợ. Anh nói nếu cưới, gần như mọi khoản từ tiền cỗ bàn, chụp ảnh, thuê rạp đến quà cưới cho tôi đều phải tự lo. Anh sợ đến ngày cưới, nhà trai không chuẩn bị được gì tươm tất, tôi sẽ tủi thân, bố mẹ tôi cũng khó xử. Tôi bảo không cần đám cưới lớn, quà cưới cũng tùy khả năng, nhưng anh vẫn muốn chờ thêm để tích cóp. Ban đầu tôi cũng thấy hợp lý nhưng mẹ giục quá nên một hôm tôi kể hết nguyên nhân anh chưa cưới cho mẹ nghe. Tôi không ngờ mẹ lại như quay ngoắt 180 độ. Mẹ bảo đàn ông gần 30 tuổi rồi mà vẫn chưa có gì trong tay, đến đám cưới cũng không lo nổi thì sau này sao lo được cho vợ con, gia đình. Trước đó mẹ có hỏi về gia cảnh của bạn trai tôi, tôi chỉ kể là bố mẹ anh mới xây nhà, anh đang làm ở đâu và lương khoảng bao nhiêu. Từ hôm đó, mẹ không còn giục tôi cưới nữa mà bắt đầu khuyên tôi cân nhắc chuyện chia tay. Mỗi lần tôi nói anh vẫn chăm chỉ đi làm, sống có trách nhiệm và hai đứa tình cảm tốt, mẹ lại bảo khả năng làm ra tài chính của người đàn ông trong hôn nhân rất quan trọng. Tôi yêu anh, tin anh nhưng nghe mẹ nói nhiều khiến tôi bắt đầu hoang mang. Tôi yêu anh và không nghĩ anh là người thiếu trách nhiệm, chỉ là hiện tại anh chưa có tiền và chưa có tài sản gì đáng kể. Tôi cứ nghĩ chúng tôi yêu thương nhau, cùng cố gắng làm việc và sống tốt thì cuộc sống sẽ hạnh phúc. Mong được các anh chị đã đi trước và trải qua cho tôi xin lời khuyên. Cẩm Vi",
+  "primary_label": "JOY",
+  "sub_label": "CONNECTION",
+  "emotion_score": 1.0,
+  "source_platform": "vnexpress_tamsu",
+  "author": "Độc giả VnExpress",
+  "author_hash": "2d30d99c0cdb",
+  "source_url": "https://vnexpress.net/me-che-ban-trai-toi-ngheo-gan-30-tuoi-chua-co-gi-trong-tay-5126257.html",
+  "title": "Mẹ chê bạn trai tôi nghèo, gần 30 tuổi chưa có gì trong tay",
+  "narrative_score": 1.0,
+  "matched_pronouns": [
+    "tôi",
+    "anh"
+  ],
+  "matched_reflective": [
+    "cố gắng"
+  ],
+  "matched_keywords": [
+    "vui",
+    "hạnh phúc",
+    "cố gắng",
+    "gia đình",
+    "yêu thương",
+    "tủi thân",
+    "hoang mang",
+    "sợ"
+  ]
+}

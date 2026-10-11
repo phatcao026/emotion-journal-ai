@@ -1,0 +1,21 @@
+{
+  "sample_id": "vnexpress_14c191be",
+  "modality": "text",
+  "text": "Cha tôi gọi điện để hẹn gặp nhưng cha vợ không bắt máy, không gọi lại Cha vợ không bắt máy dù tôi đã thông báo cho vợ biết là cha tôi sẽ gọi. Tôi và vợ cãi nhau, vợ bỏ về ngoại ở hơn hai tháng nay. Tôi có xuống năn nỉ vợ nhưng mọi thứ đều vô nghĩa, cô ấy chỉ muốn ở lại nhà ngoại và không chịu về nhà tôi nữa. Sau hơn hai tháng, cha mẹ tôi thấy sự việc không ổn, cha tôi gọi điện thoại cho cha vợ tôi mong muốn hai gia đình gặp nhau. Nhưng cha tôi gọi hai lần ông đều không bắt máy, đến nay tận 3 ngày rồi vẫn chưa thấy cha vợ gọi lại. Theo mọi người, tình huống như thế này, có phải cha vợ đang có ý gì không? Và làm cách nào để giải quyết khi cha vợ không bắt máy dù tôi đã thông báo cho vợ biết là cha tôi có gọi cha vợ nhưng không thấy phản hồi. Minh Khôi",
+  "primary_label": "JOY",
+  "sub_label": "CONNECTION",
+  "emotion_score": 0.4,
+  "source_platform": "vnexpress_tamsu",
+  "author": "Độc giả VnExpress",
+  "author_hash": "2d30d99c0cdb",
+  "source_url": "https://vnexpress.net/cha-toi-goi-dien-de-hen-gap-nhung-cha-vo-khong-bat-may-khong-goi-lai-5126076.html",
+  "title": "Cha tôi gọi điện để hẹn gặp nhưng cha vợ không bắt máy, không gọi lại",
+  "narrative_score": 0.4,
+  "matched_pronouns": [
+    "tôi"
+  ],
+  "matched_reflective": [],
+  "matched_keywords": [
+    "gia đình"
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "sample_id": "vnexpress_03c56e2c",
+  "modality": "text",
+  "text": "Bạn trai nói tôi bất thường, có vấn đề về giới tính Anh nghi ngờ rằng tôi có vấn đề về giới tính và chủ động dừng mối quan hệ. Tôi gần 30 tuổi, trước đây chưa từng yêu ai quá sâu và chưa đi quá giới hạn. Gần đây tôi quen một người đàn ông khiến mình khá ngưỡng mộ. Mỗi lần đến nhà anh, tôi thấy anh có cả tủ sách, nhiều cuốn đúng những gì tôi thích. Đi làm về muộn nhưng anh vẫn ngồi học thêm nên tôi càng có cảm tình. Chúng tôi xác nhận mối quan hệ yêu đương chưa lâu, tôi chưa thực sự sẵn sàng cho chuyện gần gũi nhưng cũng không phản ứng gay gắt nên đã để anh đi quá giới hạn. Dù sao tôi cũng không còn trẻ con nữa, bạn bè khuyên tôi nên thử chuyện đó, vì nếu hai người không phù hợp thì có cưới nhau cũng khó đi cùng nhau lâu dài. Anh khá nhẹ nhàng, tâm lý nhưng chẳng hiểu sao tôi hoàn toàn không có cảm giác gì. Sau đó, tôi nói thẳng với anh. Anh động viên rằng có lẽ do là lần đầu của tôi nên mới như vậy, sau này sẽ ổn thôi. Anh là người có kinh nghiệm, khá tự tin trong chuyện đó nên tôi nghĩ anh nói đúng. Tôi thậm chí còn hơi mơ mộng, nghĩ chúng tôi sẽ thăng hoa như trong phim, trong truyện ngôn tình hay như những gì bạn bè kể. Tôi nghĩ có thể do mình chưa quen nên còn ngượng ngùng, chỉ cần thêm thời gian, được người mình yêu dẫn dắt thì mọi thứ sẽ khác. Tôi còn chủ động hỏi anh xem mình cần làm gì để thoải mái hơn. Nhưng sau vài lần, cảm giác của tôi vẫn vậy. Tôi không khó chịu hay sợ hãi, chỉ là vẫn không có cảm giác khao khát, chờ mong, thoải mái như người ta nói, thậm chí còn có chút hơi khó chịu, không muốn tiếp tục gần gũi. Anh bắt đầu thất vọng, nói rằng nếu yêu nhau mà chuyện này tôi không có cảm xúc thì sau này sống với nhau sẽ rất khó. Anh còn nghi ngờ rằng tôi có vấn đề về giới tính và chủ động dừng mối quan hệ. Tôi tìm hiểu và biết về thế giới của người vô tính, đôi khi thấy mình khá giống. Gần 30 tuổi nhưng hiếm khi tôi có nhu cầu chuyện ấy. Có thể trước đây tôi chưa yêu ai nên không nhận ra, nhưng bây giờ yêu anh mà vẫn không có cảm giác. Tôi không biết mình có thật sự bất thường như anh nói không. Mong mọi người chia sẻ để tôi có thể hiểu bản thân hơn. Vân Hồng",
+  "primary_label": "JOY",
+  "sub_label": "CONNECTION",
+  "emotion_score": 0.8,
+  "source_platform": "vnexpress_tamsu",
+  "author": "Độc giả VnExpress",
+  "author_hash": "2d30d99c0cdb",
+  "source_url": "https://vnexpress.net/ban-trai-noi-toi-bat-thuong-co-van-de-ve-gioi-tinh-5127369.html",
+  "title": "Bạn trai nói tôi bất thường, có vấn đề về giới tính",
+  "narrative_score": 1.0,
+  "matched_pronouns": [
+    "tôi",
+    "mình",
+    "anh",
+    "ta",
+    "bản thân"
+  ],
+  "matched_reflective": [
+    "đôi khi"
+  ],
+  "matched_keywords": [
+    "gần gũi",
+    "sợ hãi",
+    "sợ",
+    "khó chịu"
+  ]
+}

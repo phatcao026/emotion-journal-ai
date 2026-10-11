@@ -1,0 +1,24 @@
+{
+  "sample_id": "threads_cmt_b86df35f",
+  "modality": "text",
+  "text": "31/05/2026 Xin chào mn. Mình là nữ và là con một sinh ra trong một gia đình “từng” khá giả. Vì từ khi sinh mình ra thi gia đình sa sút dần. Nhưng khoảng thời gian thơ ấu là khoảng thời gian tuyệt vời nhất với mình. Nhưng mọi thứ tốt đẹp và đáng tự hào ấy, đã tan vỡ từ khi mình bước vào cấp 2. Mẹ bị người ta rêu rao rằng bà dang díu với người đàn ông khác (là đồng nghiệp của mẹ) và từ những lần đi caffe của mẹ và chú, và tất nhiên người rêu rao là bố. Thật ra mọi cuộc cafe ấy đều có mình và những người khác",
+  "primary_label": "JOY",
+  "sub_label": "JOY",
+  "emotion_score": 0.8,
+  "source_platform": "threads_comment",
+  "source_url": "https://www.threads.net/@tieulacdaily/post/DXmGkZ8k5ZF",
+  "author": "khanhhan1730",
+  "like_count": 0,
+  "narrative_score": 0.8,
+  "matched_pronouns": [
+    "mình",
+    "ta"
+  ],
+  "matched_reflective": [],
+  "matched_keywords": [
+    "tuyệt vời",
+    "tự hào",
+    "gia đình",
+    "tan vỡ"
+  ]
+}

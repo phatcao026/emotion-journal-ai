@@ -1,0 +1,20 @@
+{
+  "sample_id": "threads_cmt_f4d97d29",
+  "modality": "text",
+  "text": "Ng chơi hệ all-in🥹 phonggxauzai đổi thành phonggvuive hoặc là phonggcach đi nhé. Ai lại joke bản thân thế Phong nháa. Ít mqh tức là vẫn có bạn đk nè. Bạn có bạn bè khác trường hay khác lớp hong",
+  "primary_label": "ANGER",
+  "sub_label": "ANGER",
+  "emotion_score": 0.4,
+  "source_platform": "threads_comment",
+  "source_url": "https://www.threads.net/@tieulacdaily/post/DXmGkZ8k5ZF",
+  "author": "tieulacdaily",
+  "like_count": 1,
+  "narrative_score": 0.4,
+  "matched_pronouns": [
+    "bản thân"
+  ],
+  "matched_reflective": [],
+  "matched_keywords": [
+    "tức"
+  ]
+}

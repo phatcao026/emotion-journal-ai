@@ -1,0 +1,19 @@
+{
+  "sample_id": "threads_cmt_cccfa31d",
+  "modality": "text",
+  "text": "Mình đi chơi trên nhà thím mình tính 12 về nhà nhưng em mình giữ mình lại kêu chơi thêm 1 tuần nữa , lúc đó thím mình nói  về lmj ở đây chơi với em hết hè đi . Nm mình muốn về là vì mình muốn đi làm thêm ạ , mình nói với em mình là mình muốn đi làm thêm em mình nó gth cho mình 1 vài quán và có 1 quán bảo mình mai 8h xg quá c ,từ nhà em mình xg quám đó khoảng 3km nhưng mà em mình nó chỉ có xe đạp thôi . Mình muốn nhờ thím mình đưa mình đi nm kh bt nói sao ạ , h mình phải mở lời sao ạ",
+  "primary_label": "NEUTRAL",
+  "sub_label": "CALM",
+  "emotion_score": 0.0,
+  "source_platform": "threads_comment",
+  "source_url": "https://www.threads.net/@tieulacdaily/post/DXmGkZ8k5ZF",
+  "author": "_quhn_djp",
+  "like_count": 0,
+  "narrative_score": 0.8,
+  "matched_pronouns": [
+    "mình",
+    "em"
+  ],
+  "matched_reflective": [],
+  "matched_keywords": []
+}

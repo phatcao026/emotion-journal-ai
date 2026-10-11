@@ -267,6 +267,32 @@ class LoRAEmotion2Vec(nn.Module):
             self.base_model.eval()
         return self
 
+    def set_lora_trainable(self, trainable: bool = True) -> None:
+        """Freeze or unfreeze the LoRA adapters while ensuring base_model remains strictly frozen.
+
+        Args:
+            trainable: If True, enable gradients ONLY on LoRA parameters (or synthetic encoder).
+                       If False, disable gradients on all parameters.
+        """
+        if getattr(self, "_synthetic", False) or self.lora_model is None:
+            target = self.lora_model if self.lora_model is not None else self._synthetic_backbone
+            for p in target.parameters():
+                p.requires_grad = trainable
+            return
+
+        for name, p in self.lora_model.named_parameters():
+            if "lora_" in name.lower():
+                p.requires_grad = trainable
+            else:
+                p.requires_grad = False
+
+        if self.base_model is not None:
+            for p in self.base_model.parameters():
+                p.requires_grad = False
+            self.base_model.eval()
+        logger.info("LoRAEmotion2Vec: set_lora_trainable(%s) completed. Foundation backbone strictly frozen.", trainable)
+
+
     @staticmethod
     def _unpack_features(output: Any) -> Optional[torch.Tensor]:
         """Safely unpack tensor features from dictionary/tuple/list outputs."""

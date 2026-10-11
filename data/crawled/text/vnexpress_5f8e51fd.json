@@ -1,0 +1,23 @@
+{
+  "sample_id": "vnexpress_5f8e51fd",
+  "modality": "text",
+  "text": "Vợ vẫn bắt tôi làm việc nhà dù có hai giúp việc Tôi thấy mình đã làm việc rất vất vả, thu nhập khoảng 50-60 triệu mỗi tháng, tối hoặc cuối tuần nghỉ ngơi chút cũng hợp lý mà. Tôi 34 tuổi, vợ 32 tuổi, có một bé gái hơn một tuổi. Hai vợ chồng đều đi làm, kinh tế khá ổn nên từ khi có con, chúng tôi thuê hai giúp việc full time. Một người chủ yếu chăm em bé, lo các công việc xoay quanh em bé. Người còn lại lo việc nhà, nấu cơm, giặt giũ, dọn dẹp. Thế nhưng vợ tôi vẫn thường xuyên cằn nhằn chồng lười, không chịu làm việc nhà, chỉ biết đi làm rồi về nằm xem điện thoại, chơi game. Tôi thấy rất khó hiểu vì những việc đó đã có người làm. Buổi tối về nhà, tôi thường chơi với con một lúc rồi tắm, ăn cơm, sau đó giải quyết công việc tồn đọng, xem bóng đá hoặc chơi điện thoại. Thỉnh thoảng đi uống bia với bạn bè. Cuối tuần tôi hay đi đánh tennis với bạn. Vợ thì khác, dù có giúp việc, cô ấy vẫn tự tay nấu đồ ăn cho con hoặc nấu ăn cho cả gia đình. Thấy tôi không giúp hoặc làm không đúng ý, cô ấy lại cằn nhằn. Còn nói tôi không có chí tiến thủ, rảnh rỗi nhưng không học thêm hoặc làm gì thêm để nâng cao thu nhập, vì có con sẽ tốn kém hơn, nhiều khoản chi hơn. Tôi thấy mình đã làm việc rất vất vả, thu nhập khoảng 50-60 triệu mỗi tháng, tối hoặc cuối tuần nghỉ ngơi chút cũng hợp lý mà. Vả lại đã bỏ tiền thuê 2 giúp việc, tôi còn phải làm việc nhà nữa sao? Nếu thế thì thuê giúp việc làm gì. Nói qua nói lại thì hai vợ chồng cãi nhau. Mọi người thấy tôi có vô trách nhiệm như vợ nói không? Quốc Trường",
+  "primary_label": "JOY",
+  "sub_label": "CONNECTION",
+  "emotion_score": 0.4,
+  "source_platform": "vnexpress_tamsu",
+  "author": "Độc giả VnExpress",
+  "author_hash": "2d30d99c0cdb",
+  "source_url": "https://vnexpress.net/vo-van-bat-toi-lam-viec-nha-du-co-hai-giup-viec-5127063.html",
+  "title": "Vợ vẫn bắt tôi làm việc nhà dù có hai giúp việc",
+  "narrative_score": 1.0,
+  "matched_pronouns": [
+    "tôi",
+    "mình",
+    "em"
+  ],
+  "matched_reflective": [],
+  "matched_keywords": [
+    "gia đình"
+  ]
+}

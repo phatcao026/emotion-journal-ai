@@ -1,0 +1,26 @@
+{
+  "sample_id": "threads_cmt_2a754589",
+  "modality": "text",
+  "text": "31/05/2026 May mắn rằng, mình vẫn đang sống, mình có ước mơ. Và hiện tại mình đã năm 3 và đang trong quá trình hiện thực nó. Nhưng mỗi lần thi, cứ như ông trời muốn ngăn cản mình. Trong quá trình ôn thi, đều sẽ có vấn đề nào đó làm mình lại suy nghĩ để giải quyết nó, để lại mệt mỏi, lại áp lực, lại khóc mỗi đêm. Bây giờ cũng vậy. Rõ ràng mình đã yêu cuộc sống này, luôn thấy may mắn vì bản thân của trước kia đã không chùn bước, không từ bỏ cuộc đời để thực hiện ước mơ.",
+  "primary_label": "SADNESS",
+  "sub_label": "SADNESS",
+  "emotion_score": 0.4,
+  "source_platform": "threads_comment",
+  "source_url": "https://www.threads.net/@tieulacdaily/post/DXmGkZ8k5ZF",
+  "author": "khanhhan1730",
+  "like_count": 0,
+  "narrative_score": 1.0,
+  "matched_pronouns": [
+    "mình",
+    "bản thân"
+  ],
+  "matched_reflective": [
+    "áp lực",
+    "mệt mỏi",
+    "bỏ cuộc"
+  ],
+  "matched_keywords": [
+    "khóc",
+    "áp lực"
+  ]
+}

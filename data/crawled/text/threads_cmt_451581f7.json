@@ -1,0 +1,25 @@
+{
+  "sample_id": "threads_cmt_451581f7",
+  "modality": "text",
+  "text": "22 giờ có một mối quan hệ kiểu “thương nhưng không hợp” :)))) thỉnh thoảng mới nhắn tin, thỉnh thoảng mới gặp nhau nhưng cổ chưa bao giờ để toi lại một mình bạn thân k có nghĩa phải chơi thân ha, chỉ cần mỗi khoảnh khắc vui buồn trong cuộc sống đều có thể đồng hành là đủ",
+  "primary_label": "JOY",
+  "sub_label": "JOY",
+  "emotion_score": 0.4,
+  "source_platform": "threads_comment",
+  "source_url": "https://www.threads.net/@tieulacdaily/post/DXmGkZ8k5ZF",
+  "author": "theeighteenthofoctober",
+  "like_count": 0,
+  "narrative_score": 0.6000000000000001,
+  "matched_pronouns": [
+    "mình"
+  ],
+  "matched_reflective": [
+    "một mình"
+  ],
+  "matched_keywords": [
+    "vui",
+    "đồng hành",
+    "buồn",
+    "một mình"
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "sample_id": "threads_cmt_25fb652a",
+  "modality": "text",
+  "text": "31/05/2026 Học hành ngày càng sa sút, không dám kết bạn. Có thể nói thời gian C2,C3 đối với mình là sự đau khổ, áp lực, dằn vặt, không thể tâm sự với ai. Rằng bản thân thấy ngột ngạt như thế nào. Rằng vì sa sút trong học tập mình đã thấy áp lực như thế nào, mình luôn có cảm giác ai đó lấy dây thừng s c mình. Cảm giác ngộp thở ấy, mình không muốn trải nghiệm lại lần nào nữa.",
+  "primary_label": "ANXIETY",
+  "sub_label": "ANXIETY",
+  "emotion_score": 1.0,
+  "source_platform": "threads_comment",
+  "source_url": "https://www.threads.net/@tieulacdaily/post/DXmGkZ8k5ZF",
+  "author": "khanhhan1730",
+  "like_count": 0,
+  "narrative_score": 1.0,
+  "matched_pronouns": [
+    "mình",
+    "bản thân"
+  ],
+  "matched_reflective": [
+    "áp lực"
+  ],
+  "matched_keywords": [
+    "dằn vặt",
+    "ngột ngạt",
+    "áp lực"
+  ]
+}

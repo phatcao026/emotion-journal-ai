@@ -1,0 +1,18 @@
+{
+  "sample_id": "threads_cmt_d0ca7991",
+  "modality": "text",
+  "text": "27/04/2026 bạn cũ t ở tỉnh khác rồi, có mqh nhưng t hết niềm tin r, t vẫn nhắn tin với bạn cũ nhưng trên lớp thì t chơi 1 mình🫪",
+  "primary_label": "NEUTRAL",
+  "sub_label": "CALM",
+  "emotion_score": 0.0,
+  "source_platform": "threads_comment",
+  "source_url": "https://www.threads.net/@tieulacdaily/post/DXmGkZ8k5ZF",
+  "author": "phonggngonzai",
+  "like_count": 0,
+  "narrative_score": 0.4,
+  "matched_pronouns": [
+    "mình"
+  ],
+  "matched_reflective": [],
+  "matched_keywords": []
+}
