@@ -153,6 +153,10 @@ class PhoWhisperTranscriber:
                     f"Failed to load PhoWhisper checkpoint '{self.model_id}': {exc}"
                 ) from exc
 
+    def load_pretrained(self) -> None:
+        """Alias for load_model to match project-wide API conventions."""
+        self.load_model()
+
     def _load_audio(
         self, audio_path: Union[str, Path]
     ) -> Tuple[torch.Tensor, int]:

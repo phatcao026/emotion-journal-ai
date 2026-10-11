@@ -193,9 +193,14 @@ class Stage2HierarchicalMERModel(nn.Module):
 
     def load_pretrained(self) -> None:
         """Download and load pretrained weights for underlying backbones."""
-        self.audio_encoder.load_pretrained()
-        self.asr.load_pretrained()
-        self.text_encoder.load_pretrained()
+        if hasattr(self.audio_encoder, "load_pretrained"):
+            self.audio_encoder.load_pretrained()
+        if hasattr(self.asr, "load_pretrained"):
+            self.asr.load_pretrained()
+        elif hasattr(self.asr, "load_model"):
+            self.asr.load_model()
+        if hasattr(self.text_encoder, "load_pretrained"):
+            self.text_encoder.load_pretrained()
         logger.info("Stage 2 MER backbones successfully loaded.")
 
     def forward(
