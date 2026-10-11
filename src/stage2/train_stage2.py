@@ -268,6 +268,25 @@ def train_stage2(
         logger.info("Loading pretrained weights for Stage 2 MER backbones...")
         model.load_pretrained()
 
+    # 1. Load Stage 1.5 acoustic checkpoint if provided
+    if stage1_checkpoint and Path(stage1_checkpoint).exists():
+        logger.info("Loading Stage 1.5 acoustic weights from '%s'...", stage1_checkpoint)
+        ckpt = torch.load(stage1_checkpoint, map_location=dev, weights_only=False)
+        state_dict = ckpt.get("state_dict", ckpt)
+        model_dict = model.state_dict()
+        filtered_dict = {
+            k: v for k, v in state_dict.items()
+            if k in model_dict and v.shape == model_dict[k].shape
+        }
+        model.load_state_dict(filtered_dict, strict=False)
+        logger.info("Stage 1.5 weights injected: successfully loaded %d compatible tensors.", len(filtered_dict))
+
+    # 2. Audio freezing
+    if freeze_audio_epochs > 0:
+        logger.info("Freezing audio encoder for the first %d epochs...", freeze_audio_epochs)
+        for p in model.audio_encoder.parameters():
+            p.requires_grad = False
+
     train_cfg = config.get("training", {})
     loss_cfg = config.get("loss", {})
     lr = float(train_cfg.get("learning_rate", 1.0e-4))
@@ -282,7 +301,7 @@ def train_stage2(
     optimizer = optim.AdamW(params_to_opt, lr=lr, weight_decay=weight_decay)
 
     # Class counts for LDAM loss
-    class_counts = [100, 80, 20, 60, 40]
+    class_counts = [982, 863, 787, 1172, 1205] if not dummy else [12, 12, 12, 12, 12]
     loss_primary = LDAMLoss(
         class_counts=class_counts,
         max_m=float(loss_cfg.get("ldam_max_m", 0.5)),
@@ -295,8 +314,17 @@ def train_stage2(
     primary_weight = float(loss_cfg.get("default_primary_weight", 0.7))
     sub_weight = float(loss_cfg.get("default_sub_weight", 0.3))
 
+    ckpt_dir = Path("checkpoints/stage2")
+    ckpt_dir.mkdir(parents=True, exist_ok=True)
+    best_val_f1 = -1.0
+
     logger.info("Starting Stage 2 SOTA training for %d epochs...", num_epochs)
     for epoch in range(1, num_epochs + 1):
+        if epoch == freeze_audio_epochs + 1 and freeze_audio_epochs > 0:
+            logger.info("Unfreezing audio encoder parameters at epoch %d...", epoch)
+            for p in model.audio_encoder.parameters():
+                p.requires_grad = True
+
         if isinstance(loss_primary, LDAMLoss):
             loss_primary.drw_update(current_epoch=epoch, drw_start_epoch=drw_start_epoch)
 
@@ -312,7 +340,7 @@ def train_stage2(
             device=dev,
             epoch=epoch,
         )
-        evaluate(
+        val_res = evaluate(
             model=model,
             loader=val_loader,
             loss_primary_fn=loss_primary,
@@ -323,6 +351,32 @@ def train_stage2(
             device=dev,
             phase="val",
         )
+
+        val_f1 = val_res.get("primary_f1", 0.0)
+        if val_f1 > best_val_f1:
+            best_val_f1 = val_f1
+            best_model_path = ckpt_dir / "best_model_stage2.pt"
+            torch.save({
+                "epoch": epoch,
+                "state_dict": model.state_dict(),
+                "val_primary_f1": val_f1,
+                "val_metrics": val_res,
+                "config": config,
+            }, str(best_model_path))
+            logger.info("★ Saved new best Stage 2 model to %s (Val Primary Macro-F1: %.4f)", best_model_path, val_f1)
+
+    logger.info("Training complete! Running final evaluation on Test Set...")
+    evaluate(
+        model=model,
+        loader=test_loader,
+        loss_primary_fn=loss_primary,
+        loss_sub_fn=loss_sub,
+        uncertainty_loss_fn=uncertainty_loss_fn,
+        primary_weight=primary_weight,
+        sub_weight=sub_weight,
+        device=dev,
+        phase="test",
+    )
 
 
 if __name__ == "__main__":

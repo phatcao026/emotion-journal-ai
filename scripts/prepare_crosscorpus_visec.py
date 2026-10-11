@@ -96,8 +96,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--visec-dataset",
         type=str,
-        default="hustep-lab/ViSEC",
-        help="Hugging Face ViSEC dataset repo (default: hustep-lab/ViSEC)",
+        default="Vinh727/HusTep_ViSEC",
+        help="Hugging Face ViSEC dataset repo (default: Vinh727/HusTep_ViSEC)",
     )
     parser.add_argument(
         "--ravdess-dir",
@@ -219,7 +219,7 @@ def load_audio_file(file_path: Path) -> Tuple[Optional[np.ndarray], int]:
 def extract_audio_from_hf_rec(rec: Dict[str, Any]) -> Tuple[Optional[np.ndarray], int]:
     """Robustly extract audio array and sample rate from Hugging Face record."""
     audio_obj = None
-    for key in ["audio", "speech", "wav", "sound"]:
+    for key in ["path", "audio", "wav", "speech", "sound", "file"]:
         if key in rec:
             val = rec[key]
             if isinstance(val, (list, tuple)) and len(val) > 0:
@@ -288,11 +288,29 @@ def load_visec(dataset_name: str, sample_limit: Optional[int] = None) -> List[Di
         logger.error("The 'datasets' library is required. Install via: pip install datasets")
         sys.exit(1)
 
-    try:
-        ds = load_dataset(dataset_name)
-    except Exception as e:
-        logger.error("Failed to load '%s': %s", dataset_name, e)
+    candidate_datasets = [dataset_name]
+    for alt in ["Vinh727/HusTep_ViSEC", "Dennis290/ViSEC"]:
+        if alt not in candidate_datasets:
+            candidate_datasets.append(alt)
+
+    ds = None
+    loaded_name = None
+    last_err = None
+    for cand in candidate_datasets:
+        logger.info("Attempting to load ViSEC from '%s'...", cand)
+        try:
+            ds = load_dataset(cand)
+            loaded_name = cand
+            break
+        except Exception as e:
+            logger.warning("Could not load from '%s': %s", cand, e)
+            last_err = e
+
+    if ds is None:
+        logger.error("Failed to load ViSEC from all candidate repositories: %s | Last error: %s", candidate_datasets, last_err)
         sys.exit(1)
+
+    logger.info("Successfully loaded ViSEC from '%s'!", loaded_name)
 
     # Gather rows across all splits
     all_rows = []
