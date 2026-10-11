@@ -64,6 +64,14 @@ def calculate_taxonomy_violation_rate(
     return (violations / total) * 100.0
 
 
+def _extract_recall(metrics_dict: Dict[str, Any], class_idx: int) -> float:
+    """Extract per-class recall from metrics dictionary."""
+    for item in metrics_dict.get("per_class", []):
+        if item.get("class") == class_idx:
+            return float(item.get("recall", 0.0))
+    return 0.0
+
+
 @torch.no_grad()
 def evaluate_stage1_5(
     checkpoint_path: Optional[str],
@@ -105,12 +113,12 @@ def evaluate_stage1_5(
         "modalities": "Acoustic (768) + Pause (128)",
         "dim_fused": 896,
         "primary_f1": metrics.get("macro_f1", 0.0),
-        "primary_wa": metrics.get("accuracy", 0.0),
-        "primary_ua": metrics.get("unweighted_accuracy", 0.0),
+        "primary_wa": metrics.get("wa", 0.0),
+        "primary_ua": metrics.get("ua", 0.0),
         "sub_f1": None,
         "violation_rate": "N/A (No Sub-head)",
-        "anxiety_recall": metrics.get("class_metrics", {}).get(2, {}).get("recall", 0.0),
-        "sadness_recall": metrics.get("class_metrics", {}).get(1, {}).get("recall", 0.0),
+        "anxiety_recall": _extract_recall(metrics, 2),
+        "sadness_recall": _extract_recall(metrics, 1),
     }
 
 
@@ -167,12 +175,12 @@ def evaluate_stage2_v1(
         "modalities": "Voice (768) + Text (768) + Pause (128)",
         "dim_fused": 896,
         "primary_f1": m_primary.get("macro_f1", 0.0),
-        "primary_wa": m_primary.get("accuracy", 0.0),
-        "primary_ua": m_primary.get("unweighted_accuracy", 0.0),
+        "primary_wa": m_primary.get("wa", 0.0),
+        "primary_ua": m_primary.get("ua", 0.0),
         "sub_f1": m_sub.get("macro_f1", 0.0),
         "violation_rate": f"{violation_rate:.2f}%",
-        "anxiety_recall": m_primary.get("class_metrics", {}).get(2, {}).get("recall", 0.0),
-        "sadness_recall": m_primary.get("class_metrics", {}).get(1, {}).get("recall", 0.0),
+        "anxiety_recall": _extract_recall(m_primary, 2),
+        "sadness_recall": _extract_recall(m_primary, 1),
     }
 
 
@@ -235,12 +243,12 @@ def evaluate_stage2_v2(
         "modalities": "Voice (768) + Text (768) + Pause (128) + Melody (32)",
         "dim_fused": 928,
         "primary_f1": m_primary.get("macro_f1", 0.0),
-        "primary_wa": m_primary.get("accuracy", 0.0),
-        "primary_ua": m_primary.get("unweighted_accuracy", 0.0),
+        "primary_wa": m_primary.get("wa", 0.0),
+        "primary_ua": m_primary.get("ua", 0.0),
         "sub_f1": m_sub.get("macro_f1", 0.0),
         "violation_rate": f"{violation_rate:.2f}%",
-        "anxiety_recall": m_primary.get("class_metrics", {}).get(2, {}).get("recall", 0.0),
-        "sadness_recall": m_primary.get("class_metrics", {}).get(1, {}).get("recall", 0.0),
+        "anxiety_recall": _extract_recall(m_primary, 2),
+        "sadness_recall": _extract_recall(m_primary, 1),
     }
 
 
