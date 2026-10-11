@@ -69,10 +69,13 @@ def evaluate_stage1_5(
     checkpoint_path: Optional[str],
     dataloader: DataLoader,
     device: torch.device,
+    dummy: bool = False,
 ) -> Dict[str, Any]:
     """Evaluate Stage 1.5 Acoustic-Only model."""
     logger.info("--> Evaluating Stage 1.5 (Acoustic Only)...")
     model = VoiceOnlyMERModel(num_primary_classes=5, device=str(device))
+    if not dummy and hasattr(model, "load_pretrained"):
+        model.load_pretrained()
     model.to(device)
     model.eval()
 
@@ -116,10 +119,13 @@ def evaluate_stage2_v1(
     checkpoint_path: Optional[str],
     dataloader: DataLoader,
     device: torch.device,
+    dummy: bool = False,
 ) -> Dict[str, Any]:
     """Evaluate Stage 2 V1 Multimodal Gated Fusion model."""
     logger.info("--> Evaluating Stage 2 V1 (Initial Multimodal Gated Fusion)...")
     model = HierarchicalMERModel(num_primary_classes=5, num_sub_classes=11, device=str(device))
+    if not dummy and hasattr(model, "load_pretrained"):
+        model.load_pretrained()
     model.to(device)
     model.eval()
 
@@ -175,6 +181,7 @@ def evaluate_stage2_v2(
     checkpoint_path: Optional[str],
     dataloader: DataLoader,
     device: torch.device,
+    dummy: bool = False,
 ) -> Dict[str, Any]:
     """Evaluate Stage 2 V2 SOTA Multimodal Model."""
     logger.info("--> Evaluating Stage 2 V2 (SOTA Multi-Modal with Melody & Masking)...")
@@ -185,6 +192,8 @@ def evaluate_stage2_v2(
         dim_melody=32,
         device=str(device),
     )
+    if not dummy and hasattr(model, "load_pretrained"):
+        model.load_pretrained()
     model.to(device)
     model.eval()
 
@@ -268,6 +277,21 @@ def print_comparison_table(results: List[Dict[str, Any]]) -> None:
     print("=" * 115 + "\n")
 
 
+def save_markdown_report(results: List[Dict[str, Any]], output_path: str = "reports/benchmark_3stages.md") -> None:
+    """Save benchmark results to a formatted markdown file for academic paper inclusion."""
+    path = Path(output_path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with open(path, "w", encoding="utf-8") as f:
+        f.write("# Academic Benchmark: 3-Way Progression & Ablation Study\n\n")
+        f.write("| Pipeline Version | Fused Dim | Primary Macro-F1 | Primary WA | Sub Macro-F1 | Hierarchy Violation | Anxiety Recall |\n")
+        f.write("| :--- | :---: | :---: | :---: | :---: | :---: | :---: |\n")
+        for r in results:
+            sub_f1_str = f"{r['sub_f1'] * 100:.2f}%" if r['sub_f1'] is not None else "N/A"
+            f.write(f"| {r['stage']} | {r['dim_fused']} | {r['primary_f1'] * 100:.2f}% | {r['primary_wa'] * 100:.2f}% | {sub_f1_str} | {r['violation_rate']} | {r['anxiety_recall'] * 100:.2f}% |\n")
+    logger.info("Saved benchmark report to %s", output_path)
+    print(f"[*] Benchmark report saved to {output_path}", flush=True)
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Run 3-Way Benchmark for Stage 1.5 vs Stage 2 V1 vs Stage 2 V2")
     parser.add_argument("--stage1-checkpoint", type=str, default="checkpoints/voice_only/best_model_stage1_5.pt")
@@ -277,6 +301,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--data-dir", type=str, default="data/voice_journals")
     parser.add_argument("--device", type=str, default="cuda" if torch.cuda.is_available() else "cpu")
     parser.add_argument("--batch-size", type=int, default=8)
+    parser.add_argument("--output-report", type=str, default="reports/benchmark_3stages.md")
     return parser.parse_args()
 
 
@@ -294,19 +319,20 @@ def main() -> None:
 
     results = []
     # 1. Stage 1.5
-    res1 = evaluate_stage1_5(args.stage1_checkpoint, test_loader, device)
+    res1 = evaluate_stage1_5(args.stage1_checkpoint, test_loader, device, dummy=args.dummy)
     results.append(res1)
 
     # 2. Stage 2 V1
-    res2 = evaluate_stage2_v1(args.stage2_v1_checkpoint, test_loader, device)
+    res2 = evaluate_stage2_v1(args.stage2_v1_checkpoint, test_loader, device, dummy=args.dummy)
     results.append(res2)
 
     # 3. Stage 2 V2
-    res3 = evaluate_stage2_v2(args.stage2_v2_checkpoint, test_loader, device)
+    res3 = evaluate_stage2_v2(args.stage2_v2_checkpoint, test_loader, device, dummy=args.dummy)
     results.append(res3)
 
     # Print comparison
     print_comparison_table(results)
+    save_markdown_report(results, output_path=args.output_report)
 
 
 if __name__ == "__main__":
