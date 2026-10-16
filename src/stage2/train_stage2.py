@@ -66,6 +66,7 @@ def parse_args() -> argparse.Namespace:
         help="Path to pretrained acoustic encoder checkpoint",
     )
     parser.add_argument("--freeze-audio-epochs", type=int, default=0)
+    parser.add_argument("--output-dir", type=str, default="checkpoints/stage2_retrain", help="Directory to save checkpoints")
     parser.add_argument("--device", type=str, default="cuda" if torch.cuda.is_available() else "cpu")
     parser.add_argument("--epochs", type=int, default=None)
     parser.add_argument("--batch-size", type=int, default=None)
@@ -288,6 +289,7 @@ def train_stage2(
     resume_path: Optional[str] = None,
     stage1_checkpoint: Optional[str] = None,
     freeze_audio_epochs: int = 0,
+    output_dir: Optional[str] = "checkpoints/stage2_retrain",
     data_dir: Optional[str] = None,
     device: str = "cpu",
     epochs_override: Optional[int] = None,
@@ -308,7 +310,7 @@ def train_stage2(
 
     start_epoch = 1
     best_val_f1 = -1.0
-    ckpt_dir = Path("checkpoints/stage2")
+    ckpt_dir = Path(output_dir or "checkpoints/stage2_retrain")
     ckpt_dir.mkdir(parents=True, exist_ok=True)
 
     # 1. Check if resuming from an existing Stage 2 checkpoint
@@ -491,6 +493,7 @@ if __name__ == "__main__":
         resume_path=args.resume,
         stage1_checkpoint=args.stage1_checkpoint,
         freeze_audio_epochs=args.freeze_audio_epochs,
+        output_dir=args.output_dir,
         data_dir=args.data_dir,
         device=args.device,
         epochs_override=args.epochs,
