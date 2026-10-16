@@ -40,5 +40,7 @@
     "áp lực",
     "lo lắng",
     "sợ"
-  ]
+  ],
+  "data_tier": "deep_journal",
+  "disclosure_score": 1.0
 }

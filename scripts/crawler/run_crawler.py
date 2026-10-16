@@ -59,6 +59,19 @@ def cmd_status(args):
         bar = "█" * int(pct / 5)
         print(f"    * {mod:<18}: {count:>4} mẫu ({pct:>5.1f}%) {bar}")
 
+    print("\n[1.1] Phân tầng Dữ liệu Huấn luyện (Training Tiers):")
+    tiers = stats.get("tiers", {})
+    tier_desc = {
+        "deep_journal": "Tier 1: Deep Affective Journal (Tâm sự trải lòng / Nhật ký sâu)",
+        "general_monologue": "Tier 2: General Spoken Monologue (Độc thoại sạch / Podcast)",
+        "crisis_quarantine": "Cách ly: Khủng hoảng & Tự hại (Quarantine Bioethics)"
+    }
+    for t_name, desc in tier_desc.items():
+        t_count = tiers.get(t_name, 0)
+        pct = (t_count / max(stats['total_records'], 1)) * 100.0
+        bar = "█" * int(pct / 5)
+        print(f"    * {desc:<58}: {t_count:>4} mẫu ({pct:>5.1f}%) {bar}")
+
     print("\n[2] Phân bố Cảm xúc Chính (Primary 5 Classes):")
     for pri in ["JOY", "SADNESS", "ANXIETY", "ANGER", "NEUTRAL"]:
         cnt = stats["primary_emotions"].get(pri, 0)
@@ -124,8 +137,10 @@ def main():
     p_news.add_argument("--output-dir", type=str, default="data/crawled", help="Thư mục xuất dữ liệu")
 
     # 2. Subcommand: voice
-    p_voice = subparsers.add_parser("voice", help="Thu thập audio độc thoại từ YouTube/TikTok Radio")
+    p_voice = subparsers.add_parser("voice", help="Thu thập audio độc thoại từ YouTube/Podcast Radio")
     p_voice.add_argument("--url", type=str, help="URL video/podcast cần tải")
+    p_voice.add_argument("--search", type=str, help="Từ khóa tìm kiếm YouTube để quét tự động")
+    p_voice.add_argument("--max-items", type=int, default=3, help="Số video tối đa cần tải khi tìm kiếm")
     p_voice.add_argument("--file", type=str, help="Đường dẫn file âm thanh cục bộ")
     p_voice.add_argument("--chunk-duration", type=float, default=45.0, help="Thời lượng mỗi chunk (giây)")
     p_voice.add_argument("--primary", type=str, default="SADNESS", choices=["JOY", "SADNESS", "ANXIETY", "ANGER", "NEUTRAL"])
@@ -136,18 +151,33 @@ def main():
     p_voice.add_argument("--list-sources", action="store_true", help="Xem danh sách kênh gợi ý")
     p_voice.add_argument("--output-dir", type=str, default="data/crawled")
 
-    # 3. Subcommand: threads
+    # 3. Subcommand: tiktok
+    p_tiktok = subparsers.add_parser("tiktok", help="Thu thập Spontaneous Voice Journaling từ TikTok")
+    p_tiktok.add_argument("--profiles", nargs="*", help="Danh sách TikTok username cần quét (ví dụ: @tam.su.dem @goc.tam.su)")
+    p_tiktok.add_argument("--sound-urls", nargs="*", help="Danh sách URL Original Sound cần quét")
+    p_tiktok.add_argument("--search", nargs="*", help="Danh sách từ khóa tìm kiếm trên TikTok")
+    p_tiktok.add_argument("--url", type=str, help="URL video TikTok cụ thể cần xử lý trực tiếp")
+    p_tiktok.add_argument("--max-items", type=int, default=10, help="Số video tối đa cho mỗi profile/query")
+    p_tiktok.add_argument("--chunk-duration", type=float, default=45.0, help="Thời lượng mỗi đoạn monologue")
+    p_tiktok.add_argument("--transcribe", action="store_true", help="Bật PhoWhisper ASR để sinh transcript")
+    p_tiktok.add_argument("--remove-music", action="store_true", help="Chạy Demucs tách nhạc nền")
+    p_tiktok.add_argument("--primary", type=str, default="SADNESS", choices=["JOY", "SADNESS", "ANXIETY", "ANGER", "NEUTRAL"])
+    p_tiktok.add_argument("--sub", type=str, default="LONELINESS")
+    p_tiktok.add_argument("--list-creators", action="store_true", help="Xem danh sách Creator gợi ý")
+    p_tiktok.add_argument("--output-dir", type=str, default="data/crawled")
+
+    # 4. Subcommand: threads
     p_threads = subparsers.add_parser("threads", help="Cào bài viết và bình luận tâm sự từ Meta Threads")
     p_threads.add_argument("--targets", nargs="*", help="Danh sách username cần quét")
     p_threads.add_argument("--search", nargs="*", help="Danh sách từ khóa tìm kiếm")
     p_threads.add_argument("--max-items", type=int, default=10, help="Số bài tối đa mỗi mục")
     p_threads.add_argument("--output-dir", type=str, default="data/crawled")
 
-    # 4. Subcommand: status
+    # 5. Subcommand: status
     p_status = subparsers.add_parser("status", help="Xem báo cáo dashboard thống kê tập dữ liệu đã cào")
     p_status.add_argument("--output-dir", type=str, default="data/crawled")
 
-    # 5. Subcommand: balance
+    # 6. Subcommand: balance
     p_balance = subparsers.add_parser("balance", help="Kiểm tra độ lệch nhãn và gợi ý từ khóa bù trừ")
     p_balance.add_argument("--output-dir", type=str, default="data/crawled")
 
@@ -182,7 +212,14 @@ def main():
             enable_asr=args.transcribe,
             remove_music=args.remove_music
         )
-        if args.url:
+        if getattr(args, "search", None):
+            crawler.search_and_harvest(
+                query=args.search,
+                max_items=args.max_items,
+                assigned_primary=args.primary,
+                assigned_sub=args.sub
+            )
+        elif args.url:
             crawler.process_voice_url(
                 url=args.url,
                 assigned_primary=args.primary,
@@ -197,8 +234,51 @@ def main():
                 author=args.author
             )
         else:
-            print("Vui lòng cung cấp tham số --url hoặc --file (hoặc --list-sources).")
+            print("Vui lòng cung cấp tham số --search, --url hoặc --file (hoặc --list-sources).")
             p_voice.print_help()
+    elif args.command == "tiktok":
+        from scripts.crawler.crawler_tiktok import TikTokVoiceCrawler, CURATED_TIKTOK_CREATORS
+        if args.list_creators:
+            print("\n=== DANH SÁCH GỢI Ý CÁC TIKTOK CREATORS CHUYÊN VOICE JOURNAL & TÂM SỰ ===")
+            for idx, c in enumerate(CURATED_TIKTOK_CREATORS, 1):
+                print(f"[{idx}] {c['username']} - {c['description']}")
+                print(f"    Cảm xúc mặc định: {c['default_emotion'][0]} / {c['default_emotion'][1]}")
+            return
+        crawler = TikTokVoiceCrawler(
+            output_dir=args.output_dir,
+            chunk_duration_s=args.chunk_duration,
+            enable_asr=args.transcribe,
+            remove_music=args.remove_music
+        )
+        if args.url:
+            crawler.process_video_url(
+                video_url=args.url,
+                assigned_primary=args.primary,
+                assigned_sub=args.sub
+            )
+        else:
+            async def run_tiktok():
+                if args.profiles:
+                    for prof in args.profiles:
+                        vids = await crawler.harvest_from_profile(prof, max_videos=args.max_items)
+                        for v in vids:
+                            crawler.process_video_url(v, assigned_primary=args.primary, assigned_sub=args.sub, author=prof)
+                if args.sound_urls:
+                    for s_url in args.sound_urls:
+                        vids = await crawler.harvest_from_sound(s_url, max_videos=args.max_items)
+                        for v in vids:
+                            crawler.process_video_url(v, assigned_primary=args.primary, assigned_sub=args.sub, author="sound_user")
+                if args.search:
+                    for q in args.search:
+                        vids = await crawler.harvest_from_search(q, max_videos=args.max_items)
+                        for v in vids:
+                            crawler.process_video_url(v, assigned_primary=args.primary, assigned_sub=args.sub, author="search_user")
+                if not (args.profiles or args.sound_urls or args.search):
+                    print("Vui lòng cung cấp --profiles, --sound-urls, --search hoặc --url.")
+                    p_tiktok.print_help()
+                    return
+                crawler.print_summary()
+            asyncio.run(run_tiktok())
     elif args.command == "threads":
         from scripts.crawler.crawler_threads import main as threads_main
         sys.argv = [sys.argv[0]]

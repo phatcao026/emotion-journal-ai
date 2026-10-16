@@ -59,6 +59,7 @@ class CrawledDatasetManager:
                 writer.writerow([
                     "sample_id",
                     "modality",          # 'text', 'voice', 'text_voice'
+                    "data_tier",         # 'deep_journal', 'general_monologue', 'crisis_quarantine'
                     "primary_label",     # JOY, SADNESS, ANXIETY, ANGER, NEUTRAL
                     "sub_label",         # JOY, CALM, HOPE, CONNECTION, SADNESS, ANXIETY, FEAR, ANGER, GUILT_SHAME, LONELINESS, DISGUST
                     "emotion_score",     # 0.0 -> 1.0
@@ -115,6 +116,12 @@ class CrawledDatasetManager:
         entry.setdefault("is_crisis", False)
         entry.setdefault("voice_type", "unspecified")
 
+        # Xác định data_tier chuẩn mực
+        if entry.get("is_crisis"):
+            entry["data_tier"] = "crisis_quarantine"
+        elif "data_tier" not in entry or not entry["data_tier"]:
+            entry["data_tier"] = "general_monologue"
+
         # Cập nhật index in-memory
         if entry.get("sample_id"):
             self._crawled_samples.add(entry["sample_id"])
@@ -129,6 +136,7 @@ class CrawledDatasetManager:
             writer.writerow([
                 entry.get("sample_id", ""),
                 entry.get("modality", ""),
+                entry.get("data_tier", "general_monologue"),
                 entry.get("primary_label", ""),
                 entry.get("sub_label", ""),
                 entry.get("emotion_score", 0.0),
@@ -151,14 +159,19 @@ class CrawledDatasetManager:
         primary_label: str,
         sub_label: str,
         emotion_score: float,
+        data_tier: str = "deep_journal",
         meta: Optional[Dict[str, Any]] = None
     ) -> Path:
         """Lưu một mẫu văn bản nhật ký/tâm sự thuần."""
         meta = meta or {}
+        tier = meta.get("data_tier") or data_tier
+        meta["data_tier"] = tier
+
         filepath = self.text_dir / f"{sample_id}.json"
         data = {
             "sample_id": sample_id,
             "modality": "text",
+            "data_tier": tier,
             "text": text,
             "primary_label": primary_label,
             "sub_label": sub_label,
@@ -171,6 +184,7 @@ class CrawledDatasetManager:
         self.append_metadata({
             "sample_id": sample_id,
             "modality": "text",
+            "data_tier": tier,
             "primary_label": primary_label,
             "sub_label": sub_label,
             "emotion_score": emotion_score,
@@ -189,10 +203,14 @@ class CrawledDatasetManager:
         sub_label: str,
         emotion_score: float,
         duration_s: float,
+        data_tier: str = "general_monologue",
         meta: Optional[Dict[str, Any]] = None
     ) -> Path:
         """Lưu một mẫu giọng nói độc thoại/tâm sự thuần (WAV 16kHz Mono)."""
         meta = meta or {}
+        tier = meta.get("data_tier") or data_tier
+        meta["data_tier"] = tier
+
         audio_name = f"{sample_id}.wav"
         wav_path = self.voice_dir / audio_name
         with open(wav_path, "wb") as f:
@@ -202,6 +220,7 @@ class CrawledDatasetManager:
         data = {
             "sample_id": sample_id,
             "modality": "voice",
+            "data_tier": tier,
             "audio_file": audio_name,
             "duration_s": duration_s,
             "primary_label": primary_label,
@@ -215,6 +234,7 @@ class CrawledDatasetManager:
         self.append_metadata({
             "sample_id": sample_id,
             "modality": "voice",
+            "data_tier": tier,
             "primary_label": primary_label,
             "sub_label": sub_label,
             "emotion_score": emotion_score,
@@ -234,10 +254,14 @@ class CrawledDatasetManager:
         sub_label: str,
         emotion_score: float,
         duration_s: float,
+        data_tier: str = "deep_journal",
         meta: Optional[Dict[str, Any]] = None
     ) -> Tuple[Path, Path]:
         """Lưu cặp đôi hoàn chỉnh: Audio (.wav) + Nội dung Text transcript tương ứng."""
         meta = meta or {}
+        tier = meta.get("data_tier") or data_tier
+        meta["data_tier"] = tier
+
         audio_name = f"{sample_id}.wav"
         wav_path = self.text_voice_dir / audio_name
         with open(wav_path, "wb") as f:
@@ -247,6 +271,7 @@ class CrawledDatasetManager:
         data = {
             "sample_id": sample_id,
             "modality": "text_voice",
+            "data_tier": tier,
             "text": text,
             "audio_file": audio_name,
             "duration_s": duration_s,
@@ -261,6 +286,7 @@ class CrawledDatasetManager:
         self.append_metadata({
             "sample_id": sample_id,
             "modality": "text_voice",
+            "data_tier": tier,
             "primary_label": primary_label,
             "sub_label": sub_label,
             "emotion_score": emotion_score,
@@ -286,12 +312,14 @@ class CrawledDatasetManager:
         """
         meta = meta or {}
         meta["is_crisis"] = True
+        meta["data_tier"] = "crisis_quarantine"
         meta["crisis_keywords"] = crisis_keywords
 
         filepath = self.crisis_dir / f"{sample_id}.json"
         data = {
             "sample_id": sample_id,
             "modality": "crisis_text",
+            "data_tier": "crisis_quarantine",
             "text": text,
             "primary_label": primary_label,
             "sub_label": sub_label,
@@ -305,6 +333,7 @@ class CrawledDatasetManager:
         self.append_metadata({
             "sample_id": sample_id,
             "modality": "crisis_quarantine",
+            "data_tier": "crisis_quarantine",
             "primary_label": primary_label,
             "sub_label": sub_label,
             "emotion_score": 1.0,
@@ -316,11 +345,28 @@ class CrawledDatasetManager:
         })
         return filepath
 
+    def get_samples_by_tier(self, tier: str) -> List[Dict[str, Any]]:
+        """Lấy danh sách các mẫu theo phân tầng dữ liệu (deep_journal / general_monologue / crisis_quarantine)."""
+        results = []
+        if not self.metadata_jsonl.exists():
+            return results
+        with open(self.metadata_jsonl, "r", encoding="utf-8") as f:
+            for line in f:
+                if line.strip():
+                    try:
+                        item = json.loads(line)
+                        if item.get("data_tier") == tier:
+                            results.append(item)
+                    except Exception:
+                        pass
+        return results
+
     def get_statistics(self) -> Dict[str, Any]:
-        """Thống kê tổng thể về số lượng mẫu, phân bố modality, cảm xúc và người nói."""
+        """Thống kê tổng thể về số lượng mẫu, phân bố modality, phân tầng tiers, cảm xúc và người nói."""
         stats = {
             "total_records": 0,
             "modalities": {"text": 0, "voice": 0, "text_voice": 0, "crisis_quarantine": 0},
+            "tiers": {"deep_journal": 0, "general_monologue": 0, "crisis_quarantine": 0},
             "primary_emotions": {},
             "sub_emotions": {},
             "unique_authors": set(),
@@ -339,6 +385,9 @@ class CrawledDatasetManager:
                     stats["total_records"] += 1
                     mod = item.get("modality", "text")
                     stats["modalities"][mod] = stats["modalities"].get(mod, 0) + 1
+
+                    tier = item.get("data_tier", "general_monologue")
+                    stats["tiers"][tier] = stats["tiers"].get(tier, 0) + 1
 
                     pri = item.get("primary_label", "UNKNOWN")
                     stats["primary_emotions"][pri] = stats["primary_emotions"].get(pri, 0) + 1

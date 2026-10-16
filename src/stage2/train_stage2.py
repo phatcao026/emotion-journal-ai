@@ -59,7 +59,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--dummy", action="store_true", help="Run with synthetic dataset")
     parser.add_argument("--resume", type=str, default=None, help="Resume checkpoint")
     parser.add_argument("--data-dir", type=str, default=None, help="Path to dataset directory")
-    parser.add_argument("--stage1-checkpoint", type=str, default="checkpoints/voice_only/best_model_stage1_5.pt")
+    parser.add_argument(
+        "--stage1-checkpoint",
+        type=str,
+        default="checkpoints/visec_stage1_pretrained.pt" if Path("checkpoints/visec_stage1_pretrained.pt").exists() else "checkpoints/voice_only/best_model_stage1_5.pt",
+        help="Path to pretrained acoustic encoder checkpoint",
+    )
     parser.add_argument("--freeze-audio-epochs", type=int, default=0)
     parser.add_argument("--device", type=str, default="cuda" if torch.cuda.is_available() else "cpu")
     parser.add_argument("--epochs", type=int, default=None)
@@ -109,10 +114,13 @@ def build_model(config: dict, device: str) -> Stage2HierarchicalMERModel:
     model = Stage2HierarchicalMERModel(
         num_primary_classes=heads_cfg.get("primary_head", {}).get("num_classes", 5),
         num_sub_classes=heads_cfg.get("sub_head", {}).get("num_classes", 11),
+        sub_head_input_dim=heads_cfg.get("sub_head", {}).get("input_dim", None),
         fusion_dropout=fusion_cfg.get("dropout", 0.2),
         head_dropout=heads_cfg.get("primary_head", {}).get("dropout", 0.3),
         use_melody=melody_cfg.get("enabled", True),
         dim_melody=fusion_cfg.get("dim_melody", 32),
+        modality_dropout=fusion_cfg.get("modality_dropout", 0.15),
+        gate_temperature=fusion_cfg.get("gate_temperature", 0.8),
         asr_model_id=asr_cfg.get("model_id", "vinai/phowhisper-base"),
         text_model_id=text_cfg.get("model_id", "vinai/phobert-base-v2"),
         device=device,
@@ -258,7 +266,7 @@ def evaluate(
     y_s_true = torch.cat(all_s_targets) if all_s_targets else torch.empty(0)
     m_sub = compute_all_metrics(predictions=y_s_pred, targets=y_s_true, num_classes=model.num_sub_classes) if len(y_s_true) > 0 else {}
 
-    eval_msg = f"    >>> Phase [{phase.upper()}] Loss: {avg_loss:.4f} | Primary F1: {m_primary.get('macro_f1', 0.0):.4f} (WA: {m_primary.get('accuracy', 0.0):.4f}) | Sub F1: {m_sub.get('macro_f1', 0.0):.4f} (WA: {m_sub.get('accuracy', 0.0):.4f})"
+    eval_msg = f"    >>> Phase [{phase.upper()}] Loss: {avg_loss:.4f} | Primary F1: {m_primary.get('macro_f1', 0.0):.4f} (WA: {m_primary.get('wa', 0.0):.4f}) | Sub F1: {m_sub.get('macro_f1', 0.0):.4f} (WA: {m_sub.get('wa', 0.0):.4f})"
     logger.info(eval_msg)
     print(eval_msg, flush=True)
 
@@ -268,9 +276,9 @@ def evaluate(
     return {
         "loss": avg_loss,
         "primary_f1": m_primary.get("macro_f1", 0.0),
-        "primary_wa": m_primary.get("accuracy", 0.0),
+        "primary_wa": m_primary.get("wa", 0.0),
         "sub_f1": m_sub.get("macro_f1", 0.0),
-        "sub_wa": m_sub.get("accuracy", 0.0),
+        "sub_wa": m_sub.get("wa", 0.0),
     }
 
 
@@ -308,8 +316,7 @@ def train_stage2(
     if resume_path and Path(resume_path).exists():
         logger.info("Resuming Stage 2 model from checkpoint: '%s'...", resume_path)
         ckpt = torch.load(resume_path, map_location=dev, weights_only=False)
-        state_dict = ckpt.get("state_dict", ckpt)
-        model.load_state_dict(state_dict, strict=False)
+        model.load_checkpoint_compatible(resume_path, map_location=dev)
         saved_epoch = ckpt.get("epoch", 0)
         start_epoch = saved_epoch + 1
         best_val_f1 = float(ckpt.get("val_primary_f1", -1.0))
@@ -373,14 +380,20 @@ def train_stage2(
             except Exception as opt_err:
                 logger.warning("Could not restore optimizer state (%s). Initializing fresh optimizer.", opt_err)
 
-    # Class counts for LDAM loss
+    # Class counts for Primary & Sub LDAM losses
     class_counts = [982, 863, 787, 1172, 1205] if not dummy else [12, 12, 12, 12, 12]
     loss_primary = LDAMLoss(
         class_counts=class_counts,
         max_m=float(loss_cfg.get("ldam_max_m", 0.5)),
         s=float(loss_cfg.get("ldam_s", 30.0)),
     ).to(dev)
-    loss_sub = nn.CrossEntropyLoss().to(dev)
+
+    sub_counts = [450, 480, 250, 180, 520, 220, 310, 490, 85, 140, 110] if not dummy else [5] * 11
+    loss_sub = LDAMLoss(
+        class_counts=sub_counts,
+        max_m=float(loss_cfg.get("ldam_max_m", 0.5)),
+        s=float(loss_cfg.get("ldam_s", 30.0)),
+    ).to(dev)
 
     drw_start_epoch = int(loss_cfg.get("drw_start_epoch", 15))
     num_epochs = epochs_override or train_cfg.get("num_epochs", 60)
@@ -395,6 +408,8 @@ def train_stage2(
 
         if isinstance(loss_primary, LDAMLoss):
             loss_primary.drw_update(current_epoch=epoch, drw_start_epoch=drw_start_epoch)
+        if isinstance(loss_sub, LDAMLoss):
+            loss_sub.drw_update(current_epoch=epoch, drw_start_epoch=drw_start_epoch)
 
         train_one_epoch(
             model=model,

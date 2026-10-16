@@ -129,13 +129,15 @@ class VoiceRadioCrawler:
             "processed_sources": 0,
             "created_voice_chunks": 0,
             "created_text_voice_pairs": 0,
+            "deep_journal_count": 0,
+            "general_monologue_count": 0,
             "quarantined_crisis": 0,
             "rejected_audit": 0,
             "primary_counts": {},
             "sub_counts": {}
         }
 
-    def download_audio_with_ytdlp(self, url: str, base_name: str) -> Optional[Path]:
+    def download_audio_with_ytdlp(self, url: str, base_name: str) -> Tuple[Optional[Path], Dict[str, Any]]:
         """Tải âm thanh từ URL video/podcast bằng yt-dlp và chuyển về WAV qua VoiceProcessor."""
         out_template = str(self.temp_dir / f"{base_name}.%(ext)s")
         ydl_opts = {
@@ -144,11 +146,22 @@ class VoiceRadioCrawler:
             "quiet": True,
             "no_warnings": True,
         }
+        info_dict: Dict[str, Any] = {}
 
         try:
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 print(f"[*] Đang tải audio từ: {url}")
-                ydl.download([url])
+                info = ydl.extract_info(url, download=True)
+                if info:
+                    info_dict = {
+                        "title": info.get("title", ""),
+                        "description": info.get("description", ""),
+                        "uploader": info.get("uploader", ""),
+                        "uploader_id": info.get("uploader_id", ""),
+                        "channel_id": info.get("channel_id", ""),
+                        "channel": info.get("channel", ""),
+                        "duration": info.get("duration", 0)
+                    }
 
             # Tìm file vừa tải về
             candidates = list(self.temp_dir.glob(f"{base_name}.*"))
@@ -156,7 +169,7 @@ class VoiceRadioCrawler:
                 raw_audio = candidates[0]
                 converted_wav = self.temp_dir / f"{base_name}.wav"
                 if raw_audio.suffix.lower() == ".wav" and raw_audio.resolve() == converted_wav.resolve():
-                    return raw_audio
+                    return raw_audio, info_dict
 
                 ok = self.vp.convert_to_16k_mono_wav(raw_audio, converted_wav)
                 try:
@@ -166,10 +179,47 @@ class VoiceRadioCrawler:
                     pass
 
                 if ok and converted_wav.exists():
-                    return converted_wav
+                    return converted_wav, info_dict
         except Exception as e:
             print(f"[-] Lỗi yt-dlp khi tải {url}: {e}")
-        return None
+        return None, info_dict
+
+    def search_and_harvest(
+        self,
+        query: str,
+        max_items: int = 3,
+        assigned_primary: Optional[str] = None,
+        assigned_sub: Optional[str] = None
+    ):
+        """Tìm kiếm video podcast/tâm sự từ YouTube và tự động tải, phân đoạn (kèm lọc tiêu cực)."""
+        search_query = f"ytsearch{max_items}:{query} -karaoke -nhạc -truyện -cover -audiobook"
+        ydl_opts = {
+            "quiet": True,
+            "extract_flat": True,
+            "skip_download": True,
+        }
+        try:
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                print(f"[*] Đang tìm kiếm YouTube với truy vấn: '{query}' (lọc karaoke/nhạc/truyện)...")
+                res = ydl.extract_info(search_query, download=False)
+                entries = res.get("entries", []) if res else []
+                print(f"[+] Tìm thấy {len(entries)} video tiềm năng.")
+                for entry in entries:
+                    if not entry:
+                        continue
+                    video_url = entry.get("url") or f"https://www.youtube.com/watch?v={entry.get('id')}"
+                    title = entry.get("title", "")
+                    uploader = entry.get("uploader", "")
+                    print(f"\n---> Bắt đầu xử lý: {title} ({video_url})")
+                    self.process_voice_url(
+                        url=video_url,
+                        assigned_primary=assigned_primary,
+                        assigned_sub=assigned_sub,
+                        context_text=title,
+                        author=uploader or "youtube_curated"
+                    )
+        except Exception as e:
+            print(f"[-] Lỗi khi tìm kiếm YouTube: {e}")
 
     def process_voice_url(
         self,
@@ -181,17 +231,21 @@ class VoiceRadioCrawler:
     ):
         """Xử lý một URL âm thanh/podcast: tải -> convert 16kHz mono -> chunking -> validate -> lưu dataset."""
         base_id = f"voice_{uuid.uuid4().hex[:8]}"
-        downloaded = self.download_audio_with_ytdlp(url, base_id)
+        downloaded, info_dict = self.download_audio_with_ytdlp(url, base_id)
         if not downloaded:
             return
+
+        # Xác định author chuẩn từ uploader_id/channel_id để gán author_hash duy nhất theo người nói
+        real_author = info_dict.get("channel_id") or info_dict.get("uploader_id") or info_dict.get("uploader") or author
+        video_context = context_text or info_dict.get("title", "")
 
         self.process_local_audio(
             audio_path=downloaded,
             source_url=url,
             assigned_primary=assigned_primary,
             assigned_sub=assigned_sub,
-            context_text=context_text,
-            author=author
+            context_text=video_context,
+            author=real_author
         )
 
         # Xóa file tải thô
@@ -237,29 +291,31 @@ class VoiceRadioCrawler:
             else:
                 print(f"  [-] Không thể tách nhạc nền. Tiếp tục với audio ban đầu.")
 
-        author_hash = hashlib.sha256(f"radio_{author}".encode("utf-8")).hexdigest()[:12]
+        author_hash = hashlib.sha256(f"spk_{author}".encode("utf-8")).hexdigest()[:12]
 
-        # 2. Phân tích ngữ cảnh text (nếu có mô tả/tiêu đề tập) để xác định cảm xúc
-        if context_text and not (assigned_primary and assigned_sub):
+        # 2. Xác định Bayesian Prior từ cấu trúc kênh hoặc tham số người dùng
+        if assigned_primary and assigned_sub:
+            prior_pri = assigned_primary
+            prior_sub = assigned_sub
+        elif context_text:
             eval_res = self.jf.evaluate_entry(context_text)
             if eval_res["accepted"]:
-                primary_label = eval_res["primary_emotion"]
-                sub_label = eval_res["sub_emotion"]
+                prior_pri = eval_res["primary_emotion"]
+                prior_sub = eval_res["sub_emotion"]
             else:
-                primary_label = assigned_primary or "SADNESS"
-                sub_label = assigned_sub or "LONELINESS"
+                prior_pri = "SADNESS"
+                prior_sub = "LONELINESS"
         else:
-            primary_label = assigned_primary or "SADNESS"
-            sub_label = assigned_sub or "LONELINESS"
+            prior_pri = "SADNESS"
+            prior_sub = "LONELINESS"
 
-        # 3. Cắt thành các đoạn monologue (30s - 60s)
+        # 3. Cắt thành các đoạn monologue (15s - 45s) theo khoảng lặng tự nhiên IPU via Silero-VAD
         chunks_output_dir = self.temp_dir / f"chunks_{base_id}"
         chunks = self.vp.split_long_audio_to_monologues(
             wav_path=std_wav_path,
             output_dir=chunks_output_dir,
             base_sample_id=base_id,
-            chunk_duration_s=self.chunk_duration_s,
-            overlap_s=5.0
+            chunk_duration_s=self.chunk_duration_s
         )
 
         print(f"[*] Đã phân đoạn thành công {len(chunks)} đoạn độc thoại tâm sự (chuẩn 15s - {self.chunk_duration_s}s).")
@@ -277,6 +333,16 @@ class VoiceRadioCrawler:
             with open(c_wav_path, "rb") as f:
                 wav_bytes = f.read()
 
+            # 4. Gán nhãn cảm xúc âm học độc lập (Decoupled Acoustic Affect - No Circular Reasoning)
+            acoustic_affect = self.vp.estimate_acoustic_affect(
+                c_wav_path,
+                prior_primary=prior_pri,
+                prior_sub=prior_sub
+            )
+            voice_pri = acoustic_affect["primary"]
+            voice_sub = acoustic_affect["sub"]
+            emotion_score = acoustic_affect["confidence"]
+
             meta = {
                 "source_platform": "radio_podcast_monologue",
                 "author": author,
@@ -286,14 +352,23 @@ class VoiceRadioCrawler:
                 "voice_type": self.voice_type,
                 "rms_dbfs": audit["rms_dbfs"],
                 "peak": audit["peak"],
-                "speech_ratio": audit["speech_ratio"]
+                "speech_ratio": audit["speech_ratio"],
+                "snr_db": audit.get("snr_db", 0.0),
+                "noise_floor_dbfs": audit.get("noise_floor_dbfs", -60.0),
+                "acoustic_arousal": acoustic_affect["arousal"],
+                "acoustic_valence": acoustic_affect["valence"],
+                "f0_mean": acoustic_affect["f0_mean"],
+                "f0_std": acoustic_affect["f0_std"],
+                "incongruent_masking": False,
+                "text_primary": "",
+                "text_sub": ""
             }
 
-            # 4. Nếu bật ASR (--transcribe), sinh transcript thật từ giọng nói
+            # 5. Nếu bật ASR (--transcribe), sinh transcript thật từ giọng nói qua PhoWhisper
             spoken_text = ""
-            chunk_pri = primary_label
-            chunk_sub = sub_label
             is_crisis_chunk = False
+            chunk_tier = "general_monologue"
+            disclosure_score = 0.0
 
             if self.enable_asr and self.asr is not None:
                 try:
@@ -301,6 +376,9 @@ class VoiceRadioCrawler:
                     if asr_res and asr_res.text.strip():
                         spoken_text = asr_res.text.strip()
                         eval_asr = self.jf.evaluate_entry(spoken_text)
+                        chunk_tier = eval_asr.get("data_tier", "general_monologue")
+                        disclosure_score = eval_asr.get("disclosure_score", 0.0)
+
                         if eval_asr.get("is_crisis"):
                             is_crisis_chunk = True
                             self.dm.save_crisis_sample(
@@ -312,47 +390,67 @@ class VoiceRadioCrawler:
                                 meta=meta
                             )
                             self.stats["quarantined_crisis"] += 1
-                            print(f"  [!] CẢNH BÁO ASR: Phát hiện đoạn nói khủng hoảng tâm lý -> Đã cách ly!")
+                            print(f"  [!] CẢNH BÁO ASR: Phát hiện đoạn nói khủng hoảng tâm lý -> Đã cách ly an toàn!")
                         elif eval_asr["accepted"]:
-                            chunk_pri = eval_asr["primary_emotion"]
-                            chunk_sub = eval_asr["sub_emotion"]
+                            text_pri = eval_asr["primary_emotion"]
+                            text_sub = eval_asr["sub_emotion"]
+                            meta["text_primary"] = text_pri
+                            meta["text_sub"] = text_sub
+
+                            # Kiểm tra hiện tượng che giấu cảm xúc (Affective Incongruence / Masking)
+                            if text_pri != voice_pri and (text_pri == "JOY" or voice_pri in ["SADNESS", "ANXIETY", "ANGER"]):
+                                meta["incongruent_masking"] = True
+                                print(f"  [*] PHÁT HIỆN MASKING: Lời nói '{text_pri}' nhưng Giọng nói '{voice_pri}'!")
                 except Exception as e:
                     print(f"  [-] Lỗi ASR transcribe chunk {chunk_id}: {e}")
 
             if is_crisis_chunk:
                 continue
 
-            # Lưu vào Voice thuần
+            meta["data_tier"] = chunk_tier
+            meta["disclosure_score"] = disclosure_score
+
+            # 6. Lưu vào Voice thuần (Nhãn âm học chuẩn xác, độc lập)
             voice_id = f"{chunk_id}_v"
             self.dm.save_voice_sample(
                 sample_id=voice_id,
                 wav_bytes=wav_bytes,
-                primary_label=chunk_pri,
-                sub_label=chunk_sub,
-                emotion_score=0.9,
+                primary_label=voice_pri,
+                sub_label=voice_sub,
+                emotion_score=emotion_score,
                 duration_s=c_duration,
+                data_tier=chunk_tier,
                 meta=meta
             )
             self.stats["created_voice_chunks"] += 1
 
-            # Lưu cặp Text-Voice CHUẨN XÁC nếu có transcript từ ASR hoặc văn bản khớp
-            final_text = spoken_text if spoken_text else context_text
-            if final_text:
+            # 7. Lưu cặp Text-Voice ĐA PHƯƠNG THỨC:
+            # - CHỈ lưu khi transcript ASR hợp lệ (>= 5 từ) VÀ không phải lời chào/quảng cáo rác bị reject
+            # - Gắn nhãn data_tier ('deep_journal' hoặc 'general_monologue')
+            if spoken_text and len(spoken_text.split()) >= 5 and chunk_tier in ["deep_journal", "general_monologue"]:
                 self.dm.save_text_voice_sample(
                     sample_id=chunk_id,
                     wav_bytes=wav_bytes,
-                    text=final_text,
-                    primary_label=chunk_pri,
-                    sub_label=chunk_sub,
-                    emotion_score=0.9,
+                    text=spoken_text,
+                    primary_label=voice_pri,
+                    sub_label=voice_sub,
+                    emotion_score=emotion_score,
                     duration_s=c_duration,
+                    data_tier=chunk_tier,
                     meta=meta
                 )
                 self.stats["created_text_voice_pairs"] += 1
 
-            self.stats["primary_counts"][chunk_pri] = self.stats["primary_counts"].get(chunk_pri, 0) + 1
-            self.stats["sub_counts"][chunk_sub] = self.stats["sub_counts"].get(chunk_sub, 0) + 1
-            print(f"  [+] ĐÃ LƯU VOICE: {voice_id} ({c_duration}s | {chunk_pri}:{chunk_sub} | RMS: {audit['rms_dbfs']}dBFS)")
+            if chunk_tier == "deep_journal":
+                self.stats["deep_journal_count"] += 1
+            else:
+                self.stats["general_monologue_count"] += 1
+
+            self.stats["primary_counts"][voice_pri] = self.stats["primary_counts"].get(voice_pri, 0) + 1
+            self.stats["sub_counts"][voice_sub] = self.stats["sub_counts"].get(voice_sub, 0) + 1
+            mask_flag = " [MASKED]" if meta.get("incongruent_masking") else ""
+            tier_flag = f" [{chunk_tier.upper()}]"
+            print(f"  [+] ĐÃ LƯU VOICE: {voice_id} ({c_duration}s | {voice_pri}:{voice_sub}{mask_flag}{tier_flag} | Arousal: {acoustic_affect['arousal']} | RMS: {audit['rms_dbfs']}dBFS)")
 
         # Dọn dẹp thư mục tạm
         for tmp in [std_wav_path, clean_wav_path]:
@@ -371,6 +469,8 @@ class VoiceRadioCrawler:
         print("="*65)
         print(f"Tổng nguồn audio đã xử lý:             {self.stats['processed_sources']}")
         print(f"Số mẫu VOICE độc thoại chuẩn (16kHz):   {self.stats['created_voice_chunks']} mẫu")
+        print(f"  * Tier 1 (Deep Affective Journal):   {self.stats['deep_journal_count']} mẫu")
+        print(f"  * Tier 2 (General Monologue MER):    {self.stats['general_monologue_count']} mẫu")
         print(f"Số cặp Text-Voice đa phương thức:      {self.stats['created_text_voice_pairs']} mẫu")
         print(f"Số đoạn bị từ chối do không đạt chuẩn: {self.stats['rejected_audit']} đoạn")
         print("\nPhân bố cảm xúc theo Taxonomy:")
@@ -389,6 +489,8 @@ class VoiceRadioCrawler:
 def main():
     parser = argparse.ArgumentParser(description="Vietnamese Emotional Voice Monologue & Radio Crawler")
     parser.add_argument("--url", type=str, help="URL video/podcast YouTube/TikTok/Soundcloud cần tải và phân đoạn")
+    parser.add_argument("--search", type=str, help="Từ khóa tìm kiếm YouTube để tự động quét nhiều video")
+    parser.add_argument("--max-items", type=int, default=3, help="Số video tối đa cần tải khi dùng --search")
     parser.add_argument("--file", type=str, help="Đường dẫn file âm thanh/video cục bộ cần xử lý")
     parser.add_argument("--output-dir", type=str, default="data/crawled", help="Thư mục xuất dữ liệu")
     parser.add_argument("--chunk-duration", type=float, default=45.0, help="Thời lượng mỗi đoạn độc thoại (giây)")
@@ -427,7 +529,14 @@ def main():
         voice_type=args.voice_type
     )
 
-    if args.url:
+    if args.search:
+        crawler.search_and_harvest(
+            query=args.search,
+            max_items=args.max_items,
+            assigned_primary=args.primary,
+            assigned_sub=args.sub
+        )
+    elif args.url:
         crawler.process_voice_url(
             url=args.url,
             assigned_primary=args.primary,
@@ -444,7 +553,7 @@ def main():
             author=args.author
         )
     else:
-        print("Vui lòng cung cấp tham số --url <URL> hoặc --file <Path> (hoặc --list-sources để xem gợi ý).")
+        print("Vui lòng cung cấp tham số --search <Query>, --url <URL> hoặc --file <Path> (hoặc --list-sources để xem gợi ý).")
         parser.print_help()
         return
 

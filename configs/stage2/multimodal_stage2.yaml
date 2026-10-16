@@ -43,6 +43,8 @@ gated_fusion:
   melody_raw_dim: 32
   dropout: 0.2
   gate_activation: "sigmoid"
+  modality_dropout: 0.15
+  gate_temperature: 0.8
 
 hierarchical_inference:
   enforce_taxonomy_mask: true
@@ -61,7 +63,7 @@ classification_heads:
     dropout: 0.3
 
   sub_head:
-    input_dim: 768
+    input_dim: 928                      # updated: now takes z_fused (768 + 128 + 32)
     num_classes: 11
     labels:
       - "JOY"

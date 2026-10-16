@@ -1,0 +1,248 @@
+{
+  "timestamp": "2026-10-16 00:28:20",
+  "total_samples": 209,
+  "taxonomy_violation_rate_unconstrained_pct": 94.26,
+  "taxonomy_violation_rate_constrained_pct": 0.0,
+  "mean_conf_primary": 0.2812,
+  "mean_conf_sub": 0.8805,
+  "mean_entropy_primary": 0.9637,
+  "mean_entropy_sub": 0.9723,
+  "agreement_rate_pct": 7.18,
+  "gating_weights": {
+    "all_mean_gate_audio": 0.50029,
+    "all_mean_gate_text": 0.49971,
+    "unimodal_mean_gate_audio": 0.50042,
+    "multimodal_mean_gate_audio": 0.50009,
+    "congruent_mean_gate_audio": 0.50033,
+    "incongruent_mean_gate_audio": 0.50024,
+    "channel_variance_768d": 0.000793
+  },
+  "pause_biomarkers_summary": {
+    "Pause Ratio (SPR)": {
+      "mean": 0.1388,
+      "std": 0.2177,
+      "median": 0.0523,
+      "min": 0.0,
+      "max": 0.9763
+    },
+    "Pause Count / min": {
+      "mean": 17.7127,
+      "std": 8.4037,
+      "median": 18.0,
+      "min": 0.0,
+      "max": 40.0
+    },
+    "Max Duration (s)": {
+      "mean": 1.3695,
+      "std": 2.0671,
+      "median": 0.952,
+      "min": 0.0,
+      "max": 19.0
+    },
+    "Mean Duration (s)": {
+      "mean": 0.5292,
+      "std": 1.1673,
+      "median": 0.3646,
+      "min": 0.0,
+      "max": 15.288
+    }
+  },
+  "melody_biomarkers_summary": {
+    "F0_Mean": {
+      "dim_idx": 0,
+      "mean": -0.1683,
+      "std": 0.141
+    },
+    "F0_Std": {
+      "dim_idx": 1,
+      "mean": 0.0019,
+      "std": 0.2785
+    },
+    "F0_Slope": {
+      "dim_idx": 5,
+      "mean": -0.7644,
+      "std": 0.4031
+    },
+    "Voicing_Ratio": {
+      "dim_idx": 12,
+      "mean": 0.4599,
+      "std": 0.2706
+    },
+    "Jitter_Local": {
+      "dim_idx": 15,
+      "mean": -0.6122,
+      "std": 0.1063
+    },
+    "Shimmer_Local": {
+      "dim_idx": 17,
+      "mean": -0.5029,
+      "std": 0.1239
+    },
+    "HNR_dB": {
+      "dim_idx": 20,
+      "mean": -0.7021,
+      "std": 0.1731
+    },
+    "RMS_Mean": {
+      "dim_idx": 21,
+      "mean": 0.5569,
+      "std": 0.5633
+    },
+    "Energy_Entropy": {
+      "dim_idx": 26,
+      "mean": 0.5096,
+      "std": 0.2852
+    },
+    "Spectral_Centroid": {
+      "dim_idx": 27,
+      "mean": -0.4142,
+      "std": 0.1154
+    }
+  },
+  "emotional_masking_summary": {
+    "total_incongruent_samples": 122,
+    "smiling_through_tears_cases": 78,
+    "top_cases": [
+      {
+        "sample_id": "voice_48c69979_c02_v",
+        "text": "",
+        "verbal_label": "JOY",
+        "acoustic_prior": "ANGER",
+        "pred_primary": "NEUTRAL",
+        "pred_sub": "CALM",
+        "conf_p": 26.8,
+        "conf_s": 100.0,
+        "gate_audio": 0.5004,
+        "gate_text": 0.4996,
+        "modality": "voice",
+        "is_smiling_through_tears": true
+      },
+      {
+        "sample_id": "voice_48c69979_c02",
+        "text": "Thiệt lớn lên á cái mình gặp người này người kia cái bắt đầu mình cũng thay đổi mình cũng sửa lại riết nó lại trở thành một phiên bản mới trong ngôn ngữ của mình nhưng mà nhớ lại tri kỳ cảm xúc là cái gì đó nó thân thuộc nó mộc mạc nó bình dân nó gần gũi và nó phải xác nhất với con người của mình nên là tuy là bây giờ con người của mình nó cũng đã va chạm với nhiều nền văn hoá không chỉ trong nước và ngoài nước mà nó có luôn cái sự hoà tang ông.",
+        "verbal_label": "JOY",
+        "acoustic_prior": "ANGER",
+        "pred_primary": "ANXIETY",
+        "pred_sub": "ANXIETY",
+        "conf_p": 24.3,
+        "conf_s": 57.7,
+        "gate_audio": 0.4998,
+        "gate_text": 0.5002,
+        "modality": "text_voice",
+        "is_smiling_through_tears": true
+      },
+      {
+        "sample_id": "voice_48c69979_c03_v",
+        "text": "",
+        "verbal_label": "NEUTRAL",
+        "acoustic_prior": "ANGER",
+        "pred_primary": "NEUTRAL",
+        "pred_sub": "CALM",
+        "conf_p": 27.9,
+        "conf_s": 100.0,
+        "gate_audio": 0.5004,
+        "gate_text": 0.4996,
+        "modality": "voice",
+        "is_smiling_through_tears": true
+      },
+      {
+        "sample_id": "voice_48c69979_c03",
+        "text": "Thì nhớ cái nào tôi làm cái đó gà lý do đó xin chào tất cả quý vị và các bạn đây là tri kỳ cảm xúc ha vì là tri kỳ cảm xúc nên cái phần đầu nó sẽ không theo một cái phoát mái nào cả đúng ra theo cái phoát mái đầu tiên của chương trình là giới thiệu sau đó chào sau đó vào chương trình rước ở tuổi bỏ luôn mấy cái sự cứng nhắc đó quan trọng làm gì có một cái điều mà mọi người nói mà tôi cảm thấy rất là cảm động có người bảo là em mỗi sáng thứ hai đều canh nghe chương trình của anh mà nhiều khi em nghe chương trình của anh.",
+        "verbal_label": "NEUTRAL",
+        "acoustic_prior": "ANGER",
+        "pred_primary": "ANXIETY",
+        "pred_sub": "ANXIETY",
+        "conf_p": 24.8,
+        "conf_s": 54.5,
+        "gate_audio": 0.5004,
+        "gate_text": 0.4996,
+        "modality": "text_voice",
+        "is_smiling_through_tears": true
+      },
+      {
+        "sample_id": "voice_48c69979_c04_v",
+        "text": "",
+        "verbal_label": "JOY",
+        "acoustic_prior": "ANGER",
+        "pred_primary": "NEUTRAL",
+        "pred_sub": "CALM",
+        "conf_p": 28.1,
+        "conf_s": 100.0,
+        "gate_audio": 0.5004,
+        "gate_text": 0.4996,
+        "modality": "voice",
+        "is_smiling_through_tears": true
+      },
+      {
+        "sample_id": "voice_48c69979_c04",
+        "text": "Đúng không nếu mà dạy ai cái gì đó một cái chương trình mang tính giáo dục thì sẽ đặt ra tri kỷ tri thức đúng không thi kỷ tri thức bài học vậy đó đưa tri kỷ cảm xúc có nghĩa là chúng ta giao tiếp với nhau phần lớn và cảm xúc quá năng lượng đôi khi các bạn để ý như thế này các bạn đang chạy bộ các bạn bật tri kỳ cảm xúc lên các bạn nghe và trong lúc chạy bộ các bạn rất là tập trung vào bước chân của mình cũng mệt chứ tại vì chạy mà đâu phải đi bộ đâu và khi mà vừa chạy vừa mệt thì cái tay nghe các bạn bật tri kỳ cảm xúc ở bên tai.",
+        "verbal_label": "JOY",
+        "acoustic_prior": "ANGER",
+        "pred_primary": "JOY",
+        "pred_sub": "JOY",
+        "conf_p": 30.2,
+        "conf_s": 50.7,
+        "gate_audio": 0.5002,
+        "gate_text": 0.4998,
+        "modality": "text_voice",
+        "is_smiling_through_tears": true
+      },
+      {
+        "sample_id": "voice_48c69979_c06_v",
+        "text": "",
+        "verbal_label": "JOY",
+        "acoustic_prior": "ANGER",
+        "pred_primary": "NEUTRAL",
+        "pred_sub": "CALM",
+        "conf_p": 28.0,
+        "conf_s": 100.0,
+        "gate_audio": 0.5004,
+        "gate_text": 0.4996,
+        "modality": "voice",
+        "is_smiling_through_tears": true
+      },
+      {
+        "sample_id": "voice_48c69979_c06",
+        "text": "Ba chữ khi quật cái từ khóa của chúng ta bữa này đó là từ hạnh phúc đây là cái mà tôi tin rằng không nhiều người thực sự hiểu đâu và bản thân tôi đến thời điểm hiện tại khi mà tôi làm một cái tập về từ hạnh phúc tôi vẫn thực sự xem mình một cái người học lâu năm về cái cụm từ này thôi chứ tôi cũng chưa thấy tôi học xong nếu một lần nữa đừng nghĩ nó tôi đang dạy các bạn cách đi từ hạnh phúc nô chỉ là tôi biết một vài thứ và tôi muốn kể lại cho các bạn nghe cho nó vui dạy thôi từ hạnh phúc thực chất là ai trong chúng ta cũng muốn kể về sự hạnh phúc.",
+        "verbal_label": "JOY",
+        "acoustic_prior": "ANGER",
+        "pred_primary": "NEUTRAL",
+        "pred_sub": "CALM",
+        "conf_p": 27.1,
+        "conf_s": 100.0,
+        "gate_audio": 0.5003,
+        "gate_text": 0.4997,
+        "modality": "text_voice",
+        "is_smiling_through_tears": true
+      },
+      {
+        "sample_id": "voice_48c69979_c07_v",
+        "text": "",
+        "verbal_label": "JOY",
+        "acoustic_prior": "ANGER",
+        "pred_primary": "NEUTRAL",
+        "pred_sub": "CALM",
+        "conf_p": 28.2,
+        "conf_s": 100.0,
+        "gate_audio": 0.5004,
+        "gate_text": 0.4996,
+        "modality": "voice",
+        "is_smiling_through_tears": true
+      },
+      {
+        "sample_id": "voice_48c69979_c07",
+        "text": "Một đấng tối cao nào đó che chở cho chúng ta làm hết mọi sự cho chúng ta mang đến hạnh phúc cho chúng ta đó là một mơ ước rất bình thường rất bình thường ở đây không có phê phán gì cả nhưng dọc theo cái thời gian mà chúng ta sẽ trưởng thành tôi hy vọng đến một ngày nào đó càng sớm càng tốt các bạn nhận ra được điều này thì các bạn sẽ nhanh hạnh phúc hơn đó là các bạn sẽ phải tự hạnh phúc trước nếu bạn không thể tự hạnh phúc thì rất khó để bạn thực sự hạnh phúc nếu bạn không tự hạnh phúc được thì mọi người muốn nói về chuyện này là một cái mươi rất bình thường rất bình thường ở đây không có phê phán gì cả nhưng dọc theo cái thời gian mà chúng ta sẽ trưởng th.",
+        "verbal_label": "JOY",
+        "acoustic_prior": "ANGER",
+        "pred_primary": "ANXIETY",
+        "pred_sub": "FEAR",
+        "conf_p": 27.2,
+        "conf_s": 58.8,
+        "gate_audio": 0.5001,
+        "gate_text": 0.4999,
+        "modality": "text_voice",
+        "is_smiling_through_tears": true
+      }
+    ]
+  }
+}

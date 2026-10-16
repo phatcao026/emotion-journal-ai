@@ -79,7 +79,19 @@ python scripts/crawler/run_crawler.py threads `
 
 ---
 
-## 3. Cấu Trúc Dữ Liệu Đầu Ra Chuẩn Hóa
+## 3. Chiến Lược Phân Tầng Dữ Liệu Huấn Luyện (Training Tiers Architecture)
+
+Nhằm tối ưu hóa độ chính xác và tính thực tiễn lâm sàng cho mô hình Stage 2 & Stage 3 Multimodal Emotion Recognition (MER), toàn bộ dữ liệu cào được gắn nhãn phân tầng minh bạch trong `metadata.csv` và `metadata.jsonl`:
+
+| Phân tầng (Data Tier) | Bản chất Dữ liệu | Tiêu chuẩn Đánh giá | Vai trò Huấn luyện Hạ nguồn |
+| :--- | :--- | :--- | :--- |
+| **Tier 1: `deep_journal`** | **Nhật ký & Tâm sự trải lòng chuyên sâu** (First-Person Affective Self-Disclosure) | Ngôi thứ nhất (`tôi`, `mình`, `em`), bộc bạch cảm xúc chân thật, giàu từ ngữ nội tâm (`nghẹt thở`, `bật khóc`, `áp lực`, `cô đơn`, `ấm lòng`), không có văn phong thuyết giảng. | **Nòng cốt để huấn luyện chuyên sâu (Fine-tune Stage 2/3)**: Học các sắc thái cảm xúc lâm sàng, mô hình hóa sự bất đồng bộ giữa Lời nói và Giọng nói (Affective Masking). |
+| **Tier 2: `general_monologue`** | **Độc thoại sạch / Podcast chia sẻ / Tản văn** (General Monologue MER) | Âm học đạt chuẩn ITU-T P.56 SNR >= 12dB, EBU R128 RMS, không nhạc nền, giọng phát thanh/giảng bài hướng dẫn (`chúng ta`, `bài học`, `lời khuyên`). | **Dữ liệu bổ trợ cho MER cơ bản**: Huấn luyện biểu diễn âm học nền tảng (Stage 1.5 SER, speech SSL tuning, melody/pause prior baseline), mở rộng số lượng speaker clusters (`author_hash`) mà không làm loãng tập nhật ký chuyên sâu. |
+| **Quarantine: `crisis_quarantine`** | **Nguy cơ Khủng hoảng & Tự hại** (Bioethics & Clinical Safety) | Khớp từ khóa nguy cấp (theo thang đo C-SSRS: tự tử, muốn chết, rạch tay...). | **Cách ly an toàn tuyệt đối**: Không đưa vào tập train thông thường; bảo đảm quyền riêng tư và đạo đức y sinh. |
+
+---
+
+## 4. Cấu Trúc Dữ Liệu Đầu Ra Chuẩn Hóa
 
 Dữ liệu được lưu trữ tự động tại thư mục `data/crawled/`:
 ```text
@@ -88,21 +100,22 @@ data/crawled/
 ├── voice/                 # Các mẫu âm thanh độc thoại 16kHz Mono (.wav + .json)
 ├── text_voice/            # Cặp đôi đa phương thức hoàn chỉnh (.wav + .json transcript thật)
 ├── crisis_quarantine/     # KHU VỰC CÁCH LY: Các bài viết chứa nguy cơ tự hại/khủng hoảng tâm lý
-├── metadata.csv           # Bảng chỉ mục metadata tổng hợp (kèm author_hash, is_crisis, voice_type)
+├── metadata.csv           # Bảng chỉ mục metadata tổng hợp (kèm data_tier, author_hash, is_crisis, voice_type)
 └── metadata.jsonl         # Bảng JSONL metadata dạng stream (hỗ trợ resumable cào nối tiếp)
 ```
 
 ---
 
-## 4. Chạy Kiểm Thử Tự Động (Unit Tests)
+## 5. Chạy Kiểm Thử Tự Động (Unit Tests)
 
 ```powershell
 python -m unittest tests/test_crawler_pipeline.py -v
 ```
-Bộ test tự động kiểm định:
+Bộ test tự động (24 test cases) kiểm định:
+- Phân tầng chính xác `deep_journal` vs `general_monologue` qua `AffectiveSelfDisclosureFilter`.
 - Nhận diện phạm vi phủ định (*"không vui"* $\rightarrow$ không bị gán nhầm `JOY`).
 - Phát hiện và cách ly ca khủng hoảng vào `crisis_quarantine/`.
 - Cơ chế băm danh tính tác giả `author_hash` (chống rò rỉ người nói).
 - Cơ chế chống cào trùng lặp URL (Resumable Frontier).
 - Khử thông tin cá nhân PII (số điện thoại, email).
-- Kiểm định âm học chuẩn 16kHz Mono WAV.
+- Kiểm định âm học chuẩn 16kHz Mono WAV, SNR ITU-T P.56, EBU R128 RMS, 0.000% clipping.

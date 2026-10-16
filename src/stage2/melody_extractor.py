@@ -69,6 +69,24 @@ class ExplicitMelodyExtractor(nn.Module):
         """Alias for forward extraction."""
         return self.forward(waveform)
 
+    def extract_raw_biomarkers(self, waveform: torch.Tensor) -> dict[str, float]:
+        """Extract unnormalized, human-interpretable acoustic metrics (Hz, dB, ratios).
+        
+        Avoids LayerNorm distortion so clinical rules and UIs get accurate physical values.
+        """
+        if waveform.ndim == 1:
+            wav = waveform.float()
+        elif waveform.ndim == 2:
+            wav = waveform[0].float()
+        elif waveform.ndim == 3:
+            wav = waveform[0, 0].float()
+        else:
+            wav = waveform.reshape(-1).float()
+
+        device = wav.device
+        _, raw_dict = self._extract_single_with_metrics(wav, device)
+        return raw_dict
+
     def forward(self, waveform: torch.Tensor) -> torch.Tensor:
         """Extract 32 melody features for a batch of waveforms.
 
@@ -76,7 +94,7 @@ class ExplicitMelodyExtractor(nn.Module):
             waveform: Tensor of shape (B, T) or (T,) in float32.
 
         Returns:
-            Tensor of shape (B, 32) in float32.
+            Tensor of shape (B, 32) in float32 (LayerNorm normalized).
         """
         if waveform.ndim == 1:
             waveform = waveform.unsqueeze(0)
@@ -89,14 +107,18 @@ class ExplicitMelodyExtractor(nn.Module):
         features_list = []
         for b in range(batch_size):
             wav = waveform[b].float()
-            feats = self._extract_single(wav, device)
+            feats, _ = self._extract_single_with_metrics(wav, device)
             features_list.append(feats)
 
         batch_feats = torch.stack(features_list, dim=0)  # (B, 32)
         return self.norm(batch_feats)
 
     def _extract_single(self, wav: torch.Tensor, device: torch.device) -> torch.Tensor:
-        """Extract 32 features for a single 1D waveform."""
+        feats, _ = self._extract_single_with_metrics(wav, device)
+        return feats
+
+    def _extract_single_with_metrics(self, wav: torch.Tensor, device: torch.device) -> tuple[torch.Tensor, dict[str, float]]:
+        """Extract 32 features and physical metrics dictionary for a single 1D waveform."""
         T = wav.numel()
         if T < self.frame_len:
             wav = F.pad(wav, (0, self.frame_len - T))
@@ -302,4 +324,18 @@ class ExplicitMelodyExtractor(nn.Module):
             zcr * 5.0,
         ], dtype=torch.float32, device=device)
 
-        return features
+        raw_dict = {
+            "f0_mean": float(f0_mean.item()),
+            "f0_std": float(f0_std.item()),
+            "f0_slope": float(f0_slope.item()),
+            "f0_curvature": float(f0_curvature.item()),
+            "voicing_ratio": float(voicing_ratio.item()),
+            "jitter_local": float(jitter_local.item()),
+            "jitter_rap": float(jitter_rap.item()),
+            "shimmer_local": float(shimmer_local.item()),
+            "hnr_db": float(hnr_db.item()),
+            "rms_mean": float(rms_mean.item()),
+            "spectral_centroid": float(spectral_centroid.item()),
+        }
+
+        return features, raw_dict

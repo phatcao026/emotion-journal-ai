@@ -150,7 +150,121 @@ SUB_TO_PRIMARY = {
     "DISGUST": "ANGER"
 }
 
+# 7. Dấu hiệu văn phong thuyết giảng, hướng dẫn, dẫn chương trình podcast (Didactic & Presenter Markers)
+DIDACTIC_PRESENTER_MARKERS = [
+    "chào mừng các bạn", "xin chào các bạn", "chào quý vị", "thính giả thân mến", "kính thưa quý vị",
+    "chương trình hôm nay", "tập podcast", "tập hôm nay", "video hôm nay", "chủ đề ngày hôm nay",
+    "chúng ta cần", "chúng ta phải", "chúng ta nên", "chúng ta hãy", "chúng ta cùng",
+    "bài học rút ra", "bài học hôm nay", "lời khuyên", "phương pháp", "kỹ năng sống", "thói quen tốt",
+    "hãy nhớ rằng", "nhớ like", "đăng ký kênh", "chia sẻ video", "comment bên dưới", "bình luận bên dưới",
+    "thí dụ như", "ví dụ như", "người thành công", "mỗi công dân", "cộng đồng mạng", "xã hội hiện nay"
+]
+
+# 8. Dấu hiệu trải lòng cảm xúc nội tâm sâu sắc (Deep Affective Predicates)
+AFFECTIVE_PREDICATES = [
+    "cảm thấy", "thấy lòng", "trong lòng", "lòng mình", "nghĩ lại", "nghẹt thở", "bật khóc", "rơi nước mắt",
+    "áp lực", "cô đơn", "lạc lõng", "chông chênh", "bế tắc", "tuyệt vọng", "ấm áp", "nhẹ nhõm", "an yên",
+    "hạnh phúc", "biết ơn", "tủi thân", "đau lòng", "bất lực", "tự trách", "day dứt", "vững lòng", "hy vọng",
+    "mệt mỏi", "buồn phiền", "quá tải", "hoang mang", "lo sợ", "sợ hãi", "bồn chồn", "chơi vơi", "đau đớn",
+    "chìm sâu", "vỡ vụn", "nước mắt rơi", "khóc một mình", "không ai hiểu", "tự dặn lòng"
+]
+
 POSITIVE_SUBS = {"JOY", "CALM", "HOPE", "CONNECTION"}
+
+
+class AffectiveSelfDisclosureFilter:
+    """
+    Bộ kiểm định Chiều sâu Bộc bạch Cảm xúc (Affective Self-Disclosure Gatekeeper).
+    Phân định chính xác giữa:
+    - Tier 1: Deep Affective Journal / Confession ('deep_journal')
+      -> Ngôi thứ nhất tự sự, cảm xúc chân thực, không thuyết giảng.
+    - Tier 2: General Spoken Monologue MER ('general_monologue')
+      -> Độc thoại sạch, podcast tản văn, đọc truyện/triết lý sống, có ích cho pretraining acoustic prosody.
+    - Rejected Noise ('rejected')
+      -> Lời chào đầu/cuối kênh, quảng cáo, câu ngắn vô nghĩa.
+    """
+
+    def __init__(self, min_word_count: int = 10):
+        self.min_word_count = min_word_count
+
+    def evaluate_affective_disclosure(self, text: str) -> Dict[str, Any]:
+        if not text or len(text.strip().split()) < self.min_word_count:
+            return {
+                "data_tier": "rejected",
+                "disclosure_score": 0.0,
+                "first_person_count": 0,
+                "affective_count": 0,
+                "didactic_count": 0,
+                "matched_didactic": [],
+                "matched_affective": [],
+                "matched_pronouns": [],
+                "reason": "Text quá ngắn hoặc rỗng"
+            }
+
+        text_lower = text.lower()
+
+        # 1. Quét dấu hiệu thuyết giảng / dẫn chương trình (Didactic)
+        matched_didactic = []
+        for kw in DIDACTIC_PRESENTER_MARKERS:
+            pattern = r"(?<!\w)" + re.escape(kw) + r"(?!\w)"
+            if re.search(pattern, text_lower):
+                matched_didactic.append(kw)
+
+        # 2. Quét đại từ nhân xưng ngôi thứ nhất (First-person pronouns)
+        matched_pronouns = []
+        for kw in FIRST_PERSON_MARKERS:
+            if kw in ["anh", "chị"]:
+                pattern = r"(?<!chúc mừng\s)(?<!\w)" + re.escape(kw) + r"(?!\s+[A-ZÀ-Ỹ])(?!\w)"
+                target_str = text
+            elif kw in ["t", "e"]:
+                pattern = r"(?<!\w)" + re.escape(kw) + r"(?!\w)"
+                target_str = text_lower
+            else:
+                pattern = r"(?<!\w)" + re.escape(kw) + r"(?!\w)"
+                target_str = text_lower
+            if re.search(pattern, target_str):
+                matched_pronouns.append(kw)
+
+        # 3. Quét vị ngữ trạng thái cảm xúc nội tâm (Affective Predicates)
+        matched_affective = []
+        for kw in AFFECTIVE_PREDICATES:
+            pattern = r"(?<!\w)" + re.escape(kw) + r"(?!\w)"
+            if re.search(pattern, text_lower):
+                matched_affective.append(kw)
+
+        fp_count = len(matched_pronouns)
+        aff_count = len(matched_affective)
+        didactic_count = len(matched_didactic)
+
+        # Tính điểm bộc bạch cảm xúc cá nhân (0.0 - 1.0)
+        raw_score = (fp_count * 0.3) + (aff_count * 0.35) - (didactic_count * 0.4)
+        disclosure_score = max(0.0, min(1.0, round(raw_score, 2)))
+
+        # Phân tầng
+        if didactic_count >= 2 or (fp_count == 0 and didactic_count >= 1):
+            tier = "general_monologue"
+            reason = f"Độc thoại diễn thuyết / podcast chia sẻ (phát hiện {didactic_count} chỉ dấu thuyết giảng)"
+        elif fp_count >= 1 and aff_count >= 1 and didactic_count == 0:
+            tier = "deep_journal"
+            reason = f"Nhật ký tự sự bộc bạch cảm xúc sâu sắc (Tier 1 Core Journal)"
+        elif fp_count >= 1 or aff_count >= 1:
+            tier = "deep_journal" if disclosure_score >= 0.35 else "general_monologue"
+            reason = "Tự sự trải lòng đời thường" if tier == "deep_journal" else "Độc thoại tâm sự tổng quát"
+        else:
+            tier = "general_monologue"
+            reason = "Độc thoại tự nhiên không bộc lộ ngôi xưng sâu sắc"
+
+        return {
+            "data_tier": tier,
+            "disclosure_score": disclosure_score,
+            "first_person_count": fp_count,
+            "affective_count": aff_count,
+            "didactic_count": didactic_count,
+            "matched_didactic": matched_didactic,
+            "matched_affective": matched_affective,
+            "matched_pronouns": matched_pronouns,
+            "reason": reason
+        }
 
 
 class JournalFilter:
@@ -158,6 +272,7 @@ class JournalFilter:
 
     def __init__(self, min_word_count: int = 15, normalize_teencode: bool = True):
         self.min_word_count = min_word_count
+        self.disclosure_filter = AffectiveSelfDisclosureFilter(min_word_count=min_word_count)
         if VietnameseTextPreprocessor is not None:
             self.preprocessor = VietnameseTextPreprocessor(
                 lowercase=True,
@@ -341,6 +456,9 @@ class JournalFilter:
             "is_crisis": False,
             "crisis_keywords": [],
             "cleaned_text": cleaned_text,
+            "data_tier": "rejected",
+            "disclosure_score": 0.0,
+            "didactic_markers": [],
             "primary_emotion": "NEUTRAL",
             "sub_emotion": "CALM",
             "emotion_score": 0.0,
@@ -378,12 +496,22 @@ class JournalFilter:
         # 6. Phân tích cảm xúc theo taxonomy
         emotion_info = self.analyze_emotion(cleaned_text)
 
+        # 7. Kiểm định chiều sâu bộc bạch cảm xúc (Affective Self-Disclosure)
+        disclosure_info = self.disclosure_filter.evaluate_affective_disclosure(cleaned_text)
+        if has_crisis:
+            data_tier = "crisis_quarantine"
+        else:
+            data_tier = disclosure_info["data_tier"]
+
         # Chấp nhận mẫu
         return {
             "accepted": True,
             "is_crisis": has_crisis,
             "crisis_keywords": crisis_kws,
-            "reason": "Mẫu khủng hoảng tâm lý (cần cách ly riêng)" if has_crisis else "Mẫu tự sự cá nhân hợp lệ",
+            "data_tier": data_tier,
+            "disclosure_score": disclosure_info["disclosure_score"],
+            "didactic_markers": disclosure_info["matched_didactic"],
+            "reason": "Mẫu khủng hoảng tâm lý (cần cách ly riêng)" if has_crisis else f"Mẫu {data_tier} hợp lệ ({disclosure_info['reason']})",
             "word_count": word_count,
             "cleaned_text": cleaned_text,
             "narrative_score": narrative_info["score"],
@@ -394,3 +522,7 @@ class JournalFilter:
             "emotion_score": emotion_info["emotion_score"],
             "matched_keywords": emotion_info["matched_keywords"]
         }
+
+    def evaluate_affective_disclosure(self, text: str) -> Dict[str, Any]:
+        """Đánh giá trực tiếp chiều sâu bộc bạch tự sự & phân tầng dữ liệu."""
+        return self.disclosure_filter.evaluate_affective_disclosure(text)

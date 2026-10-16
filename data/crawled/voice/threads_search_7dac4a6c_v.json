@@ -23,5 +23,7 @@
     "đồng hành"
   ],
   "rms_dbfs": -16.77,
-  "speech_ratio": 0.988
+  "speech_ratio": 0.988,
+  "data_tier": "general_monologue",
+  "disclosure_score": 0.0
 }

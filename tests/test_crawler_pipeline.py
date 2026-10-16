@@ -252,6 +252,141 @@ class TestCrawlerPipeline(unittest.TestCase):
         self.assertNotIn("27/04/2026", res["cleaned_text"])
         self.assertNotIn("tác giả", res["cleaned_text"].lower())
 
+    def test_itu_p56_snr_clean_vs_noisy(self):
+        """Kiểm tra đo SNR chuẩn ITU-T P.56 phân biệt chính xác audio sạch vs audio nhiễu."""
+        import numpy as np
+        sr = 16000
+        duration_s = 4.0
+        t = np.linspace(0, duration_s, int(sr * duration_s), False)
+        # Speech-like modulated tone
+        env = np.clip(np.sin(2 * np.pi * 1.5 * t), 0, 1)
+        sig_clean = (0.3 * env * np.sin(2 * np.pi * 220 * t)).astype(np.float32)
+        # Tạp âm trắng lớn
+        np.random.seed(42)
+        sig_noisy = sig_clean + 0.12 * np.random.randn(len(t)).astype(np.float32)
+
+        vp = VoiceProcessor(min_duration_s=3.0)
+        snr_clean, nf_clean = vp.calculate_itu_p56_snr(sig_clean)
+        snr_noisy, nf_noisy = vp.calculate_itu_p56_snr(sig_noisy)
+
+        self.assertGreater(snr_clean, 20.0, f"Clean SNR should be > 20 dB, got {snr_clean}")
+        self.assertLess(snr_noisy, 12.0, f"Noisy SNR should be < 12 dB, got {snr_noisy}")
+
+    def test_decoupled_acoustic_affect_estimation(self):
+        """Kiểm tra ước lượng cảm xúc âm học độc lập (Acoustic Affect) không phụ thuộc Text."""
+        import numpy as np
+        import wave
+        sr = 16000
+        duration_s = 3.5
+        t = np.linspace(0, duration_s, int(sr * duration_s), False)
+
+        # 1. Âm thanh năng lượng thấp, F0 phẳng (Sadness / Loneliness)
+        sig_sad = (0.05 * np.sin(2 * np.pi * 120 * t) * 32767).astype(np.int16)
+        sad_wav = os.path.join(self.temp_dir, "test_sad.wav")
+        with wave.open(sad_wav, "wb") as wf:
+            wf.setnchannels(1)
+            wf.setsampwidth(2)
+            wf.setframerate(sr)
+            wf.writeframes(sig_sad.tobytes())
+
+        vp = VoiceProcessor(min_duration_s=3.0)
+        affect_sad = vp.estimate_acoustic_affect(sad_wav)
+        self.assertLess(affect_sad["arousal"], 0.40)
+        self.assertEqual(affect_sad["primary"], "SADNESS")
+        self.assertIn(affect_sad["sub"], ["LONELINESS", "SADNESS"])
+
+        # 2. Âm thanh năng lượng cao, dao động tần số mạnh (Anxiety / Anger)
+        freq_mod = 250 + 40 * np.sin(2 * np.pi * 8 * t)
+        sig_high = (0.35 * np.sin(2 * np.pi * freq_mod * t) * 32767).astype(np.int16)
+        high_wav = os.path.join(self.temp_dir, "test_high.wav")
+        with wave.open(high_wav, "wb") as wf:
+            wf.setnchannels(1)
+            wf.setsampwidth(2)
+            wf.setframerate(sr)
+            wf.writeframes(sig_high.tobytes())
+
+        affect_high = vp.estimate_acoustic_affect(high_wav)
+        self.assertGreater(affect_high["arousal"], 0.65)
+        self.assertIn(affect_high["primary"], ["ANXIETY", "ANGER"])
+
+    def test_incongruent_masking_detection(self):
+        """Kiểm tra cơ chế phát hiện Emotional Masking (nói 'vui' nhưng giọng 'buồn')."""
+        text = "Hôm nay tôi thấy bình yên và nhẹ nhõm vô cùng sau nhiều ngày áp lực."
+        eval_text = self.filter.evaluate_entry(text)
+        text_pri = eval_text["primary_emotion"]
+
+        # Giả lập giọng nói thực tế là buồn (SADNESS)
+        voice_pri = "SADNESS"
+
+        is_incongruent = (text_pri != voice_pri and (text_pri == "JOY" or voice_pri in ["SADNESS", "ANXIETY", "ANGER"]))
+        self.assertTrue(is_incongruent)
+
+    def test_strict_verbatim_transcript_pairing(self):
+        """Kiểm tra quy tắc vàng: Cặp text_voice CHỈ được lưu khi có transcript ASR chân thực (>= 5 từ)."""
+        empty_transcript = ""
+        short_noise_transcript = "À ừm"
+        valid_transcript = "Hôm nay mình ngồi một mình trong phòng trọ rất buồn"
+
+        self.assertFalse(bool(empty_transcript and len(empty_transcript.split()) >= 5))
+        self.assertFalse(bool(short_noise_transcript and len(short_noise_transcript.split()) >= 5))
+        self.assertTrue(bool(valid_transcript and len(valid_transcript.split()) >= 5))
+
+    def test_affective_self_disclosure_filter_deep_journal(self):
+        """Kiểm tra nhận diện chính xác bài viết tự sự bộc bạch nội tâm sâu sắc (Tier 1: deep_journal)."""
+        confession = (
+            "Đêm muộn ngồi một mình trong phòng trọ, dạo này áp lực công việc khiến mình thấy ngột ngạt và cô đơn vô cùng. "
+            "Nhiều lúc muốn bỏ cuộc nhưng lại tự dặn lòng phải cố gắng tiếp tục vượt qua."
+        )
+        res = self.filter.evaluate_entry(confession)
+        self.assertTrue(res["accepted"])
+        self.assertEqual(res["data_tier"], "deep_journal")
+        self.assertGreaterEqual(res["disclosure_score"], 0.4)
+        self.assertIn("mình", res["matched_pronouns"])
+        self.assertEqual(len(res["didactic_markers"]), 0)
+
+    def test_affective_self_disclosure_filter_didactic_lecture(self):
+        """Kiểm tra phân tầng bài thuyết giảng/podcast dạy đời vào Tier 2 (general_monologue)."""
+        lecture = (
+            "Chào mừng các bạn quay trở lại với tập podcast hôm nay. Hôm nay chúng ta cùng bàn về 3 bài học đắt giá "
+            "để vượt qua nghịch cảnh và phương pháp rèn luyện thói quen tốt mỗi ngày."
+        )
+        res = self.filter.evaluate_affective_disclosure(lecture)
+        self.assertEqual(res["data_tier"], "general_monologue")
+        self.assertGreaterEqual(res["didactic_count"], 2)
+        self.assertIn("chúng ta cùng", res["matched_didactic"])
+
+    def test_dataset_manager_tiered_storage(self):
+        """Kiểm tra lưu trữ phân tầng dữ liệu Tier 1 và Tier 2 trong CrawledDatasetManager."""
+        sample_deep = "sample_deep_001"
+        sample_general = "sample_general_001"
+
+        self.dm.save_text_sample(
+            sample_id=sample_deep,
+            text="Hôm nay mình thấy rất cô đơn và bế tắc trong lòng.",
+            primary_label="SADNESS",
+            sub_label="LONELINESS",
+            emotion_score=0.8,
+            data_tier="deep_journal"
+        )
+
+        self.dm.save_text_sample(
+            sample_id=sample_general,
+            text="Trong bài học hôm nay chúng ta nói về sự kiên định trong cuộc sống.",
+            primary_label="JOY",
+            sub_label="HOPE",
+            emotion_score=0.5,
+            data_tier="general_monologue"
+        )
+
+        stats = self.dm.get_statistics()
+        self.assertEqual(stats["tiers"]["deep_journal"], 1)
+        self.assertEqual(stats["tiers"]["general_monologue"], 1)
+
+        deep_samples = self.dm.get_samples_by_tier("deep_journal")
+        self.assertEqual(len(deep_samples), 1)
+        self.assertEqual(deep_samples[0]["sample_id"], sample_deep)
+
 
 if __name__ == "__main__":
     unittest.main()
+

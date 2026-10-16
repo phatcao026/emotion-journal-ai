@@ -1,0 +1,38 @@
+# ============================================================
+# configs/stage3/inference_stage3.yaml
+# Stage 3 Production Inference & Empathetic Companion Config
+# ============================================================
+
+pipeline_version: "Stage 3 SOTA Production"
+
+model:
+  checkpoint_path: "checkpoints/stage2/best_model_stage2.pt"
+  config_path: "configs/stage2/multimodal_stage2.yaml"
+  device: "cpu"                         # "cuda" on GPU, "cpu" on local deployment
+  dummy_mode: false
+
+inference:
+  sample_rate: 16000
+  enforce_taxonomy_constraint: true
+  sub_routing_mode: "joint"             # "joint" (MAP 0% violation), "soft" (Bayesian), "hard" (-inf)
+  uncertainty:
+    entropy_threshold: 0.8              # Normalized Shannon Entropy > 0.8 triggers uncertainty
+    confidence_min: 0.35
+
+crisis_detection:
+  enabled: true
+  f0_slope_threshold: -1.5
+  hnr_distress_threshold: -1.2
+  consecutive_negative_alarm: 4         # Days of consecutive sadness/anxiety before streak alert
+
+longitudinal_tracker:
+  enabled: true
+  db_path: "data/journal_records/mood_tracker.db"
+  default_history_days: 7
+  stability_rolling_window: 14
+
+empathetic_coach:
+  use_llm: false                        # Set true if GEMINI_API_KEY or OPENAI_API_KEY is available
+  llm_provider: "gemini"                # "gemini" or "openai"
+  model_name: "gemini-1.5-flash"
+  offline_fallback: true                # Always fall back to verified CBT templates if LLM fails

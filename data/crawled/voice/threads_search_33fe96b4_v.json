@@ -21,5 +21,7 @@
     "áp lực"
   ],
   "rms_dbfs": -16.98,
-  "speech_ratio": 0.944
+  "speech_ratio": 0.944,
+  "data_tier": "general_monologue",
+  "disclosure_score": 0.0
 }

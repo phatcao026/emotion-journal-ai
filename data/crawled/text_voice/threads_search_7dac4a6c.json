@@ -24,5 +24,7 @@
     "đồng hành"
   ],
   "rms_dbfs": -16.77,
-  "speech_ratio": 0.988
+  "speech_ratio": 0.988,
+  "data_tier": "deep_journal",
+  "disclosure_score": 1.0
 }

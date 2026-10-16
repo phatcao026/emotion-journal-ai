@@ -13,5 +13,7 @@
   "voice_type": "acted_radio",
   "rms_dbfs": -15.55,
   "peak": 0.953,
-  "speech_ratio": 0.816
+  "speech_ratio": 0.816,
+  "data_tier": "general_monologue",
+  "disclosure_score": 0.0
 }

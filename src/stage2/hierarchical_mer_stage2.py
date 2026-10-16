@@ -5,10 +5,13 @@ Stage 2 SOTA Hierarchical Multimodal Emotion Recognition Model.
 Features:
     1. Hybrid Acoustic Encoder: emotion2vec+ (768) + ExplicitMelodyExtractor (32) + TemporalAttentionPooling.
     2. Multilingual Semantic Encoder: PhoBERT v2 (768).
-    3. Multimodal Gated Fusion: Stage2GatedFusion.
-    4. Hierarchical Inference Mask: Conditionally masks invalid sub-emotion logits with -inf,
-       guaranteeing mathematically 0% hierarchical constraint violations.
-    5. Clean separation from Stage 1.5 baseline models.
+    3. Multimodal Gated Fusion: Stage2GatedFusion with Modality Dropout.
+    4. Hierarchical Dual-Head:
+       - Primary Head takes fused representation (928D).
+       - Sub-Emotion Head takes full multimodal representation (928D) with backward compatibility.
+    5. Soft Bayesian Probabilistic Routing & Joint MAP Inference:
+       - Mitigates cascading error when primary head is ambiguous.
+       - Guarantees 0.00% taxonomy constraint violation under joint inference.
 """
 
 from __future__ import annotations
@@ -34,12 +37,13 @@ logger = logging.getLogger(__name__)
 
 # Canonical 5-class Primary -> 11-class Sub Emotion mapping from data/taxonomy.json
 TAXONOMY_MAP: Dict[int, List[int]] = {
-    0: [0, 1, 2],       # JOY -> HAPPINESS, PRIDE, HOPE/GRATITUDE (CALM, HOPE, CONNECTION)
-    1: [4, 8, 9],       # SADNESS -> SADNESS, GUILT_SHAME, LONELINESS
-    2: [5, 6],          # ANXIETY -> ANXIETY, FEAR
-    3: [7, 10],         # ANGER -> ANGER, DISGUST
-    4: [1],             # NEUTRAL -> CALM
+    0: [0, 1, 2, 3],    # JOY -> JOY (0), CALM (1), HOPE (2), CONNECTION (3)
+    1: [4, 8, 9],       # SADNESS -> SADNESS (4), GUILT_SHAME (8), LONELINESS (9)
+    2: [5, 6],          # ANXIETY -> ANXIETY (5), FEAR (6)
+    3: [7, 10],         # ANGER -> ANGER (7), DISGUST (10)
+    4: [1],             # NEUTRAL -> CALM (1)
 }
+
 
 def build_taxonomy_mask_matrix(num_primary: int = 5, num_sub: int = 11) -> torch.Tensor:
     """Build a (num_primary, num_sub) binary mask matrix where 1 = permitted, 0 = forbidden."""
@@ -50,6 +54,7 @@ def build_taxonomy_mask_matrix(num_primary: int = 5, num_sub: int = 11) -> torch
                 if s_idx < num_sub:
                     mask[p_idx, s_idx] = 1.0
     return mask
+
 
 TAXONOMY_MASK_MATRIX = build_taxonomy_mask_matrix(5, 11)
 
@@ -75,6 +80,73 @@ def apply_hierarchical_mask(
     return masked_sub_logits
 
 
+def compute_soft_hierarchical_probs(
+    primary_logits: torch.Tensor,
+    sub_logits: torch.Tensor,
+    mask_matrix: Optional[torch.Tensor] = None,
+) -> torch.Tensor:
+    """Compute soft Bayesian hierarchical distribution over sub-emotions:
+    P(sub_s | X) = sum_p P(primary_p | X) * P(sub_s | primary_p, X)
+    Prevents single-label cascading error when primary class is ambiguous.
+    """
+    if mask_matrix is None:
+        mask_matrix = TAXONOMY_MASK_MATRIX
+    device = sub_logits.device
+    mask_matrix = mask_matrix.to(device)
+
+    primary_probs = F.softmax(primary_logits, dim=-1)  # (B, num_primary)
+    batch_size, num_sub = sub_logits.shape
+    num_primary = primary_probs.shape[1]
+
+    # Masked softmax over allowed sub classes per primary class
+    large_neg = torch.tensor(-1e4, device=device, dtype=sub_logits.dtype)
+    sub_exp = sub_logits.unsqueeze(1).expand(batch_size, num_primary, num_sub)
+    mask_exp = mask_matrix.unsqueeze(0).expand(batch_size, num_primary, num_sub)
+
+    masked_sub_per_p = torch.where(mask_exp > 0.5, sub_exp, large_neg)
+    probs_sub_given_p = F.softmax(masked_sub_per_p, dim=-1)  # (B, num_primary, num_sub)
+
+    # Marginalize over primary classes: (B, num_sub)
+    soft_sub_probs = torch.sum(primary_probs.unsqueeze(-1) * probs_sub_given_p, dim=1)
+    return soft_sub_probs
+
+
+def joint_hierarchical_prediction(
+    primary_logits: torch.Tensor,
+    sub_logits: torch.Tensor,
+    mask_matrix: Optional[torch.Tensor] = None,
+) -> Tuple[torch.Tensor, torch.Tensor]:
+    """Compute Joint MAP (p*, s*) = argmax_{(p, s): mask[p, s]=1} P(p) * P(s|p).
+    Guarantees 0.00% taxonomy constraint violation while allowing sub evidence to inform primary.
+    """
+    if mask_matrix is None:
+        mask_matrix = TAXONOMY_MASK_MATRIX
+    device = sub_logits.device
+    mask_matrix = mask_matrix.to(device)
+
+    primary_probs = F.softmax(primary_logits, dim=-1)  # (B, P)
+    batch_size, num_sub = sub_logits.shape
+    num_primary = primary_probs.shape[1]
+
+    large_neg = torch.tensor(-1e4, device=device, dtype=sub_logits.dtype)
+    sub_exp = sub_logits.unsqueeze(1).expand(batch_size, num_primary, num_sub)
+    mask_exp = mask_matrix.unsqueeze(0).expand(batch_size, num_primary, num_sub)
+
+    masked_sub = torch.where(mask_exp > 0.5, sub_exp, large_neg)
+    probs_sub_given_p = F.softmax(masked_sub, dim=-1)  # (B, P, S)
+
+    # Joint probability matrix: P(p, s) = P(p) * P(s|p) of shape (B, P, S)
+    joint_probs = primary_probs.unsqueeze(-1) * probs_sub_given_p * mask_exp
+
+    # Flatten (P, S) -> (P * S) to find global argmax per sample
+    flat_joint = joint_probs.view(batch_size, -1)
+    best_flat_idx = torch.argmax(flat_joint, dim=-1)
+
+    p_star = best_flat_idx // num_sub
+    s_star = best_flat_idx % num_sub
+    return p_star, s_star
+
+
 @dataclass
 class Stage2ModelOutput:
     """Output container for Stage2HierarchicalMERModel."""
@@ -84,6 +156,7 @@ class Stage2ModelOutput:
     sub_probs: torch.Tensor             # (B, 11) raw unconstrained
     masked_sub_logits: torch.Tensor     # (B, 11) with -inf mask applied
     masked_sub_probs: torch.Tensor      # (B, 11) normalized over valid sub-emotions
+    soft_sub_probs: torch.Tensor        # (B, 11) Bayesian soft hierarchical distribution
     z_audio: torch.Tensor               # (B, 768)
     z_semantic: torch.Tensor            # (B, 768)
     z_fused: torch.Tensor               # (B, output_dim)
@@ -96,11 +169,26 @@ class Stage2ModelOutput:
         """Returns integer class predictions for primary emotions."""
         return torch.argmax(self.primary_logits, dim=-1)
 
-    def sub_predictions(self, enforce_taxonomy: bool = True) -> torch.Tensor:
-        """Returns integer class predictions for sub emotions."""
-        if enforce_taxonomy:
+    def sub_predictions(self, enforce_taxonomy: bool = True, mode: str = "joint") -> torch.Tensor:
+        """Returns integer class predictions for sub emotions.
+        Args:
+            enforce_taxonomy: Whether to enforce taxonomy constraint.
+            mode: 'joint' (Joint MAP with 0% violation), 'soft' (Soft Bayesian MAP), or 'hard' (-inf mask).
+        """
+        if not enforce_taxonomy:
+            return torch.argmax(self.sub_logits, dim=-1)
+
+        if mode == "joint":
+            _, s_pred = joint_hierarchical_prediction(self.primary_logits, self.sub_logits)
+            return s_pred
+        elif mode == "soft":
+            return torch.argmax(self.soft_sub_probs, dim=-1)
+        else:
             return torch.argmax(self.masked_sub_logits, dim=-1)
-        return torch.argmax(self.sub_logits, dim=-1)
+
+    def joint_predictions(self) -> Tuple[torch.Tensor, torch.Tensor]:
+        """Returns mutually consistent (primary, sub) class predictions."""
+        return joint_hierarchical_prediction(self.primary_logits, self.sub_logits)
 
 
 class Stage2HierarchicalMERModel(nn.Module):
@@ -122,8 +210,11 @@ class Stage2HierarchicalMERModel(nn.Module):
         use_melody: bool = True,
         dim_melody: int = 32,
         enforce_taxonomy_mask: bool = True,
+        sub_head_input_dim: Optional[int] = None,
         asr_model_id: str = "vinai/phowhisper-base",
         text_model_id: str = "vinai/phobert-base-v2",
+        modality_dropout: float = 0.15,
+        gate_temperature: float = 0.8,
         device: str = "cpu",
     ) -> None:
         super().__init__()
@@ -167,11 +258,14 @@ class Stage2HierarchicalMERModel(nn.Module):
             dim_melody=self.dim_melody,
             melody_raw_dim=32,
             dropout=fusion_dropout,
+            modality_dropout=modality_dropout,
+            gate_temperature=gate_temperature,
         )
 
         # 5. Dual Classification Heads
-        # Primary Head input: z_fused in R^(768 + 128 + dim_melody)
+        # Primary Head input: z_fused in R^(768 + 128 + dim_melody) = 928D
         fused_dim = 768 + 128 + self.dim_melody
+        self.fused_dim = fused_dim
         self.primary_head = nn.Sequential(
             nn.Linear(fused_dim, 256),
             nn.LayerNorm(256),
@@ -180,9 +274,11 @@ class Stage2HierarchicalMERModel(nn.Module):
             nn.Linear(256, num_primary_classes),
         )
 
-        # Sub Head input: semantic + auxiliary acoustic context
+        # Sub Head: by default connects to fused_dim (928D) so it receives both acoustic and semantic context.
+        # Can be set to 768 for legacy checkpoints.
+        self.sub_head_input_dim = sub_head_input_dim if sub_head_input_dim is not None else fused_dim
         self.sub_head = nn.Sequential(
-            nn.Linear(768, 256),
+            nn.Linear(self.sub_head_input_dim, 256),
             nn.LayerNorm(256),
             nn.ReLU(),
             nn.Dropout(head_dropout),
@@ -202,6 +298,35 @@ class Stage2HierarchicalMERModel(nn.Module):
         if hasattr(self.text_encoder, "load_pretrained"):
             self.text_encoder.load_pretrained()
         logger.info("Stage 2 MER backbones successfully loaded.")
+
+    def load_checkpoint_compatible(
+        self,
+        checkpoint_path: Union[str, Path],
+        map_location: Union[str, torch.device] = "cpu",
+    ) -> Tuple[List[str], List[str]]:
+        """Load checkpoint with automatic shape adaptation (e.g., expanding sub_head from 768 -> 928)."""
+        ckpt = torch.load(str(checkpoint_path), map_location=map_location, weights_only=False)
+        state_dict = ckpt.get("state_dict", ckpt)
+        model_dict = self.state_dict()
+
+        adapted_dict = {}
+        for k, v in state_dict.items():
+            if k in model_dict:
+                if v.shape == model_dict[k].shape:
+                    adapted_dict[k] = v
+                elif k == "sub_head.0.weight" and v.shape == torch.Size([256, 768]) and model_dict[k].shape == torch.Size([256, 928]):
+                    # Expand weights: preserve 768D weights, initialize remaining 160D with small random values
+                    expanded_w = model_dict[k].clone()
+                    expanded_w[:, :768] = v
+                    expanded_w[:, 768:] = 0.01 * torch.randn_like(expanded_w[:, 768:])
+                    adapted_dict[k] = expanded_w
+                    logger.info("Adapted sub_head.0.weight from [256, 768] to [256, 928] with zero-padding.")
+                else:
+                    logger.warning("Skipping incompatible tensor %s: ckpt %s vs model %s", k, v.shape, model_dict[k].shape)
+
+        missing, unexpected = self.load_state_dict(adapted_dict, strict=False)
+        logger.info("Checkpoint loaded: %d tensors loaded, missing=%d, unexpected=%d", len(adapted_dict), len(missing), len(unexpected))
+        return missing, unexpected
 
     def set_audio_trainable(self, trainable: bool = True) -> None:
         """Control trainability of audio branch, ensuring foundation backbone stays strictly frozen."""
@@ -239,27 +364,39 @@ class Stage2HierarchicalMERModel(nn.Module):
         p_pause = self._compute_pause_features(speech_timestamps, waveforms, device)
 
         # 4. Semantic text branch
+        text_mask = None
         if texts is None and use_asr:
             texts = [self.asr.transcribe(waveforms[i], sample_rate=16000) for i in range(waveforms.size(0))]
         elif texts is None:
             texts = [""] * waveforms.size(0)
 
+        # Build text_mask indicating whether input text is non-empty
+        text_mask = torch.tensor([bool(t and t.strip()) for t in texts], device=device, dtype=torch.bool)
         z_semantic = self.text_encoder(texts).to(device)
 
-        # 5. Multimodal fusion
+        # 5. Multimodal fusion with text_mask
         z_fused, (gate_audio, gate_text) = self.fusion(
             z_audio=z_audio,
             z_semantic=z_semantic,
             p_pause=p_pause,
             p_melody=p_melody,
+            text_mask=text_mask,
         )
 
         # 6. Classification logits
         primary_logits = self.primary_head(z_fused)
-        sub_logits = self.sub_head(z_semantic)
 
-        # 7. Hierarchical Masking
+        # Sub-head receives full fused representation if configured (928D), else semantic (768D)
+        sub_input = z_fused if self.sub_head_input_dim == self.fused_dim else z_semantic
+        sub_logits = self.sub_head(sub_input)
+
+        # 7. Hierarchical Masking & Soft Probabilistic Routing
         masked_sub_logits = apply_hierarchical_mask(
+            primary_logits=primary_logits,
+            sub_logits=sub_logits,
+            mask_matrix=self.taxonomy_mask,
+        )
+        soft_sub_probs = compute_soft_hierarchical_probs(
             primary_logits=primary_logits,
             sub_logits=sub_logits,
             mask_matrix=self.taxonomy_mask,
@@ -276,6 +413,7 @@ class Stage2HierarchicalMERModel(nn.Module):
             sub_probs=sub_probs,
             masked_sub_logits=masked_sub_logits,
             masked_sub_probs=masked_sub_probs,
+            soft_sub_probs=soft_sub_probs,
             z_audio=z_audio,
             z_semantic=z_semantic,
             z_fused=z_fused,
