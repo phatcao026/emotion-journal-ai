@@ -94,6 +94,31 @@ def save_wav(file_path: Path, audio_arr: np.ndarray, sample_rate: int = TARGET_S
         wf.writeframes(int16_data.tobytes())
 
 
+def sanitize_transcript(
+    transcript: Optional[str],
+    source: str = "ViSEC",
+    has_vietnamese_translation: bool = True,
+) -> str:
+    """Đảm bảo các mẫu âm thanh ngoại ngữ hoặc không có bản dịch tiếng Việt chuẩn
+    đều được gán transcript = "" (chuỗi rỗng).
+
+    Chuỗi rỗng kích hoạt text_mask = False trong Stage 2 (HierarchicalMERModel),
+    tự động định tuyến 100% audio gate mà không làm ô nhiễm tokenizer PhoBERT tiếng Việt.
+    """
+    if not transcript or not has_vietnamese_translation:
+        return ""
+    # Các corpus tiếng Anh / ngoại ngữ (RAVDESS, CREMA-D) không có bản dịch tiếng Việt chuẩn
+    source_upper = str(source).strip().upper()
+    if source_upper in {"RAVDESS", "CREMA-D", "CREMAD", "ENGLISH", "FOREIGN"}:
+        return ""
+    # Kiểm tra và loại bỏ placeholder tiếng Anh nếu có
+    text_clean = str(transcript).strip()
+    text_lower = text_clean.lower()
+    if any(marker in text_lower for marker in ["ravdess", "crema-d", "cremad", "statement", "utterance"]):
+        return ""
+    return text_clean
+
+
 def generate_synthetic_multimodal_dataset(output_dir: Path, total_samples: int = 80) -> None:
     """Generate paired dummy audio + transcript samples for fast local verification."""
     logger.info("Generating %d synthetic paired multimodal samples in %s...", total_samples, output_dir)
@@ -110,6 +135,9 @@ def generate_synthetic_multimodal_dataset(output_dir: Path, total_samples: int =
         ("SADNESS", "GUILT_SHAME", "Tôi ân hận vì những lời nói lỡ lời đã làm tổn thương người thân."),
         ("ANXIETY", "ANXIETY", "Tôi cảm thấy bồn chồn lo lắng, không biết dự án sắp tới có suôn sẻ không."),
         ("ANXIETY", "FEAR", "Cảm giác hoảng sợ tột cùng khi nghe tiếng còi báo động trong đêm."),
+        # Mẫu âm thanh ngoại ngữ (RAVDESS/CREMA-D) hoặc không có bản dịch tiếng Việt chuẩn:
+        # Chuỗi rỗng kích hoạt text_mask = False trong Stage 2, tự động định tuyến 100% audio gate
+        ("ANXIETY", "FEAR", ""),
         ("ANGER", "ANGER", "Tôi không thể kiềm chế cơn giận dữ khi bị đối xử bất công như vậy."),
         ("ANGER", "DISGUST", "Cách hành xử thiếu tôn trọng đó thực sự khiến tôi khó chịu và ghê sợ."),
         ("NEUTRAL", "CALM", "Một ngày làm việc trôi qua bình thường, không có gì nổi bật."),
@@ -134,7 +162,8 @@ def generate_synthetic_multimodal_dataset(output_dir: Path, total_samples: int =
             wav_path = split_dir / wav_filename
 
             template = sample_templates[i % len(sample_templates)]
-            pri_label, sub_label, transcript = template
+            pri_label, sub_label, raw_transcript = template
+            transcript = sanitize_transcript(raw_transcript, source="SyntheticDummy")
 
             duration_s = random.uniform(3.0, 6.0)
             num_samples = int(duration_s * TARGET_SAMPLE_RATE)
@@ -184,6 +213,54 @@ def main() -> None:
     parser.add_argument("--output-dir", type=str, default="data/multimodal_paired")
     parser.add_argument("--dummy", action="store_true", help="Generate synthetic paired data for local verification")
     parser.add_argument("--samples", type=int, default=80, help="Number of samples in dummy mode")
+    parser.add_argument(
+        "--visec-dataset",
+        type=str,
+        default="Vinh727/HusTep_ViSEC",
+        help="Hugging Face ViSEC dataset repo (default: Vinh727/HusTep_ViSEC)",
+    )
+    parser.add_argument(
+        "--ravdess-dir",
+        type=str,
+        default=None,
+        help="Path to RAVDESS dataset directory",
+    )
+    parser.add_argument(
+        "--cremad-dir",
+        type=str,
+        default=None,
+        help="Path to CREMA-D dataset directory",
+    )
+    parser.add_argument(
+        "--cremad-limit",
+        type=int,
+        default=600,
+        help="Maximum number of Fearful audio samples to load from CREMA-D",
+    )
+    parser.add_argument(
+        "--sample-limit",
+        type=int,
+        default=None,
+        help="Limit ViSEC samples for debugging",
+    )
+    parser.add_argument(
+        "--train-ratio",
+        type=float,
+        default=0.8,
+        help="Train split ratio (default: 0.8)",
+    )
+    parser.add_argument(
+        "--val-ratio",
+        type=float,
+        default=0.1,
+        help="Validation split ratio (default: 0.1)",
+    )
+    parser.add_argument(
+        "--seed",
+        type=int,
+        default=42,
+        help="Random seed for reproducible stratified split",
+    )
     args = parser.parse_args()
 
     out_dir = Path(args.output_dir)
@@ -197,8 +274,51 @@ def main() -> None:
         try:
             import datasets
             logger.info("HuggingFace datasets library available. Ready for live download.")
-        except ImportError:
-            logger.warning("datasets library not installed. Falling back to synthetic dummy data.")
+            from scripts.prepare_crosscorpus_visec import (
+                find_cremad_dir,
+                find_ravdess_dir,
+                load_cremad_fear,
+                load_ravdess_fearful,
+                load_visec,
+                split_and_save,
+            )
+
+            # 1. Load ViSEC (Vietnamese speech + transcripts)
+            visec_records = load_visec(dataset_name=args.visec_dataset, sample_limit=args.sample_limit)
+            for r in visec_records:
+                r["transcript"] = sanitize_transcript(r.get("transcript", ""), source="ViSEC")
+
+            # 2. Ingest RAVDESS Fearful clips (English audio -> transcript = "")
+            ravdess_dir = find_ravdess_dir(args.ravdess_dir)
+            ravdess_records = []
+            if ravdess_dir:
+                ravdess_records = load_ravdess_fearful(ravdess_dir)
+                for r in ravdess_records:
+                    r["transcript"] = sanitize_transcript(r.get("transcript", ""), source="RAVDESS")
+
+            # 3. Ingest CREMA-D Fear clips (English audio -> transcript = "")
+            cremad_dir = find_cremad_dir(args.cremad_dir)
+            cremad_records = []
+            if cremad_dir:
+                cremad_records = load_cremad_fear(cremad_dir, sample_limit=args.cremad_limit)
+                for r in cremad_records:
+                    r["transcript"] = sanitize_transcript(r.get("transcript", ""), source="CREMA-D")
+
+            all_records = visec_records + ravdess_records + cremad_records
+            if not all_records:
+                logger.warning("No records collected from ViSEC/RAVDESS/CREMA-D. Falling back to synthetic dummy data.")
+                generate_synthetic_multimodal_dataset(out_dir, total_samples=args.samples)
+            else:
+                split_and_save(
+                    all_records,
+                    output_dir=out_dir,
+                    train_ratio=args.train_ratio,
+                    val_ratio=args.val_ratio,
+                    seed=args.seed,
+                )
+                logger.info("Real multimodal dataset preparation complete! Output at: %s", out_dir)
+        except Exception as e:
+            logger.warning("datasets library or dependencies not available (%s). Falling back to synthetic dummy data.", e)
             generate_synthetic_multimodal_dataset(out_dir, total_samples=args.samples)
 
 

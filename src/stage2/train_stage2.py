@@ -58,6 +58,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--config", type=str, default="configs/stage2/multimodal_stage2.yaml")
     parser.add_argument("--dummy", action="store_true", help="Run with synthetic dataset")
     parser.add_argument("--resume", type=str, default=None, help="Resume checkpoint")
+    parser.add_argument("--reset-optimizer", action="store_true", help="Reset optimizer states when resuming checkpoint")
     parser.add_argument("--data-dir", type=str, default=None, help="Path to dataset directory")
     parser.add_argument(
         "--stage1-checkpoint",
@@ -130,6 +131,61 @@ def build_model(config: dict, device: str) -> Stage2HierarchicalMERModel:
     return model
 
 
+def freeze_phobert_layers(
+    model: Stage2HierarchicalMERModel,
+    num_freeze_layers: int = 10,
+) -> None:
+    """Freeze lower layers of text encoder while allowing adaptation in top layers.
+
+    PhoBERT architecture (vinai/phobert-base-v2):
+        - Embeddings: requires_grad = False
+        - Layers 0 to num_freeze_layers - 1: requires_grad = False
+        - Layers num_freeze_layers to 11: requires_grad = True (adapted for journal domain)
+    Synthetic backbone fallback:
+        - embedding: requires_grad = False
+        - proj: requires_grad = True
+    """
+    text_encoder = getattr(model, "text_encoder", None)
+    if text_encoder is None:
+        logger.warning("freeze_phobert_layers: model has no text_encoder attribute.")
+        return
+
+    bert = getattr(text_encoder, "bert_model", None)
+    is_synth = getattr(text_encoder, "is_synthetic", False)
+
+    if bert is not None and not is_synth:
+        # Real PhoBERT backbone
+        if hasattr(bert, "embeddings"):
+            for p in bert.embeddings.parameters():
+                p.requires_grad = False
+        if hasattr(bert, "encoder") and hasattr(bert.encoder, "layer"):
+            layers = bert.encoder.layer
+            for i, layer in enumerate(layers):
+                requires_grad = (i >= num_freeze_layers)
+                for p in layer.parameters():
+                    p.requires_grad = requires_grad
+            logger.info(
+                "PhoBERT layer freezing: embeddings & layers 0..%d frozen, layers %d..%d trainable.",
+                num_freeze_layers - 1,
+                num_freeze_layers,
+                len(layers) - 1,
+            )
+        if hasattr(bert, "pooler") and bert.pooler is not None:
+            for p in bert.pooler.parameters():
+                p.requires_grad = False
+    elif hasattr(text_encoder, "_synthetic_backbone") and text_encoder._synthetic_backbone is not None:
+        synth = text_encoder._synthetic_backbone
+        if hasattr(synth, "embedding"):
+            for p in synth.embedding.parameters():
+                p.requires_grad = False
+        if hasattr(synth, "proj"):
+            for p in synth.proj.parameters():
+                p.requires_grad = True
+        logger.info("Synthetic PhoBERT freezing: embedding frozen, proj trainable.")
+    else:
+        logger.warning("freeze_phobert_layers: unrecognized text_encoder structure.")
+
+
 def train_one_epoch(
     model: Stage2HierarchicalMERModel,
     loader: DataLoader,
@@ -163,8 +219,14 @@ def train_one_epoch(
         p_targets = batch["primary_labels"].to(device)
         s_targets = batch["sub_labels"].to(device)
         transcripts = batch["transcripts"]
+        speech_ts = batch.get("speech_timestamps", None)
 
-        output = model(waveforms=waveforms, texts=transcripts, use_asr=False)
+        output = model(
+            waveforms=waveforms,
+            speech_timestamps=speech_ts,
+            texts=transcripts,
+            use_asr=False,
+        )
 
         l_primary = loss_primary_fn(output.primary_logits, p_targets)
         l_sub = loss_sub_fn(output.sub_logits, s_targets)
@@ -242,8 +304,14 @@ def evaluate(
         p_targets = batch["primary_labels"].to(device)
         s_targets = batch["sub_labels"].to(device)
         transcripts = batch["transcripts"]
+        speech_ts = batch.get("speech_timestamps", None)
 
-        output = model(waveforms=waveforms, texts=transcripts, use_asr=False)
+        output = model(
+            waveforms=waveforms,
+            speech_timestamps=speech_ts,
+            texts=transcripts,
+            use_asr=False,
+        )
 
         l_primary = loss_primary_fn(output.primary_logits, p_targets)
         l_sub = loss_sub_fn(output.sub_logits, s_targets)
@@ -287,6 +355,7 @@ def train_stage2(
     config: dict,
     dummy: bool = False,
     resume_path: Optional[str] = None,
+    reset_optimizer: bool = False,
     stage1_checkpoint: Optional[str] = None,
     freeze_audio_epochs: int = 0,
     output_dir: Optional[str] = "checkpoints/stage2_retrain",
@@ -349,38 +418,86 @@ def train_stage2(
 
     train_cfg = config.get("training", {})
     loss_cfg = config.get("loss", {})
-    lr = float(train_cfg.get("learning_rate", 1.0e-4))
+
+    # 3. PhoBERT freezing logic (Freeze bottom layers, adapt top layers 10-11)
+    phobert_freeze_layers = int(train_cfg.get("phobert_freeze_layers", 10))
+    freeze_phobert_layers(model, num_freeze_layers=phobert_freeze_layers)
+
+    # 4. Optimizer with 3 isolated parameter groups (heads/fusion, audio LoRA, PhoBERT top layers)
+    lr_heads = float(train_cfg.get("learning_rate", 1.0e-4))
+    lr_audio_lora = float(train_cfg.get("lr_audio_lora", 5.0e-5))
+    lr_text_encoder = float(train_cfg.get("lr_text_encoder", 1.5e-5))
     weight_decay = float(train_cfg.get("weight_decay", 1.0e-2))
 
     use_uncertainty = loss_cfg.get("use_uncertainty_weighting", True)
     uncertainty_loss_fn = MultiTaskUncertaintyLoss(num_tasks=2).to(dev) if use_uncertainty else None
 
-    # Optimizer with isolated parameter groups (audio LoRA vs fusion/heads)
+    # Group 2: Audio LoRA parameters
     audio_lora_params = [
         p for n, p in model.audio_encoder.named_parameters()
         if "lora_" in n.lower() or getattr(model.audio_encoder, "_synthetic", False)
     ]
-    other_params = [
-        p for n, p in model.named_parameters()
-        if not n.startswith("audio_encoder.") and p.requires_grad
+
+    # Group 3: PhoBERT top layers (trainable parameters of text_encoder)
+    text_encoder_params = [
+        p for p in model.text_encoder.parameters()
+        if p.requires_grad
+    ]
+
+    # Group 1: Heads, fusion, pause, melody, pooling, and any other trainable parameters
+    audio_param_ids = {id(p) for p in model.audio_encoder.parameters()}
+    text_param_ids = {id(p) for p in model.text_encoder.parameters()}
+    heads_and_fusion_params = [
+        p for p in model.parameters()
+        if id(p) not in audio_param_ids and id(p) not in text_param_ids and p.requires_grad
     ]
     if uncertainty_loss_fn is not None:
-        other_params.extend(list(uncertainty_loss_fn.parameters()))
+        heads_and_fusion_params.extend([p for p in uncertainty_loss_fn.parameters() if p.requires_grad])
 
     param_groups = [
-        {"params": other_params, "lr": lr, "weight_decay": weight_decay},
-        {"params": audio_lora_params, "lr": lr * 0.5, "weight_decay": weight_decay},
+        {"name": "heads_and_fusion", "params": heads_and_fusion_params, "lr": lr_heads, "weight_decay": weight_decay},
+        {"name": "audio_lora", "params": audio_lora_params, "lr": lr_audio_lora, "weight_decay": weight_decay},
+        {"name": "phobert_top_layers", "params": text_encoder_params, "lr": lr_text_encoder, "weight_decay": weight_decay},
     ]
     optimizer = optim.AdamW(param_groups)
 
+    logger.info(
+        "Optimizer AdamW initialized with 3 parameter groups:\n"
+        "  1. heads_and_fusion: %d params, lr=%.2e, weight_decay=%.2e\n"
+        "  2. audio_lora: %d params, lr=%.2e, weight_decay=%.2e\n"
+        "  3. phobert_top_layers: %d params, lr=%.2e, weight_decay=%.2e",
+        len(heads_and_fusion_params), lr_heads, weight_decay,
+        len(audio_lora_params), lr_audio_lora, weight_decay,
+        len(text_encoder_params), lr_text_encoder, weight_decay,
+    )
+
     if resumed and resume_path:
         ckpt = torch.load(resume_path, map_location=dev, weights_only=False)
-        if "optimizer_state_dict" in ckpt:
-            try:
-                optimizer.load_state_dict(ckpt["optimizer_state_dict"])
-                logger.info("Restored optimizer state successfully from checkpoint.")
-            except Exception as opt_err:
-                logger.warning("Could not restore optimizer state (%s). Initializing fresh optimizer.", opt_err)
+        opt_state = ckpt.get("optimizer_state_dict", None)
+        if opt_state is not None:
+            ckpt_param_groups = opt_state.get("param_groups", [])
+            num_ckpt_groups = len(ckpt_param_groups)
+            num_curr_groups = len(optimizer.param_groups)
+
+            if reset_optimizer:
+                logger.warning(
+                    "[*] Flag --reset-optimizer is active. Skipping checkpoint optimizer_state_dict and retaining fresh 3-group optimizer state (LR: heads=%.2e, audio_lora=%.2e, phobert=%.2e).",
+                    lr_heads, lr_audio_lora, lr_text_encoder,
+                )
+            elif num_ckpt_groups != num_curr_groups:
+                logger.warning(
+                    "[*] Optimizer group mismatch: checkpoint contains %d param groups, but current tiered optimizer requires %d groups. "
+                    "Skipping legacy optimizer_state_dict to preserve tiered learning rates (LR: heads=%.2e, audio_lora=%.2e, phobert=%.2e).",
+                    num_ckpt_groups, num_curr_groups, lr_heads, lr_audio_lora, lr_text_encoder,
+                )
+            else:
+                try:
+                    optimizer.load_state_dict(opt_state)
+                    logger.info("Restored optimizer state successfully from checkpoint (%d param groups).", num_curr_groups)
+                except Exception as opt_err:
+                    logger.warning(
+                        "Could not restore optimizer state (%s). Retaining fresh 3-group optimizer.", opt_err
+                    )
 
     # Class counts for Primary & Sub LDAM losses
     class_counts = [982, 863, 787, 1172, 1205] if not dummy else [12, 12, 12, 12, 12]
@@ -491,6 +608,7 @@ if __name__ == "__main__":
         config=config,
         dummy=args.dummy,
         resume_path=args.resume,
+        reset_optimizer=args.reset_optimizer,
         stage1_checkpoint=args.stage1_checkpoint,
         freeze_audio_epochs=args.freeze_audio_epochs,
         output_dir=args.output_dir,

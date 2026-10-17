@@ -406,7 +406,8 @@ def load_ravdess_fearful(ravdess_dir: Path) -> List[Dict[str, Any]]:
             "orig_sr": sr,
             "primary_label": "ANXIETY",
             "sub_label": "FEAR",
-            "transcript": f"RAVDESS Fearful statement ({intensity} intensity)",
+            # Chuỗi rỗng kích hoạt text_mask = False trong Stage 2, tự động định tuyến 100% audio gate mà không làm ô nhiễm tokenizer PhoBERT tiếng Việt.
+            "transcript": "",
             "speaker_id": actor_id,
             "source": "RAVDESS",
         })
@@ -520,7 +521,8 @@ def load_cremad_fear(cremad_dir: Path, sample_limit: int = 600) -> List[Dict[str
             "orig_sr": sr,
             "primary_label": "ANXIETY",
             "sub_label": "FEAR",
-            "transcript": "CREMA-D Fearful speech utterance",
+            # Chuỗi rỗng kích hoạt text_mask = False trong Stage 2, tự động định tuyến 100% audio gate mà không làm ô nhiễm tokenizer PhoBERT tiếng Việt.
+            "transcript": "",
             "speaker_id": speaker_id,
             "source": "CREMA-D",
         })

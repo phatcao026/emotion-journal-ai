@@ -174,6 +174,15 @@ class ExplicitMelodyExtractor(nn.Module):
         f0_candidates = torch.where(is_voiced, self.sample_rate / best_lag, torch.tensor(0.0, device=device))
         voiced_f0 = f0_candidates[is_voiced]
 
+        # Moving Median Filter (150ms window) to suppress Vietnamese tonal micro-prosodic spikes
+        if num_voiced > 5:
+            k = min(15, num_voiced.item() if num_voiced.item() % 2 == 1 else num_voiced.item() - 1)
+            if k >= 3:
+                voiced_f0_np = voiced_f0.detach().cpu().numpy()
+                from scipy.signal import medfilt
+                f0_smooth = torch.tensor(medfilt(voiced_f0_np, kernel_size=k), device=device, dtype=voiced_f0.dtype)
+                voiced_f0 = f0_smooth
+
         if num_voiced > 1:
             f0_mean = voiced_f0.mean()
             f0_std = voiced_f0.std(unbiased=False)

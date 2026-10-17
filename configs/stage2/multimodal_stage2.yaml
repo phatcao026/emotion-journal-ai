@@ -91,6 +91,9 @@ loss:
 training:
   batch_size: 8
   learning_rate: 1.0e-4
+  lr_audio_lora: 5.0e-5
+  lr_text_encoder: 1.5e-5
+  phobert_freeze_layers: 10
   num_epochs: 60
   warmup_ratio: 0.1
   weight_decay: 1.0e-2
