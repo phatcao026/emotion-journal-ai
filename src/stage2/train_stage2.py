@@ -430,18 +430,26 @@ def train_stage2(
         resume_msg = f"[*] Successfully resumed from '{Path(resume_path).name}': continuing from Epoch {start_epoch:02d} (prior best val Primary Macro-F1 = {best_val_f1:.4f})"
         logger.info(resume_msg)
         print(resume_msg, flush=True)
-    elif stage1_checkpoint and Path(stage1_checkpoint).exists():
-        # Load Stage 1.5 acoustic checkpoint if starting fresh
-        logger.info("Loading Stage 1.5 acoustic weights from '%s'...", stage1_checkpoint)
-        ckpt = torch.load(stage1_checkpoint, map_location=dev, weights_only=False)
-        state_dict = ckpt.get("state_dict", ckpt)
-        model_dict = model.state_dict()
-        filtered_dict = {
-            k: v for k, v in state_dict.items()
-            if k in model_dict and v.shape == model_dict[k].shape
-        }
-        model.load_state_dict(filtered_dict, strict=False)
-        logger.info("Stage 1.5 weights injected: successfully loaded %d compatible tensors.", len(filtered_dict))
+    else:
+        if stage1_checkpoint and not Path(stage1_checkpoint).exists():
+            kaggle_input = Path("/kaggle/input")
+            if kaggle_input.exists():
+                candidates = list(kaggle_input.glob("**/visec_stage1_pretrained.pt")) + list(kaggle_input.glob("**/best_model_stage1_5.pt"))
+                if candidates:
+                    stage1_checkpoint = str(candidates[0])
+                    logger.info("Auto-discovered Stage 1.5 acoustic checkpoint at '%s'.", stage1_checkpoint)
+        if stage1_checkpoint and Path(stage1_checkpoint).exists():
+            # Load Stage 1.5 acoustic checkpoint if starting fresh
+            logger.info("Loading Stage 1.5 acoustic weights from '%s'...", stage1_checkpoint)
+            ckpt = torch.load(stage1_checkpoint, map_location=dev, weights_only=False)
+            state_dict = ckpt.get("state_dict", ckpt)
+            model_dict = model.state_dict()
+            filtered_dict = {
+                k: v for k, v in state_dict.items()
+                if k in model_dict and v.shape == model_dict[k].shape
+            }
+            model.load_state_dict(filtered_dict, strict=False)
+            logger.info("Stage 1.5 weights injected: successfully loaded %d compatible tensors.", len(filtered_dict))
 
     # Initialize semantic sub-emotion prototypes if not resuming from an existing Stage 2 checkpoint
     if not dummy and not resumed and hasattr(model, "init_semantic_sub_prototypes"):
