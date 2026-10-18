@@ -100,6 +100,12 @@ def parse_args() -> argparse.Namespace:
         help="Hugging Face ViSEC dataset repo (default: Vinh727/HusTep_ViSEC)",
     )
     parser.add_argument(
+        "--visec-dir",
+        type=str,
+        default=None,
+        help="Optional local path or Kaggle input path to ViSEC dataset directory",
+    )
+    parser.add_argument(
         "--ravdess-dir",
         type=str,
         default=None,
@@ -279,8 +285,51 @@ def extract_audio_from_hf_rec(rec: Dict[str, Any]) -> Tuple[Optional[np.ndarray]
 # Corpus Loaders
 # ---------------------------------------------------------------------------
 
-def load_visec(dataset_name: str, sample_limit: Optional[int] = None) -> List[Dict[str, Any]]:
-    """Load ViSEC dataset from Hugging Face."""
+def load_visec(dataset_name: str, sample_limit: Optional[int] = None, visec_dir: Optional[str] = None) -> List[Dict[str, Any]]:
+    """Load ViSEC dataset from local directory or Hugging Face."""
+    if visec_dir and Path(visec_dir).exists():
+        logger.info("Found local ViSEC directory '%s'. Checking for metadata or wavs...", visec_dir)
+        v_path = Path(visec_dir)
+        meta_csv = v_path / "metadata.csv"
+        if not meta_csv.exists():
+            meta_csvs = list(v_path.glob("**/metadata.csv"))
+            if meta_csvs:
+                meta_csv = meta_csvs[0]
+        if meta_csv.exists():
+            records = []
+            with open(meta_csv, mode="r", encoding="utf-8") as f:
+                reader = csv.DictReader(f)
+                for idx, row in enumerate(reader):
+                    raw_label = row.get("primary_label") or row.get("label") or row.get("emotion")
+                    if not raw_label:
+                        continue
+                    mapped = VISEC_LABEL_MAPPING.get(str(raw_label).lower().strip())
+                    if not mapped:
+                        continue
+                    p_label, s_label = mapped
+                    audio_rel = row.get("audio_path") or row.get("path")
+                    if not audio_rel:
+                        continue
+                    full_audio_path = meta_csv.parent / audio_rel if not Path(audio_rel).is_absolute() else Path(audio_rel)
+                    arr, sr = load_audio_file(full_audio_path)
+                    if arr is None or len(arr) == 0:
+                        continue
+                    records.append({
+                        "sample_id": row.get("sample_id", f"visec_local_{idx:05d}"),
+                        "audio_arr": arr,
+                        "orig_sr": sr,
+                        "primary_label": p_label,
+                        "sub_label": s_label,
+                        "transcript": row.get("transcript", ""),
+                        "speaker_id": row.get("speaker_id", f"spk_{idx % 50}"),
+                        "source": "ViSEC_Local",
+                    })
+                    if sample_limit and len(records) >= sample_limit:
+                        break
+            if records:
+                logger.info("Successfully loaded %d records from local ViSEC at '%s'.", len(records), visec_dir)
+                return records
+
     logger.info("Loading ViSEC dataset '%s' from Hugging Face...", dataset_name)
     try:
         from datasets import load_dataset
@@ -681,7 +730,7 @@ def main() -> None:
         return
 
     # 1. Load ViSEC (4 classes: JOY, SADNESS, ANGER, NEUTRAL)
-    visec_records = load_visec(dataset_name=args.visec_dataset, sample_limit=args.sample_limit)
+    visec_records = load_visec(dataset_name=args.visec_dataset, sample_limit=args.sample_limit, visec_dir=args.visec_dir)
 
     # 2. Ingest RAVDESS Fearful clips
     ravdess_dir = find_ravdess_dir(args.ravdess_dir)
