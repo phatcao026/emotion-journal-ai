@@ -333,20 +333,31 @@ class Stage3InferenceEngine:
         p_melody: Optional[torch.Tensor],
         text: str,
     ) -> bool:
-        """Flags incongruent cases (e.g. smiling through tears, angry calm, distress text masked as joy)."""
+        """Flags incongruent cases while properly handling Vietnamese negation."""
+        import re
+
         positive_words = ["vui", "hạnh phúc", "tuyệt vời", "may mắn", "biết ơn", "yêu đời", "thành công"]
-        negative_words = ["buồn", "khóc", "mệt mỏi", "chán nản", "kiệt sức", "tuyệt vọng", "đau khổ", "bế tắc", "áp lực", "lo lắng", "cô đơn"]
+        negative_words = [
+            "buồn", "khóc", "mệt mỏi", "chán nản", "kiệt sức",
+            "tuyệt vọng", "đau khổ", "bế tắc", "áp lực", "lo lắng", "cô đơn",
+        ]
         negative_emotions = ["SADNESS", "ANGER", "ANXIETY"]
         positive_emotions = ["JOY"]
 
-        text_lower = text.lower()
-        has_pos_words = any(w in text_lower for w in positive_words)
+        text_lower = (text or "").lower()
+        # Strip negated positive expressions (e.g., "không vui", "chẳng thấy hạnh phúc")
+        negated_pos_pattern = (
+            r"\b(không|chẳng|chả|chưa|đâu\s*có|hết)\s+"
+            r"(còn\s+|thấy\s+|hề\s+|được\s+)?"
+            r"(vui|hạnh phúc|tuyệt vời|may mắn|biết ơn|yêu đời|thành công)\b"
+        )
+        text_for_pos = re.sub(negated_pos_pattern, " ", text_lower)
+
+        has_pos_words = any(w in text_for_pos for w in positive_words)
         has_neg_words = any(w in text_lower for w in negative_words)
 
-        # Incongruence 1: Positive words spoken with sadness / anxiety (smiling through tears or masking)
         if has_pos_words and primary_label in negative_emotions:
             return False
-        # Incongruence 2: Clear distress words predicted as Joy (mode collapse or positive bias)
         if has_neg_words and primary_label in positive_emotions:
             return False
         return True

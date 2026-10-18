@@ -85,8 +85,8 @@ class CrisisDetector:
 
     def __init__(
         self,
-        f0_slope_threshold: float = -1.5,
-        hnr_distress_threshold: float = -1.2,
+        f0_slope_threshold: float = -8.0,      # Giảm > 8 Hz/std-time (ngữ điệu sụt dốc / nghẹn ngào)
+        hnr_distress_threshold: float = 4.5,   # HNR vật lý < 4.5 dB (hụt hơi / khàn đặc / nấc nghẹn)
         consecutive_negative_alarm: int = 4,
     ) -> None:
         self.f0_slope_threshold = f0_slope_threshold
@@ -121,7 +121,7 @@ class CrisisDetector:
         # 3. Tier 2: Acute Acoustic Distress (Choking / sobbing voice signals)
         if result.f0_mean > 0:  # Valid audio present
             acoustic_flag = False
-            if result.hnr_db < self.hnr_distress_threshold and result.primary_label in ("SADNESS", "ANXIETY"):
+            if 0 < result.hnr_db < self.hnr_distress_threshold and result.primary_label in ("SADNESS", "ANXIETY"):
                 triggers.append("Tín hiệu âm học cho thấy sự hụt hơi / nấc nghẹn nghiêm trọng")
                 acoustic_flag = True
             if getattr(result, "f0_slope", 0.0) < self.f0_slope_threshold and result.primary_label in ("SADNESS", "ANXIETY"):

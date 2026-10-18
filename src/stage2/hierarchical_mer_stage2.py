@@ -32,6 +32,7 @@ from src.audio.vad_preprocessor import VADPreprocessor
 from src.text.text_encoder import PhoBERTEncoder
 from src.stage2.gated_fusion_stage2 import Stage2GatedFusion
 from src.stage2.melody_extractor import ExplicitMelodyExtractor
+from src.stage2.ldam_loss import CosineLinear
 
 logger = logging.getLogger(__name__)
 
@@ -43,6 +44,22 @@ TAXONOMY_MAP: Dict[int, List[int]] = {
     3: [7, 10],         # ANGER -> ANGER (7), DISGUST (10)
     4: [1],             # NEUTRAL -> CALM (1)
 }
+
+# First-person Vietnamese psychological descriptions for anchoring 11 Sub-Emotion prototypes
+VIETNAMESE_SUB_PROTOTYPE_PROMPTS: Dict[int, str] = {
+    0: "Tôi cảm thấy rất vui vẻ, hạnh phúc, hào hứng và tràn đầy năng lượng tích cực.",
+    1: "Tâm trạng tôi hôm nay bình yên, thư thái, nhẹ nhàng, tĩnh lặng và cân bằng.",
+    2: "Tôi tràn đầy hy vọng, lạc quan, mong chờ và tin tưởng vào những điều tốt đẹp phía trước.",
+    3: "Tôi cảm thấy gắn kết, yêu thương, biết ơn, được sẻ chia và thấu hiểu sâu sắc.",
+    4: "Tôi cảm thấy buồn bã, thất vọng, chán nản và lòng nặng trĩu nỗi buồn.",
+    5: "Tôi cảm thấy lo âu, bồn chồn, căng thẳng, áp lực và suy nghĩ không ngừng.",
+    6: "Tôi cảm thấy sợ hãi, hoảng loạn, bất an và lo sợ hiểm nguy sắp xảy ra.",
+    7: "Tôi cảm thấy tức giận, bực bội, phẫn nộ và bức xúc.",
+    8: "Tôi cảm thấy tội lỗi, xấu hổ, hối hận, day dứt và tự trách bản thân mình.",
+    9: "Tôi cảm thấy cô đơn, trống trải, lẻ loi một mình và không có ai bên cạnh thấu hiểu.",
+    10: "Tôi cảm thấy chán ghét, ác cảm, khó chịu và muốn khước từ mọi thứ.",
+}
+
 
 
 def build_taxonomy_mask_matrix(num_primary: int = 5, num_sub: int = 11) -> torch.Tensor:
@@ -271,7 +288,7 @@ class Stage2HierarchicalMERModel(nn.Module):
             nn.LayerNorm(256),
             nn.ReLU(),
             nn.Dropout(head_dropout),
-            nn.Linear(256, num_primary_classes),
+            CosineLinear(256, num_primary_classes),
         )
 
         # Sub Head: by default connects to fused_dim (928D) so it receives both acoustic and semantic context.
@@ -282,7 +299,7 @@ class Stage2HierarchicalMERModel(nn.Module):
             nn.LayerNorm(256),
             nn.ReLU(),
             nn.Dropout(head_dropout),
-            nn.Linear(256, num_sub_classes),
+            CosineLinear(256, num_sub_classes),
         )
 
         self.register_buffer("taxonomy_mask", TAXONOMY_MASK_MATRIX)
@@ -328,6 +345,21 @@ class Stage2HierarchicalMERModel(nn.Module):
         logger.info("Checkpoint loaded: %d tensors loaded, missing=%d, unexpected=%d", len(adapted_dict), len(missing), len(unexpected))
         return missing, unexpected
 
+    @torch.no_grad()
+    def init_semantic_sub_prototypes(self) -> None:
+        """Anchor sub_head CosineLinear weights using PhoBERT embeddings of Vietnamese emotion descriptions."""
+        prompts = [VIETNAMESE_SUB_PROTOTYPE_PROMPTS[i] for i in range(self.num_sub_classes)]
+        z_sem = self.text_encoder(prompts).to(self.device)  # (11, 768)
+        if self.sub_head_input_dim > 768:
+            pad = torch.zeros(self.num_sub_classes, self.sub_head_input_dim - 768, device=self.device)
+            sub_in = torch.cat([z_sem, pad], dim=-1)
+        else:
+            sub_in = z_sem[:, :self.sub_head_input_dim]
+
+        hidden = self.sub_head[2](self.sub_head[1](self.sub_head[0](sub_in)))  # (11, 256)
+        self.sub_head[4].weight.data.copy_(F.normalize(hidden, p=2, dim=-1))
+        logger.info("Initialized 11 Sub-Emotion Cosine prototypes from Vietnamese PhoBERT descriptions.")
+
     def set_audio_trainable(self, trainable: bool = True) -> None:
         """Control trainability of audio branch, ensuring foundation backbone stays strictly frozen."""
         if hasattr(self.audio_encoder, "set_lora_trainable"):
@@ -351,6 +383,7 @@ class Stage2HierarchicalMERModel(nn.Module):
         device = waveforms.device
 
         # 1. Acoustic branch
+        audio_mask = (waveforms.abs().amax(dim=-1) > 1e-5)
         frame_feats = self.audio_encoder(waveforms)
         z_audio, alpha = self.pooling(frame_feats)
 
@@ -374,13 +407,14 @@ class Stage2HierarchicalMERModel(nn.Module):
         text_mask = torch.tensor([bool(t and t.strip()) for t in texts], device=device, dtype=torch.bool)
         z_semantic = self.text_encoder(texts).to(device)
 
-        # 5. Multimodal fusion with text_mask
+        # 5. Multimodal fusion with text_mask and audio_mask
         z_fused, (gate_audio, gate_text) = self.fusion(
             z_audio=z_audio,
             z_semantic=z_semantic,
             p_pause=p_pause,
             p_melody=p_melody,
             text_mask=text_mask,
+            audio_mask=audio_mask,
         )
 
         # 6. Classification logits

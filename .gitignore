@@ -28,3 +28,8 @@ __pycache__/
 .pytest_cache/
 .venv/
 venv/
+
+# Local AI Agent tools & Orca configuration
+.orca/
+start.bat
+AGENTS.md

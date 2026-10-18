@@ -15,7 +15,7 @@ import os
 import random
 import sys
 from pathlib import Path
-from typing import Dict, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
 # Mitigate CUDA memory fragmentation on 15-16GB GPUs (Tesla T4)
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
@@ -68,6 +68,7 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--freeze-audio-epochs", type=int, default=0)
     parser.add_argument("--output-dir", type=str, default="checkpoints/stage2_retrain", help="Directory to save checkpoints")
+    parser.add_argument("--use-vigoemotions", action="store_true", help="Co-train with uitnlp/vigoemotions via Text-Only Modality Gate")
     parser.add_argument("--device", type=str, default="cuda" if torch.cuda.is_available() else "cpu")
     parser.add_argument("--epochs", type=int, default=None)
     parser.add_argument("--batch-size", type=int, default=None)
@@ -81,6 +82,7 @@ def build_dataloaders(
     dummy: bool = False,
     batch_size_override: Optional[int] = None,
     data_dir_override: Optional[str] = None,
+    use_vigoemotions: bool = False,
     seed: int = 42,
 ) -> Tuple[DataLoader, DataLoader, DataLoader]:
     batch_size = batch_size_override or config.get("training", {}).get("batch_size", 8)
@@ -100,10 +102,38 @@ def build_dataloaders(
         val_set = VoiceJournalDataset(data_dir=data_dir, split="val", use_sub_labels=True)
         test_set = VoiceJournalDataset(data_dir=data_dir, split="test", use_sub_labels=True)
 
+        if use_vigoemotions or config.get("data", {}).get("use_vigoemotions", False):
+            try:
+                from src.audio.vigoemotions_dataset import ViGoEmotionsStage2Dataset
+                from torch.utils.data import ConcatDataset
+                vigo_train = ViGoEmotionsStage2Dataset(split="train")
+                if len(vigo_train) > 0:
+                    train_set = ConcatDataset([train_set, vigo_train])
+                    logger.info("Co-training enabled: ConcatDataset contains %d samples (%d from ViGoEmotions).", len(train_set), len(vigo_train))
+            except Exception as vigo_err:
+                logger.warning("Could not co-train with ViGoEmotions (%s). Continuing with primary dataset only.", vigo_err)
+
     train_loader = DataLoader(train_set, batch_size=batch_size, shuffle=True, collate_fn=VoiceJournalDataset.collate_fn)
     val_loader = DataLoader(val_set, batch_size=batch_size, shuffle=False, collate_fn=VoiceJournalDataset.collate_fn)
     test_loader = DataLoader(test_set, batch_size=batch_size, shuffle=False, collate_fn=VoiceJournalDataset.collate_fn)
     return train_loader, val_loader, test_loader
+
+
+def compute_dataset_class_counts(loader: DataLoader, num_primary: int = 5, num_sub: int = 11) -> Tuple[List[int], List[int]]:
+    """Count actual Primary and Sub-Emotion samples from train_loader instead of hardcoded arrays."""
+    p_counts = [0] * num_primary
+    s_counts = [0] * num_sub
+    for batch in loader:
+        for p in batch["primary_labels"].tolist():
+            if 0 <= p < num_primary:
+                p_counts[p] += 1
+        for s in batch["sub_labels"].tolist():
+            if 0 <= s < num_sub:
+                s_counts[s] += 1
+    # Ensure minimum count of 1 for LDAM margin stability
+    p_counts = [max(1, c) for c in p_counts]
+    s_counts = [max(1, c) for c in s_counts]
+    return p_counts, s_counts
 
 
 def build_model(config: dict, device: str) -> Stage2HierarchicalMERModel:
@@ -266,7 +296,8 @@ def train_one_epoch(
 
     y_s_pred = torch.cat(all_s_preds) if all_s_preds else torch.empty(0)
     y_s_true = torch.cat(all_s_targets) if all_s_targets else torch.empty(0)
-    m_sub = compute_all_metrics(predictions=y_s_pred, targets=y_s_true, num_classes=model.num_sub_classes) if len(y_s_true) > 0 else {}
+    valid_s_mask = (y_s_true >= 0) & (y_s_true < model.num_sub_classes)
+    m_sub = compute_all_metrics(predictions=y_s_pred[valid_s_mask], targets=y_s_true[valid_s_mask], num_classes=model.num_sub_classes) if valid_s_mask.any() else {}
 
     summary_msg = f"\n>>> [EPOCH {epoch:02d} TRAIN COMPLETED] Loss: {avg_loss:.4f} | Primary F1: {m_primary.get('macro_f1', 0.0):.4f} | Sub F1: {m_sub.get('macro_f1', 0.0):.4f}"
     logger.info(summary_msg)
@@ -333,7 +364,8 @@ def evaluate(
 
     y_s_pred = torch.cat(all_s_preds) if all_s_preds else torch.empty(0)
     y_s_true = torch.cat(all_s_targets) if all_s_targets else torch.empty(0)
-    m_sub = compute_all_metrics(predictions=y_s_pred, targets=y_s_true, num_classes=model.num_sub_classes) if len(y_s_true) > 0 else {}
+    valid_s_mask = (y_s_true >= 0) & (y_s_true < model.num_sub_classes)
+    m_sub = compute_all_metrics(predictions=y_s_pred[valid_s_mask], targets=y_s_true[valid_s_mask], num_classes=model.num_sub_classes) if valid_s_mask.any() else {}
 
     eval_msg = f"    >>> Phase [{phase.upper()}] Loss: {avg_loss:.4f} | Primary F1: {m_primary.get('macro_f1', 0.0):.4f} (WA: {m_primary.get('wa', 0.0):.4f}) | Sub F1: {m_sub.get('macro_f1', 0.0):.4f} (WA: {m_sub.get('wa', 0.0):.4f})"
     logger.info(eval_msg)
@@ -360,6 +392,7 @@ def train_stage2(
     freeze_audio_epochs: int = 0,
     output_dir: Optional[str] = "checkpoints/stage2_retrain",
     data_dir: Optional[str] = None,
+    use_vigoemotions: bool = False,
     device: str = "cpu",
     epochs_override: Optional[int] = None,
     batch_size_override: Optional[int] = None,
@@ -370,7 +403,7 @@ def train_stage2(
     dev = torch.device(device)
 
     train_loader, val_loader, test_loader = build_dataloaders(
-        config, dummy=dummy, batch_size_override=batch_size_override, data_dir_override=data_dir, seed=seed,
+        config, dummy=dummy, batch_size_override=batch_size_override, data_dir_override=data_dir, use_vigoemotions=use_vigoemotions, seed=seed,
     )
     model = build_model(config, device=device)
     if not dummy:
@@ -407,6 +440,13 @@ def train_stage2(
         }
         model.load_state_dict(filtered_dict, strict=False)
         logger.info("Stage 1.5 weights injected: successfully loaded %d compatible tensors.", len(filtered_dict))
+
+    # Initialize semantic sub-emotion prototypes if not resuming from an existing Stage 2 checkpoint
+    if not dummy and not resumed and hasattr(model, "init_semantic_sub_prototypes"):
+        try:
+            model.init_semantic_sub_prototypes()
+        except Exception as proto_err:
+            logger.warning("Could not initialize semantic sub prototypes (%s). Continuing with Xavier init.", proto_err)
 
     # 2. Audio freezing logic (only freezes/unfreezes LoRA adapters; foundation backbone is always frozen)
     if freeze_audio_epochs > 0 and start_epoch <= freeze_audio_epochs:
@@ -500,18 +540,26 @@ def train_stage2(
                     )
 
     # Class counts for Primary & Sub LDAM losses
-    class_counts = [982, 863, 787, 1172, 1205] if not dummy else [12, 12, 12, 12, 12]
+    if dummy:
+        class_counts = [12, 12, 12, 12, 12]
+        sub_counts = [5] * 11
+    else:
+        logger.info("Computing actual Primary and Sub-Emotion sample counts from train_loader...")
+        class_counts, sub_counts = compute_dataset_class_counts(train_loader, num_primary=5, num_sub=11)
+        logger.info("Dynamic sample counts: Primary=%s, Sub=%s", class_counts, sub_counts)
+
     loss_primary = LDAMLoss(
         class_counts=class_counts,
         max_m=float(loss_cfg.get("ldam_max_m", 0.5)),
         s=float(loss_cfg.get("ldam_s", 30.0)),
+        ignore_index=-100,
     ).to(dev)
 
-    sub_counts = [450, 480, 250, 180, 520, 220, 310, 490, 85, 140, 110] if not dummy else [5] * 11
     loss_sub = LDAMLoss(
         class_counts=sub_counts,
         max_m=float(loss_cfg.get("ldam_max_m", 0.5)),
         s=float(loss_cfg.get("ldam_s", 30.0)),
+        ignore_index=-100,
     ).to(dev)
 
     drw_start_epoch = int(loss_cfg.get("drw_start_epoch", 15))
@@ -613,6 +661,7 @@ if __name__ == "__main__":
         freeze_audio_epochs=args.freeze_audio_epochs,
         output_dir=args.output_dir,
         data_dir=args.data_dir,
+        use_vigoemotions=args.use_vigoemotions,
         device=args.device,
         epochs_override=args.epochs,
         batch_size_override=args.batch_size,
