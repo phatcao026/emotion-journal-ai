@@ -219,4 +219,4 @@ def test_dummy_train_run(tmp_path):
         seed=42,
     )
 
-    assert (tmp_path / "last_model_stage2.pt").exists(), "Checkpoint last_model_stage2.pt should be saved"
+    assert (tmp_path / "last_model_stage2_5.pt").exists() or (tmp_path / "last_model_stage2.pt").exists(), "Checkpoint last_model should be saved"

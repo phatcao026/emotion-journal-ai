@@ -67,7 +67,8 @@ def parse_args() -> argparse.Namespace:
         help="Path to pretrained acoustic encoder checkpoint",
     )
     parser.add_argument("--freeze-audio-epochs", type=int, default=0)
-    parser.add_argument("--output-dir", type=str, default="checkpoints/stage2_retrain", help="Directory to save checkpoints")
+    parser.add_argument("--output-dir", type=str, default="checkpoints/stage2_5_retrain", help="Directory to save checkpoints")
+    parser.add_argument("--model-name", type=str, default="stage2_5", help="Name tag for checkpoint files (e.g. best_model_{name}.pt)")
     parser.add_argument("--use-vigoemotions", action="store_true", help="Co-train with uitnlp/vigoemotions via Text-Only Modality Gate")
     parser.add_argument("--device", type=str, default="cuda" if torch.cuda.is_available() else "cpu")
     parser.add_argument("--epochs", type=int, default=None)
@@ -390,7 +391,8 @@ def train_stage2(
     reset_optimizer: bool = False,
     stage1_checkpoint: Optional[str] = None,
     freeze_audio_epochs: int = 0,
-    output_dir: Optional[str] = "checkpoints/stage2_retrain",
+    output_dir: Optional[str] = "checkpoints/stage2_5_retrain",
+    model_name: str = "stage2_5",
     data_dir: Optional[str] = None,
     use_vigoemotions: bool = False,
     device: str = "cpu",
@@ -412,7 +414,7 @@ def train_stage2(
 
     start_epoch = 1
     best_val_f1 = -1.0
-    ckpt_dir = Path(output_dir or "checkpoints/stage2_retrain")
+    ckpt_dir = Path(output_dir or "checkpoints/stage2_5_retrain")
     ckpt_dir.mkdir(parents=True, exist_ok=True)
 
     # 1. Check if resuming from an existing Stage 2 checkpoint
@@ -606,7 +608,7 @@ def train_stage2(
         val_f1 = val_res.get("primary_f1", 0.0)
         if val_f1 > best_val_f1:
             best_val_f1 = val_f1
-            best_model_path = ckpt_dir / "best_model_stage2.pt"
+            best_model_path = ckpt_dir / f"best_model_{model_name}.pt"
             torch.save({
                 "epoch": epoch,
                 "state_dict": model.state_dict(),
@@ -615,12 +617,12 @@ def train_stage2(
                 "val_metrics": val_res,
                 "config": config,
             }, str(best_model_path))
-            save_msg = f"    [*] [SAVED BEST STAGE 2 MODEL] Val Primary Macro-F1 = {val_f1:.4f} -> {best_model_path.name}\n"
+            save_msg = f"    [*] [SAVED BEST MODEL] Val Primary Macro-F1 = {val_f1:.4f} -> {best_model_path.name}\n"
             logger.info(save_msg)
             print(save_msg, flush=True)
 
         # Always save latest model checkpoint for crash recovery
-        latest_model_path = ckpt_dir / "last_model_stage2.pt"
+        latest_model_path = ckpt_dir / f"last_model_{model_name}.pt"
         torch.save({
             "epoch": epoch,
             "state_dict": model.state_dict(),
@@ -660,6 +662,7 @@ if __name__ == "__main__":
         stage1_checkpoint=args.stage1_checkpoint,
         freeze_audio_epochs=args.freeze_audio_epochs,
         output_dir=args.output_dir,
+        model_name=args.model_name,
         data_dir=args.data_dir,
         use_vigoemotions=args.use_vigoemotions,
         device=args.device,
