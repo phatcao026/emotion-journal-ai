@@ -68,6 +68,12 @@ class Stage2GatedFusion(nn.Module):
         self.layer_norm = nn.LayerNorm(self.output_dim)
         self.dropout = nn.Dropout(dropout)
 
+        # 5. Decoupled routing fallback for text-only samples (e_no_prosody: 128 + 32 = 160D)
+        prosody_dim = dim_pause + (dim_melody if dim_melody > 0 else 0)
+        self.e_no_prosody = nn.Parameter(torch.zeros(1, prosody_dim))
+        nn.init.normal_(self.e_no_prosody, mean=0.0, std=0.02)
+        self.use_decoupled_routing = False
+
     def forward(
         self,
         z_audio: torch.Tensor,
@@ -135,10 +141,19 @@ class Stage2GatedFusion(nn.Module):
         z_bimodal = gate_audio * effective_z_audio + gate_text * effective_z_semantic
 
         # 6. Concatenate projected streams (with masked melody when audio is absent)
-        streams = [z_bimodal, z_pause_proj]
-        if p_melody is not None and self.melody_projection is not None:
-            z_melody_proj = self.melody_projection(p_melody) * audio_keep_factor
-            streams.append(z_melody_proj)
+        if self.use_decoupled_routing and audio_mask is not None:
+            am = audio_mask.view(-1, 1).float()
+            is_text_only = (am <= 0.5)
+            z_mel = self.melody_projection(p_melody) if (p_melody is not None and self.melody_projection is not None) else torch.zeros(batch_size, self.dim_melody, device=device)
+            prosody_real = torch.cat([self.pause_projection(p_pause), z_mel], dim=-1)
+            prosody_fallback = self.e_no_prosody.expand(batch_size, -1)
+            prosody_fused = torch.where(is_text_only, prosody_fallback, prosody_real)
+            streams = [z_bimodal, prosody_fused]
+        else:
+            streams = [z_bimodal, z_pause_proj]
+            if p_melody is not None and self.melody_projection is not None:
+                z_melody_proj = self.melody_projection(p_melody) * audio_keep_factor
+                streams.append(z_melody_proj)
 
         z_fused_raw = torch.cat(streams, dim=-1)
         z_fused = self.dropout(self.layer_norm(z_fused_raw))

@@ -228,10 +228,13 @@ class Stage2HierarchicalMERModel(nn.Module):
         dim_melody: int = 32,
         enforce_taxonomy_mask: bool = True,
         sub_head_input_dim: Optional[int] = None,
+        use_conditional_subhead: bool = False,
         asr_model_id: str = "vinai/phowhisper-base",
         text_model_id: str = "vinai/phobert-base-v2",
         modality_dropout: float = 0.15,
         gate_temperature: float = 0.8,
+        melody_median_kernel: int = 15,
+        text_pooling: str = "cls",
         device: str = "cpu",
     ) -> None:
         super().__init__()
@@ -241,6 +244,9 @@ class Stage2HierarchicalMERModel(nn.Module):
         self.use_melody = use_melody
         self.dim_melody = dim_melody if use_melody else 0
         self.enforce_taxonomy_mask = enforce_taxonomy_mask
+        self.use_conditional_subhead = use_conditional_subhead
+        self.melody_median_kernel = melody_median_kernel
+        self.text_pooling = text_pooling
 
         # 1. Acoustic Stream: SSL + Pooling
         self.audio_encoder = LoRAEmotion2Vec(
@@ -251,7 +257,7 @@ class Stage2HierarchicalMERModel(nn.Module):
 
         # 2. Acoustic Biomarker Stream: Explicit Melody (F0, Jitter, Shimmer, HNR)
         if self.use_melody:
-            self.melody_extractor = ExplicitMelodyExtractor(sample_rate=16000)
+            self.melody_extractor = ExplicitMelodyExtractor(sample_rate=16000, median_kernel=melody_median_kernel)
         else:
             self.melody_extractor = None
 
@@ -263,6 +269,7 @@ class Stage2HierarchicalMERModel(nn.Module):
         )
         self.text_encoder = PhoBERTEncoder(
             model_id=text_model_id,
+            pooling_strategy=text_pooling,
             device=device,
         )
 
@@ -291,9 +298,12 @@ class Stage2HierarchicalMERModel(nn.Module):
             CosineLinear(256, num_primary_classes),
         )
 
-        # Sub Head: by default connects to fused_dim (928D) so it receives both acoustic and semantic context.
-        # Can be set to 768 for legacy checkpoints.
-        self.sub_head_input_dim = sub_head_input_dim if sub_head_input_dim is not None else fused_dim
+        # Sub Head: connects to fused_dim (928D) or conditional dim (928 + 256 + 5 = 1189D)
+        if use_conditional_subhead:
+            self.sub_head_input_dim = fused_dim + 256 + num_primary_classes
+        else:
+            self.sub_head_input_dim = sub_head_input_dim if sub_head_input_dim is not None else fused_dim
+
         self.sub_head = nn.Sequential(
             nn.Linear(self.sub_head_input_dim, 256),
             nn.LayerNorm(256),
@@ -331,13 +341,14 @@ class Stage2HierarchicalMERModel(nn.Module):
             if k in model_dict:
                 if v.shape == model_dict[k].shape:
                     adapted_dict[k] = v
-                elif k == "sub_head.0.weight" and v.shape == torch.Size([256, 768]) and model_dict[k].shape == torch.Size([256, 928]):
-                    # Expand weights: preserve 768D weights, initialize remaining 160D with small random values
+                elif k == "sub_head.0.weight" and v.shape[0] == model_dict[k].shape[0] and v.shape[1] < model_dict[k].shape[1]:
+                    # Expand weights: preserve existing input dims, initialize remaining dims with small values
                     expanded_w = model_dict[k].clone()
-                    expanded_w[:, :768] = v
-                    expanded_w[:, 768:] = 0.01 * torch.randn_like(expanded_w[:, 768:])
+                    in_dim = v.shape[1]
+                    expanded_w[:, :in_dim] = v
+                    expanded_w[:, in_dim:] = 0.001 * torch.randn_like(expanded_w[:, in_dim:])
                     adapted_dict[k] = expanded_w
-                    logger.info("Adapted sub_head.0.weight from [256, 768] to [256, 928] with zero-padding.")
+                    logger.info("Adapted %s from %s to %s with warm-start padding.", k, v.shape, model_dict[k].shape)
                 else:
                     logger.warning("Skipping incompatible tensor %s: ckpt %s vs model %s", k, v.shape, model_dict[k].shape)
 
@@ -418,10 +429,13 @@ class Stage2HierarchicalMERModel(nn.Module):
         )
 
         # 6. Classification logits
-        primary_logits = self.primary_head(z_fused)
-
-        # Sub-head receives full fused representation if configured (928D), else semantic (768D)
-        sub_input = z_fused if self.sub_head_input_dim == self.fused_dim else z_semantic
+        if self.use_conditional_subhead:
+            h_prim = self.primary_head[:4](z_fused)
+            primary_logits = self.primary_head[4](h_prim)
+            sub_input = torch.cat([z_fused, h_prim.detach(), primary_logits.detach()], dim=-1)
+        else:
+            primary_logits = self.primary_head(z_fused)
+            sub_input = z_fused if self.sub_head_input_dim == self.fused_dim else z_semantic
         sub_logits = self.sub_head(sub_input)
 
         # 7. Hierarchical Masking & Soft Probabilistic Routing

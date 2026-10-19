@@ -116,3 +116,92 @@ def get_drw_weights(
     if device is not None:
         tensor_w = tensor_w.to(device)
     return tensor_w
+
+
+# ============================================================================
+# SIBLING MASKING FOR 5 PRIMARY -> 11 SUB TAXONOMY
+# ============================================================================
+# 5 coarse sub-emotions with true samples in ViSEC + RAVDESS:
+ACTIVE_5_SUB_INDICES: List[int] = [0, 1, 4, 6, 7]
+# 6 fine-grained sub-emotions with zero support in ViSEC + RAVDESS:
+ZERO_SUPPORT_SPEECH_SUB_INDICES: List[int] = [2, 3, 5, 8, 9, 10]
+
+# Mapping from coarse sub-emotion (ViSEC) to its fine-grained siblings to mask out:
+COARSE_SUB_TO_SIBLINGS: Dict[int, List[int]] = {
+    0: [2, 3],  # JOY(0) -> siblings HOPE(2), CONNECTION(3)
+    1: [],      # CALM(1)
+    4: [8, 9],  # SADNESS(4) -> siblings GUILT_SHAME(8), LONELINESS(9)
+    6: [5],     # FEAR(6) -> sibling ANXIETY(5)
+    7: [10],    # ANGER(7) -> sibling DISGUST(10)
+}
+
+
+class SiblingMaskedLDAMLoss(LDAMLoss):
+    """
+    LDAM Loss with Sibling Negative Masking support for hierarchical coarse labels.
+    Prevents coarse speech batches from penalizing fine-grained sibling predictions.
+    """
+    def __init__(
+        self,
+        cls_num_list: Optional[Union[List[int], np.ndarray, torch.Tensor]] = None,
+        max_m: float = 0.5,
+        scale: float = 30.0,
+        weight: Optional[torch.Tensor] = None,
+        coarse_to_siblings: Optional[Dict[int, List[int]]] = None,
+        ignore_index: int = -100,
+        num_classes: int = 11,
+        use_sibling_masking: bool = True,
+    ) -> None:
+        super().__init__(
+            cls_num_list=cls_num_list,
+            max_m=max_m,
+            scale=scale,
+            weight=weight,
+            ignore_index=ignore_index,
+        )
+        self.use_sibling_masking = use_sibling_masking
+        mapping = coarse_to_siblings if coarse_to_siblings is not None else COARSE_SUB_TO_SIBLINGS
+        mask_table = torch.zeros((num_classes, num_classes), dtype=torch.bool)
+        for coarse_idx, siblings in mapping.items():
+            for sib_idx in siblings:
+                if coarse_idx < num_classes and sib_idx < num_classes:
+                    mask_table[coarse_idx, sib_idx] = True
+        self.register_buffer("sibling_mask_table", mask_table)
+
+    def forward(
+        self,
+        logits: torch.Tensor,
+        targets: torch.Tensor,
+        is_coarse_speech: Optional[torch.Tensor] = None,
+    ) -> torch.Tensor:
+        if targets.ndim == 2:
+            targets = targets.argmax(dim=-1)
+
+        valid_mask = (targets >= 0) & (targets != self.ignore_index)
+        if not valid_mask.any():
+            return logits.sum() * 0.0
+
+        valid_logits = logits[valid_mask]
+        valid_targets = targets[valid_mask]
+        batch_size = valid_logits.size(0)
+
+        index = torch.zeros_like(valid_logits, dtype=torch.bool)
+        index.scatter_(1, valid_targets.unsqueeze(1), True)
+
+        margins = self.m_list.to(valid_logits.device).unsqueeze(0).expand(batch_size, -1)
+        target_margins = margins[index].view(batch_size, 1)
+
+        diff = torch.zeros_like(valid_logits)
+        diff.scatter_(1, valid_targets.unsqueeze(1), target_margins)
+        output_logits = self.scale * (valid_logits - diff)
+
+        # Sibling Masking for coarse speech samples
+        if self.use_sibling_masking and is_coarse_speech is not None:
+            valid_coarse = is_coarse_speech[valid_mask].bool().to(valid_logits.device)
+            if valid_coarse.any():
+                sib_mask = self.sibling_mask_table[valid_targets] & valid_coarse.unsqueeze(1)
+                output_logits = output_logits.masked_fill(sib_mask, -1e4)
+
+        weight = self.weight.to(valid_logits.device) if self.weight is not None else None
+        return F.cross_entropy(output_logits, valid_targets, weight=weight)
+

@@ -31,9 +31,11 @@ class ExplicitMelodyExtractor(nn.Module):
         f0_min_hz: float = 65.0,
         f0_max_hz: float = 450.0,
         sr: Optional[int] = None,
+        median_kernel: int = 15,
     ) -> None:
         super().__init__()
         self.sample_rate = sr if sr is not None else sample_rate
+        self.median_kernel = median_kernel
         self.frame_len = int(frame_length_ms * self.sample_rate / 1000.0)
         self.hop_len = int(hop_length_ms * self.sample_rate / 1000.0)
         self.min_lag = int(self.sample_rate / f0_max_hz)
@@ -148,7 +150,8 @@ class ExplicitMelodyExtractor(nn.Module):
         voiced_f0 = f0_candidates[is_voiced]
 
         if num_voiced > 5:
-            k = min(15, num_voiced.item() if num_voiced.item() % 2 == 1 else num_voiced.item() - 1)
+            target_k = self.median_kernel if self.median_kernel % 2 == 1 else self.median_kernel - 1
+            k = min(target_k, num_voiced.item() if num_voiced.item() % 2 == 1 else num_voiced.item() - 1)
             if k >= 3:
                 from scipy.signal import medfilt
                 voiced_f0_np = voiced_f0.detach().cpu().numpy()

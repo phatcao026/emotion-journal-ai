@@ -40,6 +40,7 @@ class SyntheticPhoBERTBackbone(nn.Module):
             nn.Tanh(),
             nn.Linear(hidden_dim, hidden_dim),
         )
+        self.attn_scorer = nn.Linear(hidden_dim, 1)
 
     def forward(
         self,
@@ -52,7 +53,7 @@ class SyntheticPhoBERTBackbone(nn.Module):
         Args:
             input_ids (torch.Tensor): (B, L) integer token IDs.
             attention_mask (Optional[torch.Tensor]): (B, L) binary mask.
-            pooling_strategy (str): 'cls', 'mean', or 'max'.
+            pooling_strategy (str): 'cls', 'attention', 'mean', or 'max'.
 
         Returns:
             torch.Tensor: (B, hidden_dim).
@@ -61,6 +62,13 @@ class SyntheticPhoBERTBackbone(nn.Module):
 
         if pooling_strategy == "cls":
             pooled = x[:, 0, :]
+        elif pooling_strategy == "attention":
+            attn_logits = self.attn_scorer(x).squeeze(-1)
+            if attention_mask is not None:
+                pad_mask = (attention_mask == 0)
+                attn_logits = attn_logits.masked_fill(pad_mask, -1e4)
+            attn_weights = F.softmax(attn_logits, dim=-1).unsqueeze(-1)
+            pooled = (x * attn_weights).sum(dim=1)
         elif pooling_strategy == "mean":
             if attention_mask is not None:
                 mask = attention_mask.unsqueeze(-1).float()
@@ -128,6 +136,7 @@ class PhoBERTEncoder(nn.Module):
         self._synthetic_backbone = SyntheticPhoBERTBackbone(
             vocab_size=10000, hidden_dim=self.FEATURE_DIM
         )
+        self.attn_scorer = nn.Linear(self.FEATURE_DIM, 1)
 
         logger.info(
             "PhoBERTEncoder initialized: model=%s, pooling=%s, device=%s",
@@ -267,6 +276,12 @@ class PhoBERTEncoder(nn.Module):
 
             if self.pooling_strategy == "cls":
                 z_semantic = hidden_states[:, 0, :]
+            elif self.pooling_strategy == "attention":
+                attn_logits = self.attn_scorer(hidden_states).squeeze(-1)
+                pad_mask = (attention_mask == 0)
+                attn_logits = attn_logits.masked_fill(pad_mask, -1e4)
+                attn_weights = F.softmax(attn_logits, dim=-1).unsqueeze(-1)
+                z_semantic = (hidden_states * attn_weights).sum(dim=1)
             elif self.pooling_strategy == "mean":
                 mask = attention_mask.unsqueeze(-1).float()
                 z_semantic = (hidden_states * mask).sum(dim=1) / mask.sum(dim=1).clamp(min=1e-9)
