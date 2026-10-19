@@ -776,11 +776,19 @@ def main():
 
     # Auto-discover checkpoint on Kaggle if default doesn't exist
     ckpt_path = Path(args.checkpoint)
-    if not ckpt_path.exists():
-        kaggle_matches = list(Path("/kaggle").glob("**/best_model_stage2_5.pt")) if Path("/kaggle").exists() else []
-        if kaggle_matches:
-            ckpt_path = kaggle_matches[0]
-            logger.info("Discovered Kaggle baseline checkpoint at '%s'.", ckpt_path)
+    if not ckpt_path.exists() and Path("/kaggle").exists():
+        candidates = (
+            list(Path("/kaggle").glob("**/best_model_stage2_5.pt"))
+            + list(Path("/kaggle").glob("**/best_model_stage2*.pt"))
+            + list(Path("/kaggle").glob("**/*stage2_5*.pt"))
+            + list(Path("/kaggle").glob("**/best_model*.pt"))
+        )
+        if candidates:
+            ckpt_path = candidates[0]
+            logger.info("Auto-discovered Kaggle baseline checkpoint at '%s'.", ckpt_path)
+        else:
+            all_pt = list(Path("/kaggle/input").glob("**/*.pt")) if Path("/kaggle/input").exists() else []
+            logger.warning("No checkpoint found at '%s'. Available .pt files in /kaggle/input: %s", args.checkpoint, all_pt)
 
     output_dir = Path(args.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)

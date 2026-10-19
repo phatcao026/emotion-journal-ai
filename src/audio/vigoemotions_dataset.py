@@ -62,8 +62,10 @@ class ViGoEmotionsStage2Dataset(Dataset):
         super().__init__()
         self.samples: List[Tuple[str, int, int]] = []
         try:
+            import os
             from datasets import load_dataset
-            ds = load_dataset("uitnlp/vigoemotions", split=split)
+            token = os.environ.get("HF_TOKEN") or os.environ.get("HUGGING_FACE_HUB_TOKEN")
+            ds = load_dataset("uitnlp/vigoemotions", split=split, token=token)
             for row in ds:
                 text = str(row.get("text", "")).strip()
                 labels = row.get("labels", [])
