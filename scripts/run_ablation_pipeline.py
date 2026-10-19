@@ -154,11 +154,21 @@ def build_dual_track_datasets(
         return train_speech, val_speech, test_speech, train_vigo, val_vigo
 
     data_dir_path = Path(data_dir or config.get("data", {}).get("data_dir", "data/voice_journals"))
-    if not data_dir_path.exists() and Path("/kaggle/input").exists():
-        meta_candidates = list(Path("/kaggle/input").glob("**/metadata.csv"))
-        if meta_candidates:
-            data_dir_path = meta_candidates[0].parent
-            logger.info("Auto-discovered dataset metadata.csv at '%s'.", data_dir_path)
+    if not (data_dir_path / "metadata.csv").exists():
+        fallback_candidates = [
+            Path("data/visec_crosscorpus"),
+            Path("data/voice_journals"),
+            Path("/kaggle/working/data/visec_crosscorpus"),
+            Path("/kaggle/working/data/voice_journals"),
+        ]
+        if Path("/kaggle/input").exists():
+            fallback_candidates.extend([p.parent for p in Path("/kaggle/input").glob("**/metadata.csv")])
+
+        for cand in fallback_candidates:
+            if (cand / "metadata.csv").exists():
+                data_dir_path = cand
+                logger.info("Auto-discovered dataset metadata.csv at '%s'.", data_dir_path)
+                break
 
     train_speech = VoiceJournalDataset(data_dir=str(data_dir_path), split="train", use_sub_labels=True)
     val_speech = VoiceJournalDataset(data_dir=str(data_dir_path), split="val", use_sub_labels=True)
