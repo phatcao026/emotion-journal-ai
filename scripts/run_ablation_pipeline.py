@@ -153,10 +153,16 @@ def build_dual_track_datasets(
         val_vigo = SyntheticViGoDataset(size=20)
         return train_speech, val_speech, test_speech, train_vigo, val_vigo
 
-    data_dir_path = data_dir or config.get("data", {}).get("data_dir", "data/voice_journals")
-    train_speech = VoiceJournalDataset(data_dir=data_dir_path, split="train", use_sub_labels=True)
-    val_speech = VoiceJournalDataset(data_dir=data_dir_path, split="val", use_sub_labels=True)
-    test_speech = VoiceJournalDataset(data_dir=data_dir_path, split="test", use_sub_labels=True)
+    data_dir_path = Path(data_dir or config.get("data", {}).get("data_dir", "data/voice_journals"))
+    if not data_dir_path.exists() and Path("/kaggle/input").exists():
+        meta_candidates = list(Path("/kaggle/input").glob("**/metadata.csv"))
+        if meta_candidates:
+            data_dir_path = meta_candidates[0].parent
+            logger.info("Auto-discovered dataset metadata.csv at '%s'.", data_dir_path)
+
+    train_speech = VoiceJournalDataset(data_dir=str(data_dir_path), split="train", use_sub_labels=True)
+    val_speech = VoiceJournalDataset(data_dir=str(data_dir_path), split="val", use_sub_labels=True)
+    test_speech = VoiceJournalDataset(data_dir=str(data_dir_path), split="test", use_sub_labels=True)
 
     # Load ViGoEmotions
     train_vigo = None
