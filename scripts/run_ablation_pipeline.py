@@ -783,6 +783,28 @@ def main():
             + list(Path("/kaggle").glob("**/*stage2_5*.pt"))
             + list(Path("/kaggle").glob("**/best_model*.pt"))
         )
+        # If no .pt found, check if user uploaded a .zip file in /kaggle/input
+        if not candidates and Path("/kaggle/input").exists():
+            zip_candidates = (
+                list(Path("/kaggle/input").glob("**/*stage2*.zip"))
+                + list(Path("/kaggle/input").glob("**/*best_model*.zip"))
+                + list(Path("/kaggle/input").glob("**/*.zip"))
+            )
+            for zf in zip_candidates:
+                try:
+                    import zipfile
+                    extract_target = Path("checkpoints/auto_extracted")
+                    extract_target.mkdir(parents=True, exist_ok=True)
+                    with zipfile.ZipFile(zf, 'r') as zip_ref:
+                        zip_ref.extractall(extract_target)
+                    logger.info("Auto-extracted zip archive '%s' to '%s'.", zf, extract_target)
+                    found_pts = list(extract_target.glob("**/*.pt"))
+                    if found_pts:
+                        candidates = found_pts
+                        break
+                except Exception as zip_err:
+                    logger.warning("Could not extract zip '%s': %s", zf, zip_err)
+
         if candidates:
             ckpt_path = candidates[0]
             logger.info("Auto-discovered Kaggle baseline checkpoint at '%s'.", ckpt_path)
