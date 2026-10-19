@@ -783,6 +783,25 @@ def main():
             + list(Path("/kaggle").glob("**/*stage2_5*.pt"))
             + list(Path("/kaggle").glob("**/best_model*.pt"))
         )
+        # If no .pt found, check if Kaggle unpacked a PyTorch checkpoint directory containing data.pkl
+        if not candidates and Path("/kaggle/input").exists():
+            pkl_matches = list(Path("/kaggle/input").glob("**/data.pkl"))
+            if pkl_matches:
+                pkl_dir = pkl_matches[0].parent
+                repacked_pt = Path("checkpoints/best_model_stage2_5.pt")
+                repacked_pt.parent.mkdir(parents=True, exist_ok=True)
+                import zipfile
+                logger.info("Detected unpacked PyTorch checkpoint directory at '%s'. Packaging into '%s'...", pkl_dir, repacked_pt)
+                base_parent = pkl_dir.parent
+                with zipfile.ZipFile(repacked_pt, "w", zipfile.ZIP_STORED) as z_out:
+                    for root, dirs, files in os.walk(pkl_dir):
+                        for file in files:
+                            full_p = os.path.join(root, file)
+                            rel_p = os.path.relpath(full_p, base_parent)
+                            z_out.write(full_p, rel_p)
+                candidates = [repacked_pt]
+                logger.info("Successfully packaged checkpoint into '%s' (%0.1f MB).", repacked_pt, repacked_pt.stat().st_size / (1024 * 1024))
+
         # If no .pt found, check if user uploaded a .zip file in /kaggle/input
         if not candidates and Path("/kaggle/input").exists():
             zip_candidates = (
