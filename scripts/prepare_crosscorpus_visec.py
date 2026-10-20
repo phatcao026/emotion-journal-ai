@@ -716,6 +716,26 @@ def split_and_save(
 
         logger.info("Successfully generated %s (%d records).", csv_path, len(rows_to_write))
 
+    # Also generate a master metadata.csv at root of output_dir for universal compatibility
+    master_csv = output_dir / "metadata.csv"
+    master_rows = []
+    for sname in ["train", "val", "test"]:
+        scsv = output_dir / sname / "metadata.csv"
+        if scsv.exists():
+            with open(scsv, mode="r", encoding="utf-8") as rf:
+                for r in csv.DictReader(rf):
+                    r_copy = dict(r)
+                    r_copy["split"] = sname
+                    r_copy["audio_path"] = f"{sname}/{r['audio_path']}"
+                    master_rows.append(r_copy)
+    if master_rows:
+        m_fieldnames = list(master_rows[0].keys())
+        with open(master_csv, mode="w", newline="", encoding="utf-8") as mf:
+            m_writer = csv.DictWriter(mf, fieldnames=m_fieldnames)
+            m_writer.writeheader()
+            m_writer.writerows(master_rows)
+        logger.info("Successfully generated master %s (%d records).", master_csv, len(master_rows))
+
 
 # ---------------------------------------------------------------------------
 # Main Entrypoint

@@ -462,6 +462,9 @@ class VoiceJournalDataset(Dataset):
         with open(manifest_path, mode="r", encoding="utf-8") as f:
             reader = csv.DictReader(f)
             for row in reader:
+                row_split = row.get("split", "").strip().lower()
+                if row_split and row_split != self.split.lower():
+                    continue
                 s_id = row.get("sample_id", "")
                 a_path = row.get("audio_path", "")
                 if not Path(a_path).is_absolute():

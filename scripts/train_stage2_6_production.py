@@ -288,18 +288,54 @@ def main():
             Path("data/voice_journals"),
             Path("/kaggle/working/data/visec_crosscorpus"),
             Path("/kaggle/working/data/voice_journals"),
+            Path("/kaggle/working/emotion-journal-ai/data/visec_crosscorpus"),
+            Path("/kaggle/working/emotion-journal-ai/data/voice_journals"),
         ]
         if Path("/kaggle/input").exists():
             data_candidates.extend([p.parent for p in Path("/kaggle/input").glob("**/metadata.csv")])
+            data_candidates.extend([p.parent.parent for p in Path("/kaggle/input").glob("**/train/metadata.csv")])
 
         data_dir_path = None
         for dc in data_candidates:
-            if dc and (dc / "metadata.csv").exists():
+            if dc and ((dc / "metadata.csv").exists() or (dc / "train" / "metadata.csv").exists()):
                 data_dir_path = dc
                 break
 
+        # Self-healing: if dataset is not found, automatically invoke preparation script
         if not data_dir_path:
-            raise FileNotFoundError("Could not locate dataset containing metadata.csv! Please prepare data or specify --data-dir.")
+            logger.info("Dataset metadata.csv not found in workspace or inputs.")
+            logger.info("Auto-initiating dataset preparation via scripts/prepare_crosscorpus_visec.py...")
+            import subprocess
+            prep_script = Path("scripts/prepare_crosscorpus_visec.py")
+            if prep_script.exists():
+                prep_cmd = [
+                    sys.executable,
+                    str(prep_script),
+                    "--output-dir", "data/visec_crosscorpus",
+                ]
+                # Deep search for RAVDESS in /kaggle/input if available
+                if Path("/kaggle/input").exists():
+                    ravdess_candidates = list(Path("/kaggle/input").glob("**/*-*-06-*.wav"))
+                    if ravdess_candidates:
+                        rav_actor = ravdess_candidates[0].parent
+                        rav_dir = rav_actor.parent if rav_actor.name.startswith("Actor_") else rav_actor
+                        prep_cmd.extend(["--ravdess-dir", str(rav_dir)])
+                        logger.info("Auto-discovered RAVDESS input at '%s'.", rav_dir)
+
+                logger.info("Executing dataset preparation: %s", " ".join(prep_cmd))
+                res = subprocess.run(prep_cmd, check=False)
+                if res.returncode == 0:
+                    cand = Path("data/visec_crosscorpus")
+                    if (cand / "metadata.csv").exists() or (cand / "train" / "metadata.csv").exists():
+                        data_dir_path = cand
+                        logger.info("Successfully auto-prepared cross-corpus dataset at '%s'.", data_dir_path)
+
+        if not data_dir_path:
+            raise FileNotFoundError(
+                "Could not locate or generate dataset containing metadata.csv! "
+                "Please verify that 'uwrfkaggler/ravdess-emotional-speech-audio' is added to Kaggle Input, "
+                "or specify --data-dir."
+            )
 
         logger.info("Speech dataset resolved at '%s'.", data_dir_path)
         train_speech = VoiceJournalDataset(data_dir=str(data_dir_path), split="train", use_sub_labels=True)
