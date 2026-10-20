@@ -203,7 +203,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--lr", type=float, default=5.0e-5, help="Warm-start learning rate for heads and fusion")
     parser.add_argument("--lr-audio-lora", type=float, default=2.5e-5)
     parser.add_argument("--lr-text-encoder", type=float, default=1.0e-5)
-    parser.add_argument("--use-amp", action="store_true", default=True, help="Mixed precision (FP16) acceleration")
+    parser.add_argument("--use-amp", action="store_true", default=False, help="Mixed precision (FP16) acceleration (default: False for audio attention stability)")
+    parser.add_argument("--no-amp", dest="use_amp", action="store_false", help="Explicitly disable mixed precision")
     parser.add_argument("--output-dir", type=str, default="checkpoints/stage2_6_production")
     parser.add_argument("--patience", type=int, default=12, help="Early stopping patience")
     parser.add_argument("--dummy", action="store_true")
@@ -449,6 +450,8 @@ def main():
         use_sibling_masking=True,
     ).to(dev)
 
+    all_trainable_params = [p for p in model.parameters() if p.requires_grad] + [p for p in uncertainty_fn.parameters() if p.requires_grad]
+
     # 6. Training Loop with High Throughput & Early Stopping
     best_val_score = -1.0
     best_epoch = 0
@@ -482,24 +485,38 @@ def main():
             with torch.amp.autocast(device_type, enabled=(args.use_amp and dev.type == "cuda")):
                 out = model(waveforms=wavs, speech_timestamps=speech_ts, texts=transcripts, use_asr=False)
 
-                # Decoupled primary supervision
-                if is_speech.any():
-                    l_prim = loss_primary(out.primary_logits[is_speech], p_targets[is_speech])
-                else:
-                    l_prim = out.primary_logits.sum() * 0.0
+                # Decoupled primary supervision with numerical nan_to_num guard
+                p_logits = torch.nan_to_num(out.primary_logits, nan=0.0)
+                s_logits = torch.nan_to_num(out.sub_logits, nan=0.0)
 
-                l_s = loss_sub(out.sub_logits, s_targets, is_coarse_speech=is_speech)
+                if is_speech.any():
+                    l_prim = loss_primary(p_logits[is_speech], p_targets[is_speech])
+                else:
+                    l_prim = p_logits.sum() * 0.0
+
+                l_s = loss_sub(s_logits, s_targets, is_coarse_speech=is_speech)
                 loss = uncertainty_fn(l_prim, l_s)
                 loss_scaled = loss / args.grad_accum_steps
 
-            scaler.scale(loss_scaled).backward()
-
-            if (batch_idx + 1) % args.grad_accum_steps == 0 or (batch_idx + 1) == len(train_loader):
-                scaler.unscale_(optimizer)
-                torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
-                scaler.step(optimizer)
-                scaler.update()
+            if torch.isnan(loss) or torch.isinf(loss):
+                logger.warning("Encountered NaN/Inf loss at Epoch %d Batch %d. Skipping step to protect weights.", ep, batch_idx + 1)
                 optimizer.zero_grad()
+                continue
+
+            if args.use_amp and dev.type == "cuda":
+                scaler.scale(loss_scaled).backward()
+                if (batch_idx + 1) % args.grad_accum_steps == 0 or (batch_idx + 1) == len(train_loader):
+                    scaler.unscale_(optimizer)
+                    torch.nn.utils.clip_grad_norm_(all_trainable_params, 1.0)
+                    scaler.step(optimizer)
+                    scaler.update()
+                    optimizer.zero_grad()
+            else:
+                loss_scaled.backward()
+                if (batch_idx + 1) % args.grad_accum_steps == 0 or (batch_idx + 1) == len(train_loader):
+                    torch.nn.utils.clip_grad_norm_(all_trainable_params, 1.0)
+                    optimizer.step()
+                    optimizer.zero_grad()
 
             total_loss += loss.item()
 
