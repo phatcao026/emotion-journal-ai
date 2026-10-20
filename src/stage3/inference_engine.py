@@ -49,13 +49,15 @@ class Stage3InferenceEngine:
 
     def __init__(
         self,
-        checkpoint_path: Optional[str] = "checkpoints/stage2/best_model_stage2.pt",
+        checkpoint_path: Optional[str] = "checkpoints/best_model_stage2_6_winner.pt" if Path("checkpoints/best_model_stage2_6_winner.pt").exists() else "checkpoints/stage2/best_model_stage2.pt",
         config_path: str = "configs/stage2/multimodal_stage2.yaml",
         device: str = "cpu",
         dummy: bool = False,
+        melody_median_kernel: int = 5,
     ) -> None:
         self.device = torch.device(device)
         self.dummy = dummy
+        self.melody_median_kernel = melody_median_kernel
 
         # 1. Load config
         self.config_path = Path(config_path)
@@ -78,6 +80,7 @@ class Stage3InferenceEngine:
             dim_melody=fusion_cfg.get("dim_melody", 32),
             modality_dropout=0.0,   # No dropout during inference
             gate_temperature=fusion_cfg.get("gate_temperature", 0.8),
+            melody_median_kernel=melody_median_kernel,
             device=device,
         )
 
