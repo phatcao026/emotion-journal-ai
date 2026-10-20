@@ -63,7 +63,7 @@ class MultiTaskUncertaintyLoss(nn.Module):
 
         for i, loss in enumerate(losses):
             precision = torch.exp(-self.log_vars[i])
-            weighted_task_loss = 0.5 * precision * loss + 0.5 * self.log_vars[i]
+            weighted_task_loss = 0.5 * precision * loss.float() + 0.5 * self.log_vars[i]
             total_loss = total_loss + weighted_task_loss
 
             metrics[f"task_{i}_weight"] = float(precision.detach().item())

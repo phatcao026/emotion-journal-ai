@@ -84,21 +84,22 @@ class LDAMLoss(nn.Module):
         if not valid_mask.any():
             return logits.sum() * 0.0
 
-        valid_logits = logits[valid_mask]
+        # Cast to float32 to ensure numerical stability and avoid scatter dtype mismatch under AMP FP16
+        valid_logits = logits[valid_mask].float()
         valid_targets = targets[valid_mask]
         batch_size = valid_logits.size(0)
 
         index = torch.zeros_like(valid_logits, dtype=torch.bool)
         index.scatter_(1, valid_targets.unsqueeze(1), True)
 
-        margins = self.m_list.to(valid_logits.device).unsqueeze(0).expand(batch_size, -1)
+        margins = self.m_list.to(device=valid_logits.device, dtype=torch.float32).unsqueeze(0).expand(batch_size, -1)
         target_margins = margins[index].view(batch_size, 1)
 
         diff = torch.zeros_like(valid_logits)
         diff.scatter_(1, valid_targets.unsqueeze(1), target_margins)
         output_logits = self.scale * (valid_logits - diff)
 
-        weight = self.weight.to(valid_logits.device) if self.weight is not None else None
+        weight = self.weight.to(device=valid_logits.device, dtype=torch.float32) if self.weight is not None else None
         return F.cross_entropy(output_logits, valid_targets, weight=weight)
 
 
@@ -181,14 +182,15 @@ class SiblingMaskedLDAMLoss(LDAMLoss):
         if not valid_mask.any():
             return logits.sum() * 0.0
 
-        valid_logits = logits[valid_mask]
+        # Cast to float32 to ensure numerical stability and avoid scatter dtype mismatch under AMP FP16
+        valid_logits = logits[valid_mask].float()
         valid_targets = targets[valid_mask]
         batch_size = valid_logits.size(0)
 
         index = torch.zeros_like(valid_logits, dtype=torch.bool)
         index.scatter_(1, valid_targets.unsqueeze(1), True)
 
-        margins = self.m_list.to(valid_logits.device).unsqueeze(0).expand(batch_size, -1)
+        margins = self.m_list.to(device=valid_logits.device, dtype=torch.float32).unsqueeze(0).expand(batch_size, -1)
         target_margins = margins[index].view(batch_size, 1)
 
         diff = torch.zeros_like(valid_logits)
@@ -202,6 +204,6 @@ class SiblingMaskedLDAMLoss(LDAMLoss):
                 sib_mask = self.sibling_mask_table[valid_targets] & valid_coarse.unsqueeze(1)
                 output_logits = output_logits.masked_fill(sib_mask, -1e4)
 
-        weight = self.weight.to(valid_logits.device) if self.weight is not None else None
+        weight = self.weight.to(device=valid_logits.device, dtype=torch.float32) if self.weight is not None else None
         return F.cross_entropy(output_logits, valid_targets, weight=weight)
 
