@@ -248,6 +248,25 @@ def main():
                 ckpt_path = sp
                 break
 
+        # If no .pt found, check if Kaggle unpacked a PyTorch checkpoint directory containing data.pkl
+        if not ckpt_path and Path("/kaggle/input").exists():
+            pkl_matches = list(Path("/kaggle/input").glob("**/data.pkl"))
+            if pkl_matches:
+                pkl_dir = pkl_matches[0].parent
+                repacked_pt = Path("checkpoints/base_model_repacked.pt")
+                repacked_pt.parent.mkdir(parents=True, exist_ok=True)
+                import zipfile
+                logger.info("Detected unpacked PyTorch checkpoint directory at '%s'. Packaging into '%s'...", pkl_dir, repacked_pt)
+                base_parent = pkl_dir.parent
+                with zipfile.ZipFile(repacked_pt, "w", zipfile.ZIP_STORED) as z_out:
+                    for root, dirs, files in os.walk(pkl_dir):
+                        for file in files:
+                            full_p = os.path.join(root, file)
+                            rel_p = os.path.relpath(full_p, base_parent)
+                            z_out.write(full_p, rel_p)
+                ckpt_path = repacked_pt
+                logger.info("Successfully packaged checkpoint into '%s' (%0.1f MB).", repacked_pt, repacked_pt.stat().st_size / (1024 * 1024))
+
     if ckpt_path:
         logger.info("Base Checkpoint discovered: '%s'", ckpt_path)
     else:
@@ -509,6 +528,13 @@ def main():
 
     with open(output_dir / "final_report.md", "w", encoding="utf-8") as f:
         f.write(report_text)
+
+    # Auto-copy to /kaggle/working root for direct 1-click download in Kaggle Output
+    if Path("/kaggle/working").exists() and best_ckpt_path.exists():
+        import shutil
+        kaggle_dest = Path("/kaggle/working/best_model_stage2_6_final.pt")
+        shutil.copyfile(best_ckpt_path, kaggle_dest)
+        logger.info("Copied final model to Kaggle root: %s", kaggle_dest)
 
     print("\n[COMPLETED] Production model trained and saved successfully.")
 
