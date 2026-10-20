@@ -356,6 +356,14 @@ def main():
 
     train_combined = ConcatDataset([train_speech, train_vigo])
 
+    # Warm up Silero-VAD in main process before spawning DataLoader workers to prevent race conditions
+    try:
+        from src.audio.audio_dataset import _get_silero_vad
+        _get_silero_vad()
+        logger.info("Silero-VAD model pre-warmed successfully in main process.")
+    except Exception as e:
+        logger.warning("Silero-VAD warmup skipped (%s).", e)
+
     # 3. High-throughput DataLoader
     pin_mem = (dev.type == "cuda")
     nw = args.num_workers if dev.type == "cuda" else 0
